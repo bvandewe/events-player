@@ -1,7 +1,7 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: attempts-aggregator
+  name: cloudevent-viewer
   namespace: mozart
 spec:
   gateways:
@@ -11,6 +11,6 @@ spec:
   http:
   - route:
     - destination:
-        host: attempts-aggregator
+        host: cloudevent-viewer
         port:
-          number: 80
+          number: 8888

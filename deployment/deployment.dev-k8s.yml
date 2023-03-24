@@ -1,26 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: attempts-aggregator
+  name: cloudevent-viewer
   namespace: mozart
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: attempts-aggregator
+      app: cloudevent-viewer
       version: v1
   template:
     metadata:
       labels:
-        app: attempts-aggregator
+        app: cloudevent-viewer
         version: v1
     spec:
       containers:
-      - name: attempts-aggregator
-        image: ccie-gitlab.ccie.cisco.com:4567/esa/sys/bi/attempts/aggregator:0.1.8
+      - name: cloudevent-viewer
+        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:0.1.0
         imagePullPolicy: Always
-        env:
-        - name: api_data_settings
-          value: '{"default_time_range_start": "5","report_svc_base_url": "http://150.101.0.124:8090/attempt_data/","report_svc_username": "360portal","report_svc_password": "T1meT0Sh1ne","report_svc_page_size": "10000"}'
         ports:
-        - containerPort: 80
+        - containerPort: 8888
