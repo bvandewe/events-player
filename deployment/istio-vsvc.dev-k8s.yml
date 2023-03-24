@@ -7,7 +7,7 @@ spec:
   gateways:
   - istio-system/all-ccie-gateway
   hosts:
-  - perfreports.k.ccie.cisco.com
+  - events-viewer.k.ccie.cisco.com
   http:
   - route:
     - destination:
