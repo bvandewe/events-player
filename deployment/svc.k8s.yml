@@ -5,8 +5,8 @@ metadata:
   namespace: mozart
 spec:
   ports:
-    - port: 80
-      targetPort: 8888
+    - port: 8888
+      targetPort: 80
       protocol: TCP
       name: web
   selector:

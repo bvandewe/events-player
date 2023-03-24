@@ -20,4 +20,4 @@ spec:
         image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:0.1.0
         imagePullPolicy: Always
         ports:
-        - containerPort: 8888
+        - containerPort: 80
