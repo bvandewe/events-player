@@ -4,6 +4,8 @@ This micro-app can be used as a test subscriber of [CloudEvents](https://cloudev
 
 It provides a web-based interface to quickly visualize events that it received on its `POST /events/pub` endpoint.
 
+![Demo](assets/demo.gif)
+
 ## Limitations
 
 There is NO PERSISTANCE anywhere so refreshing the page on the browser will reset the state.  
