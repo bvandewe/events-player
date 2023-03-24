@@ -35,11 +35,17 @@ When an event is received, it is added to a queue that is consumed by a backgrou
 The SSE stream can be accessed at `/stream` using a browser or any SSE client. The stream sends a JSON payload for each received event, with the event payload and a timestamp indicating when the event was received.
 
 
-## Requirements
+## Local Usage
 
-Python 3.7+
-FastAPI
-Jinja2
+1. Pull and run the Docker image:
+
+`docker run --name cloudevent-viewer -p 8888:80 ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:0.1.0`
+
+2. Browse to http://localhost:8888
+
+3. Emit Cloudevent to http://localhost:8888/events/pub
+
+4. Enjoy!
 
 ## Development
 
