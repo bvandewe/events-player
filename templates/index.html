@@ -3,336 +3,112 @@
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.2">
-    <title>CloudEvents Viewer</title>
+    <title>CloudEvents Player</title>
+    <link rel="stylesheet" href="/static/css/app.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <!-- <link rel="manifest" href="/site.webmanifest"> -->
 </head>
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        background-color: rgb(26, 29, 32);
-        color: #fff;
-        min-width: 700px;
-    }
-
-    .container {
-        height: calc(100vh - 102px);
-        display: flex;
-        flex-direction: column;
-        margin-top: 100px;
-    }
-
-    h1 {
-        background-color: rgb(26, 29, 32);
-        margin: 0;
-        padding: 30px;
-        font-size: 24px;
-        font-family: 'Comfortaa', 'Arial', sans-serif;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        color: #4DCEF3;
-        border-top: 1px solid #4DCEF3;
-        z-index: 1;
-    }
-
-    #filter-container {
-        position: fixed;
-        top: 0;
-        right: 0;
-        z-index: 1;
-        margin-right: 30px;
-        margin-top: 22px;
-    }
-
-    input[type=text] {
-        background-color: rgb(82, 82, 82);
-        color: #4DCEF3;
-        font-size: 18px;
-        width: 200px;
-        padding: 10px;
-        border-radius: 5px;
-        border: none;
-        border-bottom: 2px solid #4DCEF3;
-    }
-
-    input[type=text]:focus {
-        outline: none;
-        border: none;
-        border-bottom: 2px solid #4DCEF3;
-    }
-
-    #toggle-button {
-        position: fixed;
-        top: 22px;
-        right: 240px;
-        background-color: rgb(26, 29, 32);
-        border: 1px;
-        border-radius: 5px;
-        color: #4DCEF3;
-        padding: 10px 10px;
-        margin-right: 30px;
-        height: 41px;
-        width: 41px;
-        font-size: 24px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #toggle-button:hover {
-        background-color: #4DCEF3;
-        color: rgb(26, 29, 32);
-    }
-
-    #info-icon {
-        position: fixed;
-        top: 22px;
-        right: 300px;
-        background-color: rgb(26, 29, 32);
-        border: 1px;
-        border-radius: 5px;
-        color: #4DCEF3;
-        padding: 10px 10px;
-        margin-right: 30px;
-        height: 41px;
-        width: 41px;
-        font-size: 18px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #info-icon:hover {
-        background-color: #4DCEF3;
-        color: rgb(26, 29, 32);
-    }
-
-    .log-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background-color: rgb(33, 37, 41);
-        padding: 10px;
-        font-size: 20px;
-        font-family: 'Arial', sans-serif;
-        cursor: pointer;
-        color: #fff;
-    }
-
-    .log-header:hover {
-        background-color: #4DCEF3;
-    }
-
-    #log {
-        overflow: hidden;
-        transition: height 0.3s ease-out;
-        padding: 10px;
-        box-sizing: border-box;
-        font-family: 'Arial', sans-serif;
-        background-color: rgb(26, 29, 32);
-    }
-
-    #log-container.active #log {
-        height: calc(100vh - 110px);
-    }
-
-    .log-message {
-        border: 1px solid #555;
-        border-radius: 3px;
-        margin-bottom: 5px;
-        margin-left: 20px;
-        margin-right: 20px;
-        font-family: 'Arial', sans-serif;
-        background-color: rgb(33, 37, 41);
-    }
-
-    .log-time {
-        display: inline-block;
-        margin-left: 20px;
-        margin-right: 10px;
-    }
-
-    .log-count {
-        font-size: 18px;
-        font-weight: bold;
-        color: #4DCEF3;
-    }
-
-    .log-timestamp {
-        display: inline-block;
-        font-size: 12px;
-        font-family: 'Arial', sans-serif;
-        margin-left: 10px;
-        color: #ccc;
-    }
-
-    .log-header:hover .log-count {
-        color: rgb(33, 37, 41);
-    }
-
-    .log-header:hover .log-timestamp {
-        color: rgb(33, 37, 41);
-    }
-
-    .log-header:hover .cloudevent-source {
-        color: rgb(33, 37, 41);
-    }
-
-    .log-header:hover .cloudevent-type {
-        color: rgb(33, 37, 41);
-    }
-    .cloudevent-source {
-        font-weight: bold;
-        margin-right: 20px;
-        font-size: 14px;
-        color: #CCC;
-    }
-
-    .cloudevent-type {
-        font-weight: bold;
-        margin-right: 20px;
-        font-size: 14px;
-        color: #4DCEF3;
-    }
-
-    .cloudevent-message {
-        font-family: 'Courier New', monospace;
-        background-color: rgb(82, 82, 82);
-        white-space: pre;
-        font-size: 12px;
-        display: none;
-        padding: 10px;
-        color: #fff;
-        line-height: 1.5;
-    }
-</style>
 
 <body>
-    <div class="container">
-        <h1>CloudEvents Viewer (<span id="log-count">0</span>)</h1>
-        <div id="filter-container">
-            <button id="toggle-button"><i id="toggle-icon" class="fa fa-caret-up"></i></button>
-            <input type="text" id="filter-input" placeholder="Filter events...">
-            <a href="/api/docs" target="_blank">
-                <button id="info-icon"><i class="fa fa-info"></i></button>
-            </a>
+    <header>
+        <nav>
+            <div class="menu-container">
+                <div class="left-items">
+                    <div class="title-container">
+                        <h1>CloudEvents Player (<span id="event-count">0</span>)</h1>
+                    </div>
+                    <div class="sub-menu-container">
+                        <ul>
+                            <li><a href="/#">Viewer</a></li>
+                            <li><a href="/#" id="myButton" onclick="openNav()">Generator</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="right-items">
+                    <div class="action-icons-container">
+                        <button id="info-button" title="Open the OpenAPI/Swagger page"><i class="fa fa-info"></i></button>
+                        <button id="toggle-button" title="Toggle the expand/collapse for All visible events"><i id="toggle-icon" class="fa fa-caret-up"></i></button>
+                    </div>
+                    <div class="filter-container">
+                        <form action="#">
+                            <input type="text" id="filter-input" placeholder="Filter events..." onsubmit="onFilterInputChange()">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <div class="container">
+            <div id="events-stack">
+            </div>
         </div>
-        <div id="log-container">
-            <div id="log"></div>
+    </main>
+    <footer>
+        <p>&copy; 2023 CloudEvents Player. All rights reserved.</p>
+    </footer>
+    <!-- Modal -->
+    <div id="generatorModal" class="sidebar">
+        <div id="generatorHeader">
+            <h3>Generate CloudEvents</h3>
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
         </div>
+        <div>
+            <form id="generatorForm">
+                <div class="form-group">
+                    <label for="input1">Gateway:</label>
+                    <input type="text" id="input1" name="event_gateway" onkeydown="return event.key !== ' '" placeholder="/events/pub" value="http://localhost/events/pub">
+                    <!-- <input type="checkbox" id="checkboxGateway" name="checkboxGateway">
+                    <label for="checkboxGateway" style="align:left;">Random?</label> -->
+                </div>
+                <div class="form-group">
+                    <label for="input2">Source:</label>
+                    <input type="text" id="input2" name="event_source"  onkeydown="return event.key !== ' '" placeholder="https://dummy.source.com/sys-admin" value="https://dummy.source.com/sys-admin">
+                </div>
+                <div class="form-group">
+                    <label for="input3">Type:</label>
+                    <input type="text" id="input3" name="event_type" onkeydown="return event.key !== ' '" placeholder="com.source.dummy.test.requested.v1" value="com.source.dummy.test.requested.v1">
+                </div>
+                <div class="form-group">
+                    <label for="input5">Data:</label>
+                    <textarea id="input5" name="event_data" rows="5" cols="50" style="font-family: monospace;">
+{
+  "foo":"bar"
+}
+</textarea>
+                </div>
+                <div class="form-group" style="margin-top: 2rem;">
+                    <label for="input4">Iterations:</label>
+                    <input type="number" id="input4" name="iterations" min="0" value="1">
+                    <label for="input4">Delay (ms):</label>
+                    <input type="number" id="input4" name="delay" min="0" placeholder="ms" value="100">
+                </div>
+
+                <div class="form-group" id="send-button">
+                    <button type="submit"><i class="fa fa-paper-plane"></i></button>
+                </div>
+            </form>
+        </div>
+
     </div>
+    <!-- Toast -->
+    <div class="toast-message"></div>
+
+    <script src="/static/js/app.js"></script>
     <script>
-        var logDiv = document.getElementById('log');
-        var eventSource = new EventSource('/stream');
-        var logCount = document.getElementById('log-count');
-        var count = 0;
-        var filterInput = document.getElementById('filter-input');
-        var toggleButton = document.getElementById('toggle-button');
-
-        eventSource.onmessage = function (event) {
-            console.log(event);
-            count++;
-            logCount.innerHTML = count;
-            var eventData = JSON.parse(event.data.replace(/'/g, "\""));
-            console.log(eventData);
-            var cloudEventData = eventData.cloudevent;
-            <!-- console.log(JSON.stringify(cloudEventData, null, 2)); -->
-            var logMessage = document.createElement('div');
-            var logHeader = document.createElement('div');
-            var cloudeventMessage = document.createElement('div');
-            var eventTime = document.createElement('span');
-            var eventNumber = document.createElement('span');
-            var eventTimestamp = document.createElement('span');
-            var eventSource = document.createElement('span');
-            var eventType = document.createElement('span');
-
-            document.title = "CloudEvents Viewer (" + count + ")";
-
-            logMessage.classList.add('log-message');
-            logHeader.classList.add('log-header');
-            cloudeventMessage.classList.add('cloudevent-message');
-
-            eventNumber.innerHTML = '#' + count + ' ';
-            eventNumber.classList.add('log-count');
-
-            eventTimestamp.innerHTML = eventData.time + ' ';
-            eventTimestamp.classList.add('log-timestamp');
-
-            eventTime.appendChild(eventNumber);
-            eventTime.appendChild(eventTimestamp);
-            eventTime.classList.add('log-time');
-
-            eventSource.innerHTML = cloudEventData.source + ' ';
-            eventSource.classList.add('cloudevent-source');
-
-            eventType.innerHTML = cloudEventData.type + ' ';
-            eventType.classList.add('cloudevent-type');
-
-            logHeader.appendChild(eventTime);
-            logHeader.appendChild(eventSource);
-            logHeader.appendChild(eventType);
-
-            cloudeventMessage.innerHTML = JSON.stringify(cloudEventData, null, 2);
-            cloudeventMessage.style.display = 'none';
-
-            logMessage.appendChild(logHeader);
-            logMessage.appendChild(cloudeventMessage);
-            logDiv.prepend(logMessage);
-
-            logHeader.addEventListener('click', function () {
-                if (cloudeventMessage.style.display === 'none') {
-                    cloudeventMessage.style.display = 'block';
-                } else {
-                    cloudeventMessage.style.display = 'none';
-                }
-            });
-        };
-        function filterResults() {
-            var filterValue = filterInput.value.toLowerCase();
-            var logMessages = logDiv.getElementsByClassName('log-message');
-            for (var i = 0; i < logMessages.length; i++) {
-                var text = logMessages[i].innerText.toLowerCase();
-                if (text.indexOf(filterValue) > -1) {
-                    logMessages[i].style.display = '';
-                } else {
-                    logMessages[i].style.display = 'none';
-                }
+        //Control the Generator Modal with Keyb combinations :) 
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" || (event.metaKey && event.key === "ArrowDown")) {
+                document.getElementById("generatorModal").style.height = "0";
             }
-        };
-        function onInputChange(event) {
-            if (event.keyCode === 13) {
-                filterResults(event.target.value);
+            if (event.key === "Control" || (event.metaKey && event.key === "ArrowUp")) {
+                document.getElementById("generatorModal").style.height = "650px";
             }
-        };
-
-        function toggleAll() {
-            var cloudeventMessages = document.getElementsByClassName('cloudevent-message');
-            var toggleIcon = document.getElementById('toggle-icon');
-            if (toggleIcon.classList.contains('fa-caret-up')) {
-                toggleIcon.classList.remove('fa-caret-up');
-                toggleIcon.classList.add('fa-caret-down');
-            } else {
-                toggleIcon.classList.remove('fa-caret-down');
-                toggleIcon.classList.add('fa-caret-up');
-            }
-            for (var i = 0; i < cloudeventMessages.length; i++) {
-                if (cloudeventMessages[i].style.display === 'none') {
-                    cloudeventMessages[i].style.display = 'block';
-                } else {
-                    cloudeventMessages[i].style.display = 'none';
-                }
-            }
-        }
-
-        filterInput.addEventListener('keyup', onInputChange);
-        toggleButton.addEventListener('click', toggleAll);
-
+        });
     </script>
 </body>
 
