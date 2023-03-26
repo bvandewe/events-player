@@ -58,12 +58,12 @@ Have to downgrade to 1.74: https://code.visualstudio.com/updates/v1_74 Then, dis
 
 
 ```sh
-TAG="0.1.0"
+TAG="0.1.1"
 
-docker build -t cloudevent-viewer:latest .
+docker build -t event-viewer:latest .
 
-docker tag cloudevent-viewer:latest cloudevent-viewer:$TAG
-docker tag cloudevent-viewer:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:$TAG
+docker tag event-viewer:latest event-viewer:$TAG
+docker tag event-viewer:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/event-viewer:$TAG
 
 docker run --name cloudevent-viewer -p 8888:80 cloudevent-viewer:0.1.0
 
