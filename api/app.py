@@ -1,10 +1,10 @@
 import asyncio
 import datetime
 
-from fastapi import FastAPI, Request, Header, HTTPException, Depends, BackgroundTasks
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi import FastAPI, Request, Response, Header, HTTPException, Depends, BackgroundTasks
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from typing import AsyncGenerator
+from sse_starlette.sse import EventSourceResponse
 
 
 description = """
@@ -39,33 +39,45 @@ app = FastAPI(title="CloudEvents Viewer",
               )
 
 
-log_queue = asyncio.Queue()
-
-
-async def generate_log_messages() -> AsyncGenerator[str, None]:
-    while True:
-        message = await log_queue.get()
-        if message is None:
-            break
-        now = datetime.datetime.now()
-        date_str = now.strftime("%Y-%M-%d")
-        time_str = now.strftime("%H:%M:%S.%f")
-        timestamp = f"{date_str} at {time_str}"
-        sse_message = f"data: {{\"time\": \"{timestamp}\", \"cloudevent\": \"{message}\"}}\n\n"
-        yield sse_message
+MAX_QUEUE_SIZE = 2000
+events_queue = asyncio.Queue()
+sse_clients = {}
 
 
 async def validate_cloud_event(content_type: str = Header(...)):
+    # TODO: add validation of the event attributes!
     if content_type != "application/cloudevents+json":
         raise HTTPException(status_code=400, detail="Only CloudEvents are supported! (Missing Content-Type: application/cloudevents+json)")
 
 
+async def build_sse_payload(payload: dict):
+    now = datetime.datetime.now()
+    date_str = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%H:%M:%S.%f")
+    timestamp = f"{date_str} at {time_str}"
+    sse_event_payload = {}
+    sse_event_payload["time"] = timestamp
+    sse_event_payload["cloudevent"] = payload
+    return sse_event_payload
+
+
+async def push_event_to_all_clients():
+    sse_message = await events_queue.get()
+    for client_queue in sse_clients.values():
+        await client_queue.put(sse_message)
+
+
 async def handle_event(payload: dict):
     try:
-        await log_queue.put(payload)
+        print(f"Handling event to {len(sse_clients)} clients: {payload}")
+        # await events_queue.put(payload)
+        # await push_event_to_all_clients()
+        for client_queue in sse_clients.values():
+            await client_queue.put(payload)
+
     except Exception as e:
-        await log_queue.put(f"Error handling event: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        # await events_queue.put(f"Error handling event: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
 
 @app.get(path="/",
@@ -82,14 +94,45 @@ async def get_ui(request: Request):
 async def handle_events(payload: dict, background_tasks: BackgroundTasks, content_type: str = Header(...), valid_event: bool = Depends(validate_cloud_event)):
     try:
         background_tasks.add_task(handle_event, payload)
-        return {"status": "well received."}
+        return Response(status_code=202)
     except Exception as e:
-        await log_queue.put(f"Error handling event: {str(e)}")
+        await events_queue.put(f"Error handling event: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get(path="/stream",
-         tags=['Streaming'],
-         operation_id="stream_events")
-async def stream_events():
-    return StreamingResponse(generate_log_messages(), media_type="text/event-stream")
+async def event_generator(client_id: str | None, request: Request):
+    if client_id is not None:
+        try:
+            while True:
+                # If client closes connection, stop sending events
+                if await request.is_disconnected():
+                    break
+
+                # Dequeue an event if there's one
+                sse_message_payload = await sse_clients[client_id].get()
+                if sse_message_payload is None:
+                    break
+                else:
+                    sse_message_payload = await build_sse_payload(sse_message_payload)
+                    yield {
+                        "data": sse_message_payload
+                    }
+                await asyncio.sleep(0.2)
+
+        except Exception as e:
+            print(f"Error in event_generator: {e}")
+
+        # Handle client disconnection
+        finally:
+            del sse_clients[client_id]
+
+
+@app.get('/stream')
+async def message_stream(request: Request):
+    client_id = None
+    if request.client:
+        # Add an individual queue for each new client
+        client_id = f"{request.client.host}:{request.client.port}"
+        sse_clients[client_id] = asyncio.Queue(MAX_QUEUE_SIZE)
+
+    return EventSourceResponse(event_generator(client_id, request))

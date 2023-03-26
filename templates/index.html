@@ -184,6 +184,9 @@
         color: rgb(33, 37, 41);
     }
 
+    .log-header:hover .cloudevent-type {
+        color: rgb(33, 37, 41);
+    }
     .cloudevent-source {
         font-weight: bold;
         margin-right: 20px;
@@ -196,10 +199,6 @@
         margin-right: 20px;
         font-size: 14px;
         color: #4DCEF3;
-    }
-
-    .log-header:hover .cloudevent-type {
-        color: rgb(33, 37, 41);
     }
 
     .cloudevent-message {
@@ -237,11 +236,13 @@
         var toggleButton = document.getElementById('toggle-button');
 
         eventSource.onmessage = function (event) {
+            console.log(event);
             count++;
             logCount.innerHTML = count;
-            var eventData = JSON.parse(event.data);
-            var cloudEventData = JSON.parse(eventData.cloudevent.replace(/'/g, "\""));
-            console.log(JSON.stringify(cloudEventData, null, 2));
+            var eventData = JSON.parse(event.data.replace(/'/g, "\""));
+            console.log(eventData);
+            var cloudEventData = eventData.cloudevent;
+            <!-- console.log(JSON.stringify(cloudEventData, null, 2)); -->
             var logMessage = document.createElement('div');
             var logHeader = document.createElement('div');
             var cloudeventMessage = document.createElement('div');
