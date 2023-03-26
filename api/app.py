@@ -31,7 +31,7 @@ The SSE stream can be accessed at `/stream` using a browser or any SSE client. E
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI(title="CloudEvents Viewer",
-              version="0.1.0",
+              version="0.1.1",
               description=description,
               docs_url="/api/docs",
               redoc_url=None,
@@ -40,7 +40,6 @@ app = FastAPI(title="CloudEvents Viewer",
 
 
 MAX_QUEUE_SIZE = 2000
-events_queue = asyncio.Queue()
 sse_clients = {}
 
 
@@ -61,22 +60,13 @@ async def build_sse_payload(payload: dict):
     return sse_event_payload
 
 
-async def push_event_to_all_clients():
-    sse_message = await events_queue.get()
-    for client_queue in sse_clients.values():
-        await client_queue.put(sse_message)
-
-
 async def handle_event(payload: dict):
     try:
         print(f"Handling event to {len(sse_clients)} clients: {payload}")
-        # await events_queue.put(payload)
-        # await push_event_to_all_clients()
         for client_queue in sse_clients.values():
             await client_queue.put(payload)
 
     except Exception as e:
-        # await events_queue.put(f"Error handling event: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
 
@@ -134,5 +124,4 @@ async def message_stream(request: Request):
         # Add an individual queue for each new client
         client_id = f"{request.client.host}:{request.client.port}"
         sse_clients[client_id] = asyncio.Queue(MAX_QUEUE_SIZE)
-
     return EventSourceResponse(event_generator(client_id, request))

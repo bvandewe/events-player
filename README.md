@@ -10,8 +10,6 @@ It provides a web-based interface to quickly visualize events that it received o
 
 There is NO PERSISTANCE anywhere so refreshing the page on the browser will reset the state.  
 
-> **It does NOT currently support concurrent users or multiple browsers, as it is intended to be used locally!**
-
 It is deployed at https://events-viewer.k.ccie.cisco.com **for illustration only**!
 
 ## Frontend
@@ -61,7 +59,6 @@ Have to downgrade to 1.74: https://code.visualstudio.com/updates/v1_74 Then, dis
 TAG="0.1.1"
 
 docker build -t event-viewer:latest .
-
 docker tag event-viewer:latest event-viewer:$TAG
 docker tag event-viewer:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/event-viewer:$TAG
 
