@@ -4,13 +4,13 @@ This micro-app can be used as a test subscriber of [CloudEvents](https://cloudev
 
 It provides a web-based interface to quickly visualize events that it received on its `POST /events/pub` endpoint.
 
-![Demo](assets/demo.gif)
+![Demo](assets/cloudevent-player_demo_0.1.2.gif)
 
 ## Limitations
 
 There is NO PERSISTANCE anywhere so refreshing the page on the browser will reset the state.  
 
-It is deployed at https://events-viewer.k.ccie.cisco.com **for illustration only**!
+It is deployed at https://events-player.k.ccie.cisco.com and the Mozart Channel has a subscrption for it... Lets see if it behaves under stress :)
 
 ## Frontend
 
@@ -28,18 +28,19 @@ The app provides an endpoint at `/events/pub` that accepts HTTP POST requests wi
 - The payload must have the `Content-Type` header set to `application/cloudevents+json`.
 - The event must be formatted as per the CloudEvents [Specifications v1.0.2](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md) in [JSON Format](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/formats/json-format.md).  
 
-When an event is received, it is added to a queue that is consumed by a background task that logs the events to a server-sent events (SSE) stream.
+When an event is received, it is added to a queue that is consumed by a background task that pushes it the streaming clients.
 
 ## Streaming
 
 The SSE stream can be accessed at `/stream` using a browser or any SSE client. The stream sends a JSON payload for each received event, with the event payload and a timestamp indicating when the event was received.
 
-
 ## Local Usage
 
 1. Pull and run the Docker image:
 
-`docker run --name cloudevent-viewer -p 8888:80 ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:0.1.0`
+    ```sh
+    docker run --name cloudevent-viewer -p 8888:80 ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:latest
+    ```
 
 2. Browse to http://localhost:8888
 
@@ -54,18 +55,26 @@ The SSE stream can be accessed at `/stream` using a browser or any SSE client. T
 The debugger fails with vscode v1.75 (currently the latest version).
 Have to downgrade to 1.74: https://code.visualstudio.com/updates/v1_74 Then, disable automatic updates (settings > 'update': set to "none")
 
+### Cheat Sheet
 
 ```sh
-TAG="0.1.1"
+# Update CHANGELOG.md !!
 
-docker build -t event-viewer:latest .
-docker tag event-viewer:latest event-viewer:$TAG
-docker tag event-viewer:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/event-viewer:$TAG
+# Upgrade Version
+TAG="0.1.2"
 
-docker run --name cloudevent-viewer -p 8888:80 cloudevent-viewer:0.1.0
+# Build locally
+docker build -t cloudevent-viewer:latest .
+docker tag cloudevent-viewer:latest cloudevent-viewer:$TAG
 
+# Run locally
+docker run --name cloudevent-viewer -p 8888:80 cloudevent-viewer:$TAG
+
+# Publish to CCIE Gitlab
 docker login ccie-gitlab.ccie.cisco.com:4567
-
+docker tag cloudevent-viewer:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:$TAG
+docker tag cloudevent-viewer:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:latest
 docker push ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:$TAG
+docker push ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:latest
 
 ```
