@@ -82,6 +82,7 @@ eventSource.onmessage = function (event) {
 
     sseConnectionTimer = setTimeout(() => {
         sseConnectionStatus.style.backgroundColor = "green";
+        sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
       }, 10000);
 };
 
