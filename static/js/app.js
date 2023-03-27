@@ -6,14 +6,30 @@ var eventCount = document.getElementById('event-count');
 var infoButton = document.getElementById("info-button");
 var toggleButton = document.getElementById('toggle-button');
 var filterInput = document.getElementById('filter-input');
+var sseConnectionStatus = document.getElementById('sseConnectionStatus');
+sseConnectionStatus.style.backgroundColor = "none" ;
+
+var sseConnectionTimer;
+
+eventSource.onopen = function(event){
+    sseConnectionStatus.style.backgroundColor = "green";
+    sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
+}
 
 eventSource.onmessage = function (event) {
+    console.log(event);
+    clearTimeout(sseConnectionTimer);
+    sseConnectionStatus.style.backgroundColor = "#4DCEF3" ;
+    sseConnectionStatus.style.color = "#1a1d20" ;
+    sseConnectionStatus.classList.add('glow');
+    sseConnectionStatus.classList.remove('blink');
+    sseConnectionStatus.setAttribute("title", "Connected - happy to see some traffic here!");
+
     count++;
     eventCount.innerHTML = count;
     document.title = "CloudEvents Viewer (" + count + ")";
 
-    var eventData = JSON.parse(event.data.replace(/'/g, "\""));
-    console.log(eventData);
+    var eventData = JSON.parse(event.data.replace(/'/g, "\""));    
     var cloudEventData = eventData.cloudevent;
 
     var eventBox = document.createElement('div');
@@ -24,7 +40,6 @@ eventSource.onmessage = function (event) {
     var eventTimestamp = document.createElement('span');
     var eventSource = document.createElement('span');
     var eventType = document.createElement('span');
-
 
     eventBox.classList.add('event-box');
     eventHeader.classList.add('event-header');
@@ -64,24 +79,36 @@ eventSource.onmessage = function (event) {
             eventMessage.style.display = 'none';
         }
     });
+
+    sseConnectionTimer = setTimeout(() => {
+        sseConnectionStatus.style.backgroundColor = "green";
+      }, 10000);
 };
 
-function filterResults() {
+eventSource.onerror = function (event) {
+    sseConnectionStatus.style.backgroundColor = "#800000";
+    sseConnectionStatus.style.color = "#FFF";
+    sseConnectionStatus.classList.remove('glow');
+    sseConnectionStatus.classList.add('blink');
+    sseConnectionStatus.setAttribute("title", "Disconnected... Trying to reconnect every 2s...");
+}
+
+sseConnectionStatus.addEventListener('animationend', () => {
+    sseConnectionStatus.classList.remove('glow');
+    sseConnectionStatus.classList.remove('blink');
+});
+
+
+function onFilterInputChange() {
     var filterValue = filterInput.value.toLowerCase();
     var eventMessages = eventsStackDiv.getElementsByClassName('event-box');
     for (var i = 0; i < eventMessages.length; i++) {
-        var text = eventMessages[i].innerText.toLowerCase();
-        if (text.indexOf(filterValue) > -1) {
+        var text = eventMessages[i].textContent || eventMessages[i].innerText;
+        if (text.toLowerCase().indexOf(filterValue) > -1) {
             eventMessages[i].style.display = '';
         } else {
             eventMessages[i].style.display = 'none';
         }
-    }
-};
-function onFilterInputChange(event) {
-    event.preventDefault();
-    if (event.keyCode === 13) {
-        filterResults(event.target.value);
     }
 };
 
@@ -111,33 +138,14 @@ infoButton.addEventListener("click", function () {
 });
 
 // Generator Modal
-function openNav() {
-    document.getElementById("generatorModal").style.height = "650px";
-}
-function closeNav() {
-    document.getElementById("generatorModal").style.height = "0";
-}
-
-// Toast
-function showToast(result) {
-    console.log(result);
-    var toast = document.querySelector('.toast-message');
-    if (Array.isArray(result.detail)) {
-        console.log("ERROR!!");
-        toast.classList.add('error');
-        toast.innerHTML = JSON.stringify(result.detail);
+function toggleGeneratorModal(){
+    var generatorModal = document.getElementById("generatorModal");
+    if (generatorModal.style.height === "" || generatorModal.style.height === "0px"){
+        generatorModal.style.height = "650px";
     } else {
-        toast.classList.add("success");
-        toast.innerHTML = result.message;
+        generatorModal.style.height = "0px";
     }
-    toast.classList.add('show');
-    setTimeout(function () {
-        toast.classList.remove('show');
-        toast.classList.remove('error');
-        toast.classList.remove('success');
-    }, 4000);
 }
-
 
 const form = document.getElementById('generatorForm');
 form.addEventListener('submit', handleSubmit);
@@ -164,3 +172,153 @@ function handleSubmit(event) {
             showToast(result);
         });
 }
+
+// Toast
+function showToast(result) {
+    console.log(result);
+    var toast = document.querySelector('.toast-message');
+    if (Array.isArray(result.detail)) {
+        toast.classList.add('error');
+        console.log(result.detail[0].msg);
+        // toast.innerHTML = JSON.stringify(result.detail);
+        toast.innerHTML = "<strong>" + result.detail[0].msg + " in " + result.detail[0].loc.join(", ") + "</strong>";
+    } else {
+        toast.classList.add("success");
+        toast.innerHTML = result.message;
+    }
+    toast.classList.add('show');
+    setTimeout(function () {
+        toast.classList.remove('show');
+        toast.classList.remove('error');
+        toast.classList.remove('success');
+    }, 4000);
+}
+
+
+// CUSTOM SELECT
+// https://www.w3schools.com/howto/howto_custom_select.asp
+var x, i, j, l, ll, selElmnt, a, b, c;
+/* Look for any elements with the class "custom-select": */
+x = document.getElementsByClassName("custom-select");
+l = x.length;
+for (i = 0; i < l; i++) {
+  selElmnt = x[i].getElementsByTagName("select")[0];
+  ll = selElmnt.length;
+  /* For each element, create a new DIV that will act as the selected item: */
+  a = document.createElement("DIV");
+  a.setAttribute("class", "select-selected");
+  a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
+  x[i].appendChild(a);
+  /* For each element, create a new DIV that will contain the option list: */
+  b = document.createElement("DIV");
+  b.setAttribute("class", "select-items select-hide");
+  for (j = 1; j < ll; j++) {
+    /* For each option in the original select element,
+    create a new DIV that will act as an option item: */
+    c = document.createElement("DIV");
+    c.innerHTML = selElmnt.options[j].innerHTML;
+    c.addEventListener("click", function(e) {
+        /* When an item is clicked, update the original select box,
+        and the selected item: */
+        var y, i, k, s, h, sl, yl;
+        s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+        sl = s.length;
+        h = this.parentNode.previousSibling;
+        for (i = 0; i < sl; i++) {
+          if (s.options[i].innerHTML == this.innerHTML) {
+            s.selectedIndex = i;
+            h.innerHTML = this.innerHTML;
+            y = this.parentNode.getElementsByClassName("same-as-selected");
+            yl = y.length;
+            for (k = 0; k < yl; k++) {
+              y[k].removeAttribute("class");
+            }
+            this.setAttribute("class", "same-as-selected");
+            break;
+          }
+        }
+        h.click();
+    });
+    b.appendChild(c);
+  }
+  x[i].appendChild(b);
+  a.addEventListener("click", function(e) {
+    /* When the select box is clicked, close any other select boxes,
+    and open/close the current select box: */
+    e.stopPropagation();
+    closeAllSelect(this);
+    this.nextSibling.classList.toggle("select-hide");
+    this.classList.toggle("select-arrow-active");
+  });
+}
+
+function closeAllSelect(elmnt) {
+  /* A function that will close all select boxes in the document,
+  except the current select box: */
+  var x, y, i, xl, yl, arrNo = [];
+  x = document.getElementsByClassName("select-items");
+  y = document.getElementsByClassName("select-selected");
+  xl = x.length;
+  yl = y.length;
+  for (i = 0; i < yl; i++) {
+    if (elmnt == y[i]) {
+      arrNo.push(i)
+    } else {
+      y[i].classList.remove("select-arrow-active");
+    }
+  }
+  for (i = 0; i < xl; i++) {
+    if (arrNo.indexOf(i)) {
+      x[i].classList.add("select-hide");
+    }
+  }
+}
+document.addEventListener("click", closeAllSelect);
+// CUSTOM SELECT
+
+
+
+// HELP MODAL
+var helpModal = document.getElementById("helpModal");
+var helpBtn = document.getElementById("help-button");
+var span = document.getElementsByClassName("close")[0];
+
+helpBtn.onclick = function() {
+  helpModal.style.display = "block";
+}
+span.onclick = function() {
+  helpModal.style.display = "none";
+}
+window.onclick = function(event) {
+  if (event.target == helpModal) {
+    helpModal.style.display = "none";
+  }
+  if (event.target == confirmModal) {
+    confirmModal.style.display = "none";
+  }
+}
+
+
+// CONFIRM MODAL
+var confirmModal = document.getElementById('confirmModal');
+
+function toggleConfirmModal(){
+    if (confirmModal.style.display === "" || confirmModal.style.display === "none"){
+        if( document.querySelectorAll(".event-box").length > 0 ){
+            confirmModal.style.display='block';
+        }
+    } else {
+        confirmModal.style.display='none';
+    }
+}
+
+function deleteAllEvents(){
+    const events = document.querySelectorAll(".event-box");
+    const deletedCount = events.length;
+    for (let i = 0; i < deletedCount; i++){
+        events[i].remove();
+    }
+    document.getElementById('confirmModal').style.display='none';
+    count = count - deletedCount;
+}
+

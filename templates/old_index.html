@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <title>CloudEvents Player</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <!-- <link rel="manifest" href="/site.webmanifest"> -->
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="menu-container">
+                <div class="left-items">
+                    <div class="title-container">
+                        <h1>CloudEvents Player (<span id="event-count">0</span>)</h1>
+                    </div>
+                    <div class="sub-menu-container">
+                        <ul>
+                            <li><a href="/#">Viewer</a></li>
+                            <li><a href="/#" id="myButton" onclick="openNav()">Generator</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="right-items">
+                    <div class="action-icons-container">
+                        <button id="info-button" title="Open the OpenAPI/Swagger page"><i class="fa fa-info"></i></button>
+                        <button id="toggle-button" title="Toggle the expand/collapse for All visible events"><i id="toggle-icon" class="fa fa-caret-up"></i></button>
+                    </div>
+                    <div class="filter-container">
+                        <form action="#">
+                            <input type="text" id="filter-input" placeholder="Filter events..." onsubmit="onFilterInputChange()">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <div class="container">
+            <div id="events-stack">
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2023 CloudEvents Player. All rights reserved.</p>
+    </footer>
+    <!-- Modal -->
+    <div id="generatorModal" class="sidebar">
+        <div id="generatorHeader">
+            <h3>Generate CloudEvents</h3>
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        </div>
+        <div>
+            <form id="generatorForm">
+                <div class="form-group">
+                    <label for="input1">Gateway:</label>
+                    <input type="text" id="input1" name="event_gateway" onkeydown="return event.key !== ' '" placeholder="/events/pub" value="http://localhost/events/pub">
+                    <!-- <input type="checkbox" id="checkboxGateway" name="checkboxGateway">
+                    <label for="checkboxGateway" style="align:left;">Random?</label> -->
+                </div>
+                <div class="form-group">
+                    <label for="input2">Source:</label>
+                    <input type="text" id="input2" name="event_source"  onkeydown="return event.key !== ' '" placeholder="https://dummy.source.com/sys-admin" value="https://dummy.source.com/sys-admin">
+                </div>
+                <div class="form-group">
+                    <label for="input3">Type:</label>
+                    <input type="text" id="input3" name="event_type" onkeydown="return event.key !== ' '" placeholder="com.source.dummy.test.requested.v1" value="com.source.dummy.test.requested.v1">
+                </div>
+                <div class="form-group">
+                    <label for="input5">Data:</label>
+                    <textarea id="input5" name="event_data" rows="5" cols="50" style="font-family: monospace;">
+{
+  "foo":"bar"
+}
+</textarea>
+                </div>
+                <div class="form-group" style="margin-top: 2rem;">
+                    <label for="input4">Iterations:</label>
+                    <input type="number" id="input4" name="iterations" min="0" value="1">
+                    <label for="input4">Delay (ms):</label>
+                    <input type="number" id="input4" name="delay" min="0" placeholder="ms" value="100">
+                </div>
+
+                <div class="form-group" id="send-button">
+                    <button type="submit"><i class="fa fa-paper-plane"></i></button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+    <!-- Toast -->
+    <div class="toast-message"></div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        //Control the Generator Modal with Keyb combinations :) 
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" || (event.metaKey && event.key === "ArrowDown")) {
+                document.getElementById("generatorModal").style.height = "0";
+            }
+            if (event.key === "Control" || (event.metaKey && event.key === "ArrowUp")) {
+                document.getElementById("generatorModal").style.height = "650px";
+            }
+        });
+    </script>
+</body>
+
+</html>

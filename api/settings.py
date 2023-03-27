@@ -4,14 +4,14 @@ from pydantic import BaseSettings, BaseModel, AnyUrl
 
 class DefaultGateways(BaseModel):
     urls: typing.List[AnyUrl] = [
-        AnyUrl(url="http://localhost/events/pub", scheme="http"),
-        AnyUrl(url="http://k.ccie.cisco.com:32051/events/pub", scheme="http")]
+        AnyUrl(url="http://localhost/events/pub", scheme="http")]
 
 
 class DefaultEvent(BaseModel):
-    event_source: str = ""
-    event_type: str = ""
-    event_data: typing.Dict[str, typing.Any] = {}
+    event_source: str = "https://dummy.source.com/sys-admin"
+    event_type: str = "com.source.dummy.test.requested.v1"
+    event_subject: str = ""
+    event_data: typing.Dict[str, typing.Any] = {"foo": "bar"}
 
 
 class ApiSettings(BaseSettings):

@@ -37,6 +37,7 @@ async def handle_generator_request(generator_request: EventGeneratorRequest):
                 "datacontenttype": "application/json",
                 "type": generator_request.event_type,
                 "source": generator_request.event_source,
+                "subject": generator_request.event_subject,
                 "data": data
             }
             # print(event)

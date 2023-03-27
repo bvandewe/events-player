@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import (
     APIRouter,
     Request,
@@ -8,8 +10,9 @@ from fastapi import (
     BackgroundTasks
 )
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 
+from .settings import settings
 from .models import EventGeneratorRequest
 from .background_tasks import (
     handle_event,
@@ -20,6 +23,7 @@ from .validator import validate_cloud_event
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
+# router.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # Root Route
@@ -28,7 +32,29 @@ router = APIRouter()
             operation_id="get_root",
             response_class=HTMLResponse)
 async def get_ui(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    year = datetime.datetime.now().year
+    default_events_settings = dict(settings.default_generator_event)
+    default_events_gateways = dict(settings.default_generator_gateways)
+    return templates.TemplateResponse("index.html", {"request": request,
+                                                     "year": year,
+                                                     "default_events_settings": default_events_settings,
+                                                     "default_events_gateways": default_events_gateways})
+
+
+# Favicon
+@router.get("/favicon.ico")
+async def get_default_favicon():
+    return FileResponse("static/favicon.ico")
+
+
+@router.get("/favicon-16x16.ico")
+async def get_favicon_16():
+    return FileResponse("static/favicon-16x16.ico")
+
+
+@router.get("/favicon-32x32.ico")
+async def get_favicon():
+    return FileResponse("static/favicon-32x32.ico")
 
 
 # Publisher Route
@@ -38,7 +64,6 @@ async def get_ui(request: Request):
 async def generate_events(generator_request: EventGeneratorRequest,
                           background_tasks: BackgroundTasks):
     try:
-        print(generator_request)
         background_tasks.add_task(handle_generator_request, generator_request)
 
         result = {
@@ -54,7 +79,7 @@ async def generate_events(generator_request: EventGeneratorRequest,
 @router.post(path="/events/pub",
              tags=['CloudEvents Subscriber'],
              operation_id="handle_events")
-async def handle_events(payload: dict, 
+async def handle_events(payload: dict,
                         background_tasks: BackgroundTasks,
                         content_type: str = Header(...),
                         valid_event: bool = Depends(validate_cloud_event)):
