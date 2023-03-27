@@ -2,9 +2,14 @@
 
 ## Latest
 
+-
+
+## 0.1.4
+
 - Fixed subject placeholder
 - Excluded favicon from swagger
 - Fixed indicator title from blue to green
+- Fixed anchors in modal
 
 ## 0.1.3
 
