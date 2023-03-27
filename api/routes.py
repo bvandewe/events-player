@@ -42,17 +42,17 @@ async def get_ui(request: Request):
 
 
 # Favicon
-@router.get("/favicon.ico")
+@router.get("/favicon.ico", include_in_schema=False)
 async def get_default_favicon():
     return FileResponse("static/favicon.ico")
 
 
-@router.get("/favicon-16x16.ico")
+@router.get("/favicon-16x16.ico", include_in_schema=False)
 async def get_favicon_16():
     return FileResponse("static/favicon-16x16.ico")
 
 
-@router.get("/favicon-32x32.ico")
+@router.get("/favicon-32x32.ico", include_in_schema=False)
 async def get_favicon():
     return FileResponse("static/favicon-32x32.ico")
 
