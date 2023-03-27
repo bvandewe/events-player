@@ -2,7 +2,9 @@
 
 ## Latest
 
--
+- Fixed subject placeholder
+- Excluded favicon from swagger
+- Fixed indicator title from blue to green
 
 ## 0.1.3
 

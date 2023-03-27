@@ -507,6 +507,13 @@ input[type=number]::-webkit-inner-spin-button {
     list-style-type: none;
 }
 
+.modal-body a {
+    color: var(--text-color);
+}
+.modal-body a:visited {
+    color: var(--primary-color);
+}
+
 .modal-body ul li {
     display: flex;
     align-items: center;
