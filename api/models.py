@@ -5,6 +5,7 @@ class EventGeneratorRequest(BaseModel):
     event_gateway: AnyUrl
     event_source: str
     event_type: str
+    event_subject: str
     event_data: str
     iterations: str
     delay: str | None
