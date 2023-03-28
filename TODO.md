@@ -1,6 +1,7 @@
 # TODO
 
 - [ ] Add feedback about the background task(s) progress and status
+- [ ] Use FastAPI built-in SSEEvent
 - [ ] Add support for precompiled CSS with libsass (without NPM!)
 - [ ] Add full validation cloudevent
 - [ ] Add support for delay in generator
