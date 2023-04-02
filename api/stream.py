@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import logging
 
 from fastapi import (
     APIRouter,
@@ -7,9 +8,14 @@ from fastapi import (
 )
 from sse_starlette.sse import EventSourceResponse
 
-from .globals import sse_clients
+from .globals import (
+    sse_clients,
+    active_tasks
+)
 from .constants import MAX_QUEUE_SIZE
 
+
+log = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -26,7 +32,6 @@ async def build_sse_payload(payload: dict):
     return sse_event_payload
 
 
-# SSE Generator
 async def event_generator(client_id: str | None, request: Request):
     if client_id is not None:
         try:
@@ -47,21 +52,57 @@ async def event_generator(client_id: str | None, request: Request):
                 await asyncio.sleep(0.2)
 
         except Exception as e:
-            print(f"Error in event_generator: {e}")
+            log.error(f"Error in event_generator: {e}")
 
         # Handle client disconnection
         finally:
             del sse_clients[client_id]
 
 
-# Streaming Route
-@router.get(path="/stream",
+# Stream events
+@router.get(path="/stream/events",
             tags=['Server Sent Event (SSE) Stream'],
             operation_id="sse_stream")
 async def sse_stream(request: Request):
     client_id = None
     if request.client:
-        # Add an individual queue for each new client
+        # Add an individual queue for each new client' browser tab
         client_id = f"{request.client.host}:{request.client.port}"
+        log.info(f"New client connected to SSE /stream: {client_id}")
         sse_clients[client_id] = asyncio.Queue(MAX_QUEUE_SIZE)
     return EventSourceResponse(event_generator(client_id, request))
+
+
+async def task_status_generator(task_id: str):
+    try:
+        if task_id in active_tasks:
+            task = active_tasks[task_id]
+            while serialized_task := task.json():
+                yield {
+                    "data": serialized_task
+                }
+                await asyncio.sleep(0.25)
+                if task_id in active_tasks:
+                    task = active_tasks[task_id]
+                else:
+                    break
+        else:
+            yield {
+                "data": {
+                    "id": "Unknown",
+                    "status": "Unknown or Complete",
+                    "progress": -1,
+                    "client_id": "Unknown"
+                }
+            }
+
+    except Exception as e:
+        log.error(f"Error in task_status_generator: {e}")
+
+
+# Stream Task status
+@router.get(path="/stream/task/{task_id}",
+            tags=['Server Sent Event (SSE) Stream'],
+            operation_id="get_task_status")
+def get_task(task_id: str):
+    return EventSourceResponse(task_status_generator(task_id))

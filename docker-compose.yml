@@ -1,0 +1,12 @@
+version: '3.4'
+
+name: subscribers
+services:
+  event-viewer:
+    image: cloudevent-viewer:latest
+    ports:
+      - 8885:80
+    environment:
+      api_log_level: DEBUG
+      api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      api_default_generator_gateways: '{"urls": ["http://localhost/events/pub", "http://localhost:9696/api/gateway/v1/cloud-events/pub", "http://k.ccie.cisco.com:32051/events/pub", "https://events-player.k.ccie.cisco.com/events/pub", "https://pubhook.k.certs.cloud/c3c588d1-dc7f-424e-ad22-dbd4e6ebcbd9"]}'

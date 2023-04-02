@@ -1,5 +1,6 @@
 var count = 0;
-var eventSource = new EventSource('/stream');
+let maxQueueSize = document.querySelector('.container').getAttribute('data-browser_queue_size');
+var eventSource = new EventSource('/stream/events');
 
 var eventsStackDiv = document.getElementById('events-stack');
 var eventCount = document.getElementById('event-count');
@@ -84,6 +85,11 @@ eventSource.onmessage = function (event) {
         sseConnectionStatus.style.backgroundColor = "green";
         sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
       }, 10000);
+
+    if (eventsStackDiv.childElementCount > maxQueueSize) {
+        let lastEvent = eventsStackDiv.lastChild;
+        eventsStackDiv.removeChild(lastEvent);
+    }
 };
 
 eventSource.onerror = function (event) {
@@ -148,11 +154,23 @@ function toggleGeneratorModal(){
     }
 }
 
+function toggleSendButton(){
+    var sendButton = document.getElementById("send-button");
+    if (sendButton.disabled) {
+        sendButton.disabled = false;
+        const styles = getComputedStyle(button);
+    } else {
+        sendButton.disabled = true;
+        const styles = getComputedStyle(button);
+    }
+}
+
+// Generator Form
 const form = document.getElementById('generatorForm');
 form.addEventListener('submit', handleSubmit);
 
 function handleSubmit(event) {
-    event.preventDefault();
+    event.preventDefault();    
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
     console.log(data);
@@ -165,14 +183,17 @@ function handleSubmit(event) {
     })
         .then(response => response.json())
         .then(result => {
-            console.log('Form submitted successfully:', result);
+            console.log('Form submitted successfully:', result);            
+            handleTaskStatus(result.task_id);
             showToast(result);
         })
         .catch(error => {
-            console.error('Error submitting form:', error);
+            console.error('Error submitting form:', error);            
             showToast(result);
         });
 }
+
+
 
 // Toast
 function showToast(result) {
@@ -192,7 +213,27 @@ function showToast(result) {
         toast.classList.remove('show');
         toast.classList.remove('error');
         toast.classList.remove('success');
-    }, 4000);
+    }, 5000);
+}
+
+
+function updateProgressBar(progress) {
+    const progressBar = document.querySelector('.progress-bar');
+    progressBar.style.width = `${progress}%`;
+}
+
+
+// Open Task Status stream
+function handleTaskStatus(task_id){
+    var taskId = task_id;
+    console.log("Handling Task " + taskId + " progress...");
+    var taskSource = new EventSource('/stream/task/'+taskId);
+    taskSource.onmessage = function (event) {
+        console.log(event);
+        var eventData = JSON.parse(event.data.replace(/'/g, "\""));
+        updateProgressBar(eventData.progress);
+    }
+
 }
 
 
@@ -278,7 +319,6 @@ document.addEventListener("click", closeAllSelect);
 // CUSTOM SELECT
 
 
-
 // HELP MODAL
 var helpModal = document.getElementById("helpModal");
 var helpBtn = document.getElementById("help-button");
@@ -320,6 +360,7 @@ function deleteAllEvents(){
         events[i].remove();
     }
     document.getElementById('confirmModal').style.display='none';
-    count = count - deletedCount;
+    document.title = "CloudEvents Viewer (0)";
+    document.getElementById('event-count').innerHTML = 0;
 }
 
