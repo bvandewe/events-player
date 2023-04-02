@@ -232,6 +232,11 @@ function handleTaskStatus(task_id){
         console.log(event);
         var eventData = JSON.parse(event.data.replace(/'/g, "\""));
         updateProgressBar(eventData.progress);
+        if (eventData.progress === -1){
+            console.log("Closing task streaming.");
+            taskSource.close();
+            updateProgressBar(0);
+        }
     }
 
 }
@@ -362,5 +367,6 @@ function deleteAllEvents(){
     document.getElementById('confirmModal').style.display='none';
     document.title = "CloudEvents Viewer (0)";
     document.getElementById('event-count').innerHTML = 0;
+    count = 0;
 }
 
