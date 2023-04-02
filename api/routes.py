@@ -28,7 +28,7 @@ from .validator import validate_cloud_event
 
 log = logging.getLogger(__name__)
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="static")
 router = APIRouter()
 
 

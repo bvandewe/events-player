@@ -57,3 +57,10 @@ venv
 **/old.**
 docker-compose.debug.yml
 
+.mypy*
+.parcel*
+dist
+static
+old_static/
+node_modules
+package-lock.json
