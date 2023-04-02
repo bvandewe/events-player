@@ -49,7 +49,7 @@ async def event_generator(client_id: str | None, request: Request):
                     yield {
                         "data": sse_message_payload
                     }
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.05)
 
         except Exception as e:
             log.error(f"Error in event_generator: {e}")
@@ -68,7 +68,7 @@ async def sse_stream(request: Request):
     if request.client:
         # Add an individual queue for each new client' browser tab
         client_id = f"{request.client.host}:{request.client.port}"
-        log.info(f"New client connected to SSE /stream: {client_id}")
+        log.info(f"New SSE client for /stream/events: {client_id}")
         sse_clients[client_id] = asyncio.Queue(MAX_QUEUE_SIZE)
     return EventSourceResponse(event_generator(client_id, request))
 
@@ -104,5 +104,7 @@ async def task_status_generator(task_id: str):
 @router.get(path="/stream/task/{task_id}",
             tags=['Server Sent Event (SSE) Stream'],
             operation_id="get_task_status")
-def get_task(task_id: str):
+def get_task(request: Request, task_id: str):
+    client_id = f"{request.client.host}:{request.client.port}"
+    log.info(f"New SSE client for /stream/task/{task_id}: {client_id}")
     return EventSourceResponse(task_status_generator(task_id))
