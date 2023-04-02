@@ -7,7 +7,6 @@ from .routes import router as api_router
 from .stream import router as streaming_router
 
 
-# App
 app = FastAPI(title="CloudEvents Viewer",
               version="0.1.1",
               description=description,

@@ -1,0 +1,34 @@
+<nav>
+    <div class="menu-container">
+        <div class="left-items">
+            <div class="title-container">
+                <h1>CloudEvents Player (<span id="event-count">0</span>)</h1>
+            </div>
+            <div class="sub-menu-container">
+                <ul>
+                    <li><a href="/#" onclick="toggleConfirmModal()">Viewer</a><span id="sseConnectionStatus" class="badge" title="Connected"><i class="fa fa-plug"></i></span></li>                    
+                    <li><a href="/#" onclick="toggleGeneratorModal()">Generator</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="right-items">
+            <div class="action-icons-container">
+                <button id="toggle-button" data-title="Toggle the expand/collapse for All visible events">
+                    <i id="toggle-icon" class="fa fa-caret-up"></i>
+                </button>
+                <button id="info-button" data-title="Open the OpenAPI/Swagger page">
+                    <i class="fa fa-info"></i>
+                </button>
+                <button id="help-button" data-title="Help on configuration and usage">
+                    <i class="fa fa-question"></i>
+                </button>
+            </div>
+            <div class="filter-container">
+                <form>
+                    <input type="text" id="filter-input" placeholder="Filter events..."
+                        onkeyup="onFilterInputChange()">
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
