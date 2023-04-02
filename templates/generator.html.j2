@@ -3,6 +3,9 @@
         <h3>Generate CloudEvents</h3>
         <a href="javascript:void(0)" class="closebtn" onclick="toggleGeneratorModal()">&times;</a>
     </div>
+    <div class="progress-bar-container">
+        <div class="progress-bar"></div>
+    </div>
     <div>
         <form id="generatorForm">
             <div class="form-group">
@@ -41,9 +44,8 @@
                 <label for="iterations">Iterations:</label>
                 <input type="number" id="iterations" name="iterations" min="0" value="1">
                 <label for="delay">Delay (ms):</label>
-                <input type="number" id="delay" name="delay" min="0" placeholder="ms" value="100" disabled>
-            </div>
-            <div class="progress-bar"></div>
+                <input type="number" id="delay" name="delay" min="0" placeholder="ms" value="100">
+            </div>            
             <div class="form-group" id="send-button-container">
                 <button type="submit" id="send-button"><i class="fa fa-paper-plane"></i></button>
             </div>

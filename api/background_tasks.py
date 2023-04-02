@@ -73,7 +73,7 @@ async def handle_generator_request(generator_request: EventGeneratorRequest,
                 raise Exception(f"Task {task.id} does not exist!")
 
             # wait for the requested delay
-            await asyncio.sleep(int(generator_request.delay) / 100)
+            await asyncio.sleep(int(generator_request.delay) / 1000)
 
         # Remove task from active tasks when completed
         log.info(f"Task {task.id} is completed")

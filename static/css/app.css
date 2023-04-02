@@ -343,9 +343,9 @@ textarea:focus {
     padding: 10px 10px;
     margin-top: 1rem;
     margin-bottom: 2rem;
-    height: 60px;
+    height: 40px;
     width: 3600px;
-    font-size: 24px;
+    font-size: 18px;
     cursor: pointer;
 }
 
@@ -354,9 +354,19 @@ textarea:focus {
     color: var(--background-color);
 }
 
+#progress-bar-container {
+    border: 1px solid var(--primary-color);
+    height: 10px;
+    padding: 10px;
+    display: block;
+    margin-top: 1rem;
+    margin-left: 8rem;
+    margin-right: 3rem;
+}
+
 .progress-bar {
-    height: 20px;
-    background-color: #eee;
+    height: 3px;
+    background-color: var(--primary-color);
     border-radius: 10px;
     position: relative;
 }
@@ -364,7 +374,7 @@ textarea:focus {
 .progress-bar::after {
     content: '';
     display: block;
-    height: 100%;
+    /* height: 100%; */
     background-color: #007bff;
     border-radius: 10px;
     position: absolute;
