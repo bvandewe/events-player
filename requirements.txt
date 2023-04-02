@@ -1,4 +1,6 @@
+aioredis==2.0.1
 anyio==3.6.2
+async-timeout==4.0.2
 autopep8==2.0.2
 certifi==2022.12.7
 charset-normalizer==3.1.0

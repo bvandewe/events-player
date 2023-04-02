@@ -1,5 +1,5 @@
 import typing
-from pydantic import BaseSettings, BaseModel, AnyUrl
+from pydantic import BaseSettings, BaseModel, SecretStr, AnyUrl
 
 
 class DefaultGateways(BaseModel):
@@ -22,6 +22,7 @@ class ApiSettings(BaseSettings):
 
     default_generator_gateways: DefaultGateways = DefaultGateways()
     default_generator_event: DefaultEvent = DefaultEvent()
+    browser_queue_size: int = 2
 
     class Config:
         # .env file must be present in parent directory when starting the app from uvicorn

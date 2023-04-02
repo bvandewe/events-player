@@ -2,7 +2,8 @@
 
 ## Latest
 
--
+- Added setting for the max size of the events queue in the browser
+- Added strategic logging
 
 ## 0.1.4
 

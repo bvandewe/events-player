@@ -55,8 +55,5 @@ venv
 .env
 
 **/old.**
-data/devnet_sample.json
-data/ent_inf_sample.json
-data/tmp.json
-docker-compose.yml
 docker-compose.debug.yml
+

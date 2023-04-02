@@ -4,7 +4,7 @@
     --darker-background-color: rgb(17, 18, 20);
     --lighter-background-color: rgb(50, 56, 62);
     --border-color: rgb(85, 96, 109);
-    --primary-color: #4DCEF3;
+    --primary-color: rgb(77, 206, 243);
     --text-color: #CCC;
 }
 
@@ -327,7 +327,7 @@ textarea:focus {
     width: 4rem;
 }
 
-#send-button {
+#send-button-container {
     display: flex;
     justify-content: center;
     margin-top: 10px;
@@ -335,7 +335,7 @@ textarea:focus {
     margin-right: 6.5rem;
 }
 
-#send-button button {
+#send-button {
     background-color: var(--background-color);
     border: 1px;
     border-radius: 5px;
@@ -349,10 +349,33 @@ textarea:focus {
     cursor: pointer;
 }
 
-#send-button button:hover {
+#send-button:hover {
     background-color: var(--primary-color);
     color: var(--background-color);
 }
+
+.progress-bar {
+    height: 20px;
+    background-color: #eee;
+    border-radius: 10px;
+    position: relative;
+}
+
+.progress-bar::after {
+    content: '';
+    display: block;
+    height: 100%;
+    background-color: #007bff;
+    border-radius: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0%;
+    transition: width 0.5s ease;  
+}
+  
+
+
 
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
