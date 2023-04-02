@@ -91,10 +91,7 @@ async def get_active_tasks():
                tags=['Background Tasks'],
                operation_id="cancel_all_tasks")
 async def cancel_all_tasks(background_tasks: BackgroundTasks):
-    i = 0
-    for task in background_tasks.tasks:
-        task.cancel()
-        i += 1
+    # This is not working... FastAPI bg tasks do not support cancellation! :(
     active_tasks = {}
     return {'message': f"Cancelled {i} tasks."}
 
