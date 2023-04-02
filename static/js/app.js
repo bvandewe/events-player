@@ -183,9 +183,8 @@ function handleSubmit(event) {
     })
         .then(response => response.json())
         .then(result => {
-            console.log('Form submitted successfully:', result);            
-            handleTaskStatus(result.task_id);
-            showToast(result);
+            console.log('Form submitted successfully:', result);
+            Promise.all([handleTaskStatus(result.task_id), showToast(result)]); 
         })
         .catch(error => {
             console.error('Error submitting form:', error);            
@@ -217,25 +216,29 @@ function showToast(result) {
 }
 
 
-function updateProgressBar(progress) {
-    const progressBar = document.querySelector('.progress-bar');
+function updateProgressBar(taskId, progress) {
+    const progressBar = document.getElementById(taskId);
     progressBar.style.width = `${progress}%`;
 }
 
-
 // Open Task Status stream
 function handleTaskStatus(task_id){
+    var progressBarContainer = document.getElementById('progress-bar-container');
+    var progressBar = document.createElement('div');
+    progressBar.classList.add("progress-bar");
+    progressBar.setAttribute('id', task_id);
+    progressBarContainer.appendChild(progressBar);
     var taskId = task_id;
     console.log("Handling Task " + taskId + " progress...");
     var taskSource = new EventSource('/stream/task/'+taskId);
     taskSource.onmessage = function (event) {
-        console.log(event);
+        // console.log(event);
         var eventData = JSON.parse(event.data.replace(/'/g, "\""));
-        updateProgressBar(eventData.progress);
+        updateProgressBar(taskId, eventData.progress);
         if (eventData.progress === -1){
             console.log("Closing task streaming.");
             taskSource.close();
-            updateProgressBar(0);
+            progressBar.remove();
         }
     }
 

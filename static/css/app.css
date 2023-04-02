@@ -355,7 +355,7 @@ textarea:focus {
 }
 
 #progress-bar-container {
-    border: 1px solid var(--primary-color);
+    /* border: 1px solid var(--primary-color); */
     height: 10px;
     padding: 10px;
     display: block;
@@ -369,23 +369,13 @@ textarea:focus {
     background-color: var(--primary-color);
     border-radius: 10px;
     position: relative;
-}
-
-.progress-bar::after {
-    content: '';
-    display: block;
-    /* height: 100%; */
-    background-color: #007bff;
-    border-radius: 10px;
-    position: absolute;
+    margin: 2px;
+    /* position: absolute; */
     top: 0;
     left: 0;
     width: 0%;
     transition: width 0.5s ease;  
 }
-  
-
-
 
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {

@@ -61,7 +61,7 @@ Have to downgrade to 1.74: https://code.visualstudio.com/updates/v1_74 Then, dis
 # Update CHANGELOG.md !!
 
 # Upgrade Version
-TAG="0.1.4"
+TAG="0.1.5"
 
 # Build locally
 docker build -t cloudevent-viewer:latest .
