@@ -1,12 +1,17 @@
-var count = 0;
-let maxQueueSize = document.querySelector('.container').getAttribute('data-browser_queue_size');
-var eventSource = new EventSource('/stream/events');
+// var count = 0;
+// let maxQueueSize = document.querySelector('.container').getAttribute('data-browser_queue_size');
+import { count, globals } from "./globals.js";
+
+
+
 
 var eventsStackDiv = document.getElementById('events-stack');
 var eventCount = document.getElementById('event-count');
+
 var infoButton = document.getElementById("info-button");
 var toggleButton = document.getElementById('toggle-button');
 var filterInput = document.getElementById('filter-input');
+
 var sseConnectionStatus = document.getElementById('sseConnectionStatus');
 sseConnectionStatus.style.backgroundColor = "none" ;
 
@@ -26,9 +31,9 @@ eventSource.onmessage = function (event) {
     sseConnectionStatus.classList.remove('blink');
     sseConnectionStatus.setAttribute("title", "Connected - happy to see some traffic here!");
 
-    count++;
-    eventCount.innerHTML = count;
-    document.title = "CloudEvents Viewer (" + count + ")";
+    globals.count++;
+    eventCount.innerHTML = globals.count;
+    document.title = "CloudEvents Viewer (" + globals.count + ")";
 
     var eventData = JSON.parse(event.data.replace(/'/g, "\""));    
     var cloudEventData = eventData.cloudevent;
@@ -46,7 +51,7 @@ eventSource.onmessage = function (event) {
     eventHeader.classList.add('event-header');
     eventMessage.classList.add('event-message');
 
-    eventNumber.innerHTML = '#' + count + ' ';
+    eventNumber.innerHTML = '#' + globals.count + ' ';
     eventNumber.classList.add('event-count');
 
     eventTimestamp.innerHTML = eventData.time + ' ';
@@ -86,7 +91,7 @@ eventSource.onmessage = function (event) {
         sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
       }, 10000);
 
-    if (eventsStackDiv.childElementCount > maxQueueSize) {
+    if (eventsStackDiv.childElementCount > globals.maxQueueSize) {
         let lastEvent = eventsStackDiv.lastChild;
         eventsStackDiv.removeChild(lastEvent);
     }
@@ -245,87 +250,6 @@ function handleTaskStatus(task_id){
 }
 
 
-// CUSTOM SELECT
-// https://www.w3schools.com/howto/howto_custom_select.asp
-var x, i, j, l, ll, selElmnt, a, b, c;
-/* Look for any elements with the class "custom-select": */
-x = document.getElementsByClassName("custom-select");
-l = x.length;
-for (i = 0; i < l; i++) {
-  selElmnt = x[i].getElementsByTagName("select")[0];
-  ll = selElmnt.length;
-  /* For each element, create a new DIV that will act as the selected item: */
-  a = document.createElement("DIV");
-  a.setAttribute("class", "select-selected");
-  a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
-  x[i].appendChild(a);
-  /* For each element, create a new DIV that will contain the option list: */
-  b = document.createElement("DIV");
-  b.setAttribute("class", "select-items select-hide");
-  for (j = 1; j < ll; j++) {
-    /* For each option in the original select element,
-    create a new DIV that will act as an option item: */
-    c = document.createElement("DIV");
-    c.innerHTML = selElmnt.options[j].innerHTML;
-    c.addEventListener("click", function(e) {
-        /* When an item is clicked, update the original select box,
-        and the selected item: */
-        var y, i, k, s, h, sl, yl;
-        s = this.parentNode.parentNode.getElementsByTagName("select")[0];
-        sl = s.length;
-        h = this.parentNode.previousSibling;
-        for (i = 0; i < sl; i++) {
-          if (s.options[i].innerHTML == this.innerHTML) {
-            s.selectedIndex = i;
-            h.innerHTML = this.innerHTML;
-            y = this.parentNode.getElementsByClassName("same-as-selected");
-            yl = y.length;
-            for (k = 0; k < yl; k++) {
-              y[k].removeAttribute("class");
-            }
-            this.setAttribute("class", "same-as-selected");
-            break;
-          }
-        }
-        h.click();
-    });
-    b.appendChild(c);
-  }
-  x[i].appendChild(b);
-  a.addEventListener("click", function(e) {
-    /* When the select box is clicked, close any other select boxes,
-    and open/close the current select box: */
-    e.stopPropagation();
-    closeAllSelect(this);
-    this.nextSibling.classList.toggle("select-hide");
-    this.classList.toggle("select-arrow-active");
-  });
-}
-
-function closeAllSelect(elmnt) {
-  /* A function that will close all select boxes in the document,
-  except the current select box: */
-  var x, y, i, xl, yl, arrNo = [];
-  x = document.getElementsByClassName("select-items");
-  y = document.getElementsByClassName("select-selected");
-  xl = x.length;
-  yl = y.length;
-  for (i = 0; i < yl; i++) {
-    if (elmnt == y[i]) {
-      arrNo.push(i)
-    } else {
-      y[i].classList.remove("select-arrow-active");
-    }
-  }
-  for (i = 0; i < xl; i++) {
-    if (arrNo.indexOf(i)) {
-      x[i].classList.add("select-hide");
-    }
-  }
-}
-document.addEventListener("click", closeAllSelect);
-// CUSTOM SELECT
-
 
 // HELP MODAL
 var helpModal = document.getElementById("helpModal");
@@ -370,6 +294,9 @@ function deleteAllEvents(){
     document.getElementById('confirmModal').style.display='none';
     document.title = "CloudEvents Viewer (0)";
     document.getElementById('event-count').innerHTML = 0;
-    count = 0;
+    globals.count = 0;
 }
 
+// 
+
+import "./keyb-nav.js"

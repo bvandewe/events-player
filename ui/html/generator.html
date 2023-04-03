@@ -1,18 +1,19 @@
 <div id="generatorModal" class="sidebar">
     <div id="generatorHeader">
         <h3>Generate CloudEvents</h3>
-        <a href="javascript:void(0)" class="closebtn" onclick="toggleGeneratorModal()">&times;</a>
+        {# <a href="javascript:void(0)" class="closebtn" onclick="toggleGeneratorModal()">&times;</a> #}
+        <span class="generatorClose">&times;</span>
     </div>
     <div id="progress-bar-container">        
     </div>
     <div>
         <form id="generatorForm">
             <div class="form-group">
-                <label for="input1">Gateway:</label>
-                <!-- <input type="text" id="input1" name="event_gateway" onkeydown="return event.key !== ' '"
+                <label for="gatewaySelect">Gateway:</label>
+                <!-- <input type="text" id="gatewaySelect" name="event_gateway" onkeydown="return event.key !== ' '"
                     placeholder="/events/pub" value="http://localhost/events/pub"> -->
                 <div class="custom-select">
-                    <select id="input1" name="event_gateway">
+                    <select id="gatewaySelect" name="event_gateway">
                         <option value="0">Select a gateway</option>
                         {% for gateway_url in default_events_gateways.urls %}
                         <option value="{{ gateway_url }}">{{ gateway_url }}</option>

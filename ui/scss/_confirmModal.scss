@@ -1,0 +1,113 @@
+
+/* CONFIRM MODAL */
+/* Set a style for all buttons */
+#confirmModal button {
+    background-color: #04AA6D;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    opacity: 0.9;
+}
+
+#confirmModal button:hover {
+    opacity: 1;
+}
+
+/* Float cancel and delete buttons and add an equal width */
+#confirmModal .cancelbtn,
+#confirmModal .deletebtn {
+    float: left;
+    width: 50%;
+}
+
+/* Add a color to the cancel button */
+#confirmModal .cancelbtn {
+    background-color: var(--text-color);
+    color: var(--background-color);
+}
+
+/* Add a color to the delete button */
+#confirmModal .deletebtn {
+    background-color: #f44336;
+}
+
+/* Add padding and center-align text to the container */
+.confirm-container {
+    padding: 16px;
+    text-align: center;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: var(--lighter-background-color);
+}
+
+/* The Modal (background) */
+.confirm-modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Stay in place */
+    z-index: 4;
+    /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    /* Full width */
+    height: 100%;
+    /* Full height */
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4);
+    padding-top: 50px;
+}
+
+/* Modal Content/Box */
+#confirmModal .confirm-modal-content {
+    background-color: #fefefe;
+    margin: 5% auto 15% auto;
+    /* 5% from the top, 15% from the bottom and centered */
+    border: 1px solid #888;
+    width: 80%;
+    /* Could be more or less, depending on screen size */
+}
+
+/* Style the horizontal ruler */
+#confirmModal hr {
+    border: 1px solid #f1f1f1;
+    margin-bottom: 25px;
+}
+
+/* The Modal Close Button (x) */
+#confirmModal .confirm-close {
+    position: absolute;
+    right: 35px;
+    top: 15px;
+    font-size: 40px;
+    font-weight: bold;
+    color: #f1f1f1;
+}
+
+#confirmModal .confirm-close:hover,
+#confirmModal .confirm-close:focus {
+    color: #f44336;
+    cursor: pointer;
+}
+
+/* Clear floats */
+#confirmModal .clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+/* Change styles for cancel button and delete button on extra small screens */
+@media screen and (max-width: 300px) {
+
+    #confirmModal .cancelbtn,
+    #confirmModal .deletebtn {
+        width: 100%;
+    }
+}

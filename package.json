@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npm run copy && parcel serve ui/index.html ui/html/*.html --public-url /static/ --dist-dir static",
     "build": "npm run copy && parcel build ui/index.html ui/html/*.html --public-url /static/ --dist-dir static",
-    "copy": "copyfiles -f ui/img/*.png static/img"
+    "copy": "copyfiles -f ui/img/*.* static/img"
   },
   "repository": {
     "type": "git",

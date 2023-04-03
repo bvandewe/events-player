@@ -1,0 +1,195 @@
+
+/* Generator Modal/Sidepanel */
+
+/* The sidebar menu */
+.sidebar {
+    height: 0;
+    width: 100%;
+    position: fixed;
+    z-index: 1;
+    bottom: -60px;
+    left: 0;
+    background-color: var(--darker-background-color);
+    overflow: hidden;
+    padding: 20px;
+    transition: 0.5s;
+}
+
+/* When you mouse over the navigation links, change their color */
+.sidebar .generatorClose:hover {
+    color: var(--primary-color)
+}
+
+/* Position and style the close button (top right corner) */
+.sidebar .generatorClose {
+    position: absolute;
+    top: 1rem;
+    right: 4rem;
+    font-size: 36px;
+    margin-left: 30px;
+    text-decoration: none;
+    font-size: 25px;
+    color: var(--text-color);
+    display: block;
+    transition: 0.3s;
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+.sidebar #generatorHeader h3 {
+    font-size: 18px;
+    font-family: 'Comfortaa', 'Arial', sans-serif;
+    color: var(--primary-color);
+    text-shadow: 0 0 40px var(--text-color);
+    text-align: center;
+}
+
+#generatorForm {
+    padding: 1.3rem;
+    padding-right: 3rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    min-width: 100px;
+    text-align: right;
+    margin-right: 10px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    flex: 1;
+}
+
+#iterations,
+#delay {
+    width: 4rem;
+}
+
+#send-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    margin-left: 10rem;
+    margin-right: 6.5rem;
+}
+
+#send-button {
+    background-color: var(--background-color);
+    border: 1px;
+    border-radius: 5px;
+    color: var(--primary-color);
+    padding: 10px 10px;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    height: 40px;
+    width: 3600px;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+#send-button:hover {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+}
+
+#progress-bar-container {
+    /* border: 1px solid var(--primary-color); */
+    height: 10px;
+    padding: 10px;
+    display: block;
+    margin-top: 1rem;
+    margin-left: 8rem;
+    margin-right: 3rem;
+}
+
+.progress-bar {
+    height: 3px;
+    background-color: var(--primary-color);
+    border-radius: 10px;
+    position: relative;
+    margin: 2px;
+    /* position: absolute; */
+    top: 0;
+    left: 0;
+    width: 0%;
+    transition: width 0.5s ease;  
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    background-color: var(--primary-color);
+    border: none;
+    font-size: 14px;
+    height: 20px;
+    width: 20px;
+}
+
+
+/* Remove the default spinner appearance */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+/* custom spinners */
+input[type=number] {
+    background-color: var(--lighter-background-color);
+    color: var(--primary-color);
+    font-family: monospace;
+    font-size: 16px;
+    width: 200px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    border-bottom: 2px solid var(--primary-color);
+    /* margin-right: 20px; */
+}
+
+input[type=number] {
+    outline: none;
+    border: none;
+    border-bottom: 2px solid var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+/* Style the spinner buttons */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    /* Set background color, height, and width */
+    background-color: var(--primary-color);
+    height: 100%;
+    width: 20px;
+
+    /* Add border and border-radius */
+    border-left: 1px solid var(--primary-color);
+    border-radius: 5px 0 0 5px;
+
+    /* Position the buttons */
+    position: absolute;
+    right: 0;
+
+    /* Add icon */
+    content: "\f077";
+    font-family: "Font Awesome 5 Free";
+    font-size: 12px;
+    font-weight: 900;
+}
+
+input[type=number]::-webkit-inner-spin-button {
+    /* Position the buttons */
+    top: 50%;
+    transform: translateY(-50%);
+
+    /* Add icon */
+    content: "\f078";
+    font-family: "Font Awesome 5 Free";
+    font-size: 12px;
+    font-weight: 900;
+}
