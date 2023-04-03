@@ -1,0 +1,68 @@
+/* SCROLLBAR */
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: var(--lighter-background-color)
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: var(--background-color)
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color)
+}
+
+/* Misc */
+.badge {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    padding: 0.07rem 0.1rem;
+    text-align: center;
+    border-radius: 5px;
+    margin: 0.4rem;
+}
+
+.code {
+    font-family: monospace;
+    background-color: var(--lighter-background-color);
+}
+
+.blink {
+    animation: blink-animation 2s 3;
+  }
+
+  @keyframes blink-animation {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+}
+.glow {
+    animation: glow-animation 1.5s ease-in-out 2;
+}
+
+@keyframes glow-animation {
+    0% {
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0.7);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+    }
+
+    100% {
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0.7);
+    }
+}

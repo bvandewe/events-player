@@ -6,8 +6,8 @@
             </div>
             <div class="sub-menu-container">
                 <ul>
-                    <li><a href="/#" onclick="toggleConfirmModal()">Viewer</a><span id="sseConnectionStatus" class="badge" title="Connected"><i class="fa fa-plug"></i></span></li>                    
-                    <li><a href="/#" onclick="toggleGeneratorModal()">Generator</a></li>
+                    <li><a href="/#" id="viewerNav">Viewer</a><span id="sseConnectionStatus" class="badge" title="Connected"><i class="fa fa-plug"></i></span></li>                    
+                    <li><a href="/#" id="generatorNav">Generator</a></li>
                 </ul>
             </div>
         </div>
@@ -25,8 +25,7 @@
             </div>
             <div class="filter-container">
                 <form>
-                    <input type="text" id="filter-input" placeholder="Filter events..."
-                        onkeyup="onFilterInputChange()">
+                    <input type="text" id="filter-input" placeholder="Filter events...">
                 </form>
             </div>
         </div>

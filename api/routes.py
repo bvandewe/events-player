@@ -130,14 +130,14 @@ async def handle_events(payload: dict,
 # Favicon
 @router.get("/favicon.ico", include_in_schema=False)
 async def get_default_favicon():
-    return FileResponse("static/favicon.ico")
+    return FileResponse("static/img/favicon.ico")
 
 
 @router.get("/favicon-16x16.ico", include_in_schema=False)
 async def get_favicon_16():
-    return FileResponse("static/favicon-16x16.ico")
+    return FileResponse("static/img/favicon-16x16.ico")
 
 
 @router.get("/favicon-32x32.ico", include_in_schema=False)
 async def get_favicon():
-    return FileResponse("static/favicon-32x32.ico")
+    return FileResponse("static/img/favicon-32x32.ico")
