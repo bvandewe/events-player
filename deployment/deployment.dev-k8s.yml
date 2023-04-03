@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: cloudevent-viewer
-        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:0.1.5
+        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:0.1.6
         imagePullPolicy: Always
         ports:
         - containerPort: 80
