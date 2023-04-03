@@ -2,6 +2,18 @@
 
 ## Latest
 
+Prep for conversion to Bootstrap 5.3.x
+
+- Converted JS to Modular JS
+- Converted CSS to SASS
+- Added Parcel bundler
+- Changed Jinja2 templates folder to /static
+- Added API endpoints for Tasks (delete task by id is failing)
+- Added (multi)progress-bar for long-running tasks
+- Fixed Generator's Delay
+
+## 0.1.5
+
 - Added setting for the max size of the events queue in the browser
 - Added strategic logging
 
