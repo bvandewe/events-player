@@ -1,3 +1,5 @@
+import {toastController} from "../ui/toast";
+
 export const sseEventsController = (() => {
 
     const sseEventPath = '/stream/events';
@@ -19,9 +21,33 @@ export const sseEventsController = (() => {
 
     const handleNewEvent = (event) => {
         if ("data" in event){
-            var eventData = JSON.parse(event.data.replace(/'/g, "\""));
-            var cloudEventData = eventData.cloudevent;
-        
+            try {
+                var eventData = JSON.parse(event.data.replace(/'/g, "\""));
+                var cloudEventData = eventData.cloudevent;
+            } catch (error) {
+                console.log(error);
+                var result = {
+                    "detail": [
+                        {
+                            "loc": ["event.data"], 
+                            "msg": "Event data is not valid JSON!", 
+                            "type": "JSON.parse"
+                        }
+                    ]
+                }
+                toastController.showToast(result);
+
+                var eventData = event.data.replace(/'/g, "\"");
+                strippedEventData = eventData.substring(0, eventData.indexOf(", \"data\"")) + "}}";
+                var rawEventData = eventData.substring(eventData.indexOf("\"data\""));
+                // result.data = rawEventData.toString();
+                eventData = JSON.parse(strippedEventData);
+                var cloudEventData = eventData.cloudevent;
+                cloudEventData.data = result;
+                cloudEventData.source = "ERROR: " + cloudEventData.source;
+                cloudEventData.type = "ERROR: " + cloudEventData.type;
+            }
+            console.log("Continued!");
             var eventBox = document.createElement('div');
             var eventHeader = document.createElement('div');
             var eventMessage = document.createElement('div');

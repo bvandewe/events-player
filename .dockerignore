@@ -26,4 +26,5 @@
 LICENSE
 README.md
 **/old.*
-start-api-dev.sh
+.parcel-cache
+static/
