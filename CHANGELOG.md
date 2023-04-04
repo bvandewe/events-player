@@ -4,6 +4,7 @@
 
 - Added UI build in Dockerfile
 - Renamed project to event-player
+- Added handling of badly formatted event data
 
 ## 0.1.6
 
