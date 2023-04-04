@@ -2,6 +2,11 @@
 
 ## Latest
 
+- Added UI build in Dockerfile
+- Renamed project to event-player
+
+## 0.1.6
+
 Prep for conversion to Bootstrap 5.3.x
 
 - Converted JS to Modular JS
