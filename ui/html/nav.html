@@ -1,18 +1,21 @@
 <nav>
     <div class="menu-container">
         <div class="left-items">
+            <div class="brand-logo">
+                <img src="../img/favicon-32x32.ico"/>
+            </div>
             <div class="title-container">
                 <h1>CloudEvents Player (<span id="event-count">0</span>)</h1>
             </div>
             <div class="sub-menu-container">
                 <ul>
-                    <li><a href="/#" id="viewerNav">Viewer</a><span id="sseConnectionStatus" class="badge" title="Connected"><i class="fa fa-plug"></i></span></li>                    
+                    <li><a href="/#" id="viewerNav">Viewer</a></li>
                     <li><a href="/#" id="generatorNav">Generator</a></li>
                 </ul>
             </div>
         </div>
         <div class="right-items">
-            <div class="action-icons-container">
+            <div class="action-icons-container">                
                 <button id="toggle-button" data-title="Toggle the expand/collapse for All visible events">
                     <i id="toggle-icon" class="fa fa-caret-up"></i>
                 </button>
@@ -22,6 +25,7 @@
                 <button id="help-button" data-title="Help on configuration and usage">
                     <i class="fa fa-question"></i>
                 </button>
+                <span id="sseConnectionStatus" class="badge" title="Connected"><i class="fa fa-plug"></i></span>
             </div>
             <div class="filter-container">
                 <form>

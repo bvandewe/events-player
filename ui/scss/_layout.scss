@@ -6,6 +6,7 @@
     --border-color: rgb(85, 96, 109);
     --primary-color: rgb(77, 206, 243);
     --text-color: #CCC;
+    --error-background-color: #800000;
 }
 
 * {box-sizing: border-box}
@@ -45,12 +46,17 @@ footer {
 footer p {
     font-size: 0.7rem;
     color: var(--primary-color);
+    
+    a {
+        text-decoration: none;
+        color: var(--primary-color);
+    }
 }
 
 
 h1 {
     padding: 20px;
-    font-size: 24px;
+    font-size: 20px;
     font-family: 'Comfortaa', 'Arial', sans-serif;
     color: var(--primary-color);
     text-shadow: 0 0 40px var(--text-color);

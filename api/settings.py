@@ -15,6 +15,9 @@ class DefaultEvent(BaseModel):
 
 
 class ApiSettings(BaseSettings):
+    # App version
+    tag: str = "0.1.0"
+    repository_url: str = "https://ccie-gitlab.ccie.cisco.com/mozart/infrastructure/eventing/cloudevent-player"
 
     # Logging configs
     log_level: str = "INFO"

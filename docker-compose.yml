@@ -2,8 +2,8 @@ version: '3.4'
 
 name: subscribers
 services:
-  event-viewer:
-    image: cloudevent-viewer:latest
+  event-player:
+    image: cloudevent-player:latest
     ports:
       - 8885:80
     environment:

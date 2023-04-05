@@ -21,6 +21,9 @@ nav {
     margin-left: auto;
 }
 
+.brand-logo {
+    margin-left: 1rem;
+}
 
 .title-container,
 .sub-menu-container {
@@ -63,6 +66,9 @@ nav {
     color: var(--primary-color);
 }
 
+.filter-container {
+    margin-left: 1rem;
+}
 
 input[type=text],
 textarea {
@@ -107,12 +113,9 @@ textarea:focus {
 }
 
 #filter-input {
-    background-image: url('/static/img/searchicon.png');
-    /* Add a search icon to input */
+    background-image: url('/static/img/searchicon.png');    
     background-position: 10px 12px;
-    /* Position the search icon */
     background-repeat: no-repeat;
-    /* Do not repeat the icon image */
     padding: 12px 20px 12px 40px;
     margin-right: 20px;
 }
