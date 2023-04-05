@@ -38,11 +38,14 @@ router = APIRouter()
             operation_id="get_root",
             response_class=HTMLResponse)
 async def get_ui(request: Request):
+    tag = settings.tag
     year = datetime.datetime.now().year
     default_events_settings = dict(settings.default_generator_event)
     default_events_gateways = dict(settings.default_generator_gateways)
     log.debug(f"Received request on root: {request}")
     return templates.TemplateResponse("index.html", {"request": request,
+                                                     "tag": tag,
+                                                     "repo_url": settings.repository_url,
                                                      "year": year,
                                                      "default_events_settings": default_events_settings,
                                                      "default_events_gateways": default_events_gateways,

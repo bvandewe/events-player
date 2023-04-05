@@ -21,11 +21,14 @@ export const sseEventsController = (() => {
 
     const handleNewEvent = (event) => {
         if ("data" in event){
+            var hasError = false;
             try {
+                // 
                 var eventData = JSON.parse(event.data.replace(/'/g, "\""));
                 var cloudEventData = eventData.cloudevent;
             } catch (error) {
-                console.log(error);
+                // Simulate a Validation Error for now
+                hasError = true;
                 var result = {
                     "detail": [
                         {
@@ -36,18 +39,16 @@ export const sseEventsController = (() => {
                     ]
                 }
                 toastController.showToast(result);
-
                 var eventData = event.data.replace(/'/g, "\"");
-                strippedEventData = eventData.substring(0, eventData.indexOf(", \"data\"")) + "}}";
-                var rawEventData = eventData.substring(eventData.indexOf("\"data\""));
-                // result.data = rawEventData.toString();
+                // Assuming .data is the last attribute in the event... (!!!)
+                var strippedEventData = eventData.substring(0, eventData.indexOf(", \"data\"")) + "}}";
+                // var rawEventData = eventData.substring(eventData.indexOf("\"data\""));                
                 eventData = JSON.parse(strippedEventData);
                 var cloudEventData = eventData.cloudevent;
                 cloudEventData.data = result;
                 cloudEventData.source = "ERROR: " + cloudEventData.source;
                 cloudEventData.type = "ERROR: " + cloudEventData.type;
             }
-            console.log("Continued!");
             var eventBox = document.createElement('div');
             var eventHeader = document.createElement('div');
             var eventMessage = document.createElement('div');
@@ -80,6 +81,9 @@ export const sseEventsController = (() => {
             eventHeader.appendChild(eventLeftTitle);
             eventHeader.appendChild(eventSource);
             eventHeader.appendChild(eventType);
+            if (hasError) {
+                eventHeader.classList.add("error");
+            }
         
             eventMessage.innerHTML = JSON.stringify(cloudEventData, null, 2);
             eventMessage.style.display = 'none';
@@ -99,7 +103,7 @@ export const sseEventsController = (() => {
     };
 
     const openEventSource = () => {
-        console.log("Connection opened")
+        console.log("Connection opened");
         sseConnectionStatus.style.backgroundColor = "green";
         sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
     };

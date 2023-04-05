@@ -1,9 +1,11 @@
 # CHANGE LOG
 
-## Latest
+- Renamed project to event-player
+- Fixed handling of badly formatted event data
+
+## 0.1.7
 
 - Added UI build in Dockerfile
-- Renamed project to event-player
 - Added handling of badly formatted event data
 
 ## 0.1.6

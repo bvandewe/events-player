@@ -31,7 +31,7 @@
 
 /* Add a color to the delete button */
 #confirmModal .deletebtn {
-    background-color: #f44336;
+    background-color: var(--error-background-color);
 }
 
 /* Add padding and center-align text to the container */
