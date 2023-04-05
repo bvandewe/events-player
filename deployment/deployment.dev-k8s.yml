@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cloudevent-viewer
+  name: cloudevent-player
   namespace: mozart
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cloudevent-viewer
+      app: cloudevent-player
       version: v1
   template:
     metadata:
       labels:
-        app: cloudevent-viewer
+        app: cloudevent-player
         version: v1
     spec:
       containers:
-      - name: cloudevent-viewer
-        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:0.1.7
+      - name: cloudevent-player
+        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:0.1.8
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -26,3 +26,5 @@ spec:
           value: '{"urls": ["http://localhost/events/pub", "http://k.ccie.cisco.com:32051/events/pub", "https://events-player.k.ccie.cisco.com/events/pub", "https://pubhook.k.certs.cloud/c3c588d1-dc7f-424e-ad22-dbd4e6ebcbd9"]}'
         - name: api_browser_queue_size
           value: "1000"
+        - name: api_tag
+          value: "0.1.8"
