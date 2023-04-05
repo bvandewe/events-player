@@ -61,20 +61,20 @@ Have to downgrade to 1.74: https://code.visualstudio.com/updates/v1_74 Then, dis
 # Update CHANGELOG.md !!
 
 # Upgrade Version
-TAG="0.1.7"
+TAG="0.1.8"
 
 # Build locally
-docker build -t cloudevent-viewer:latest .
-docker tag cloudevent-viewer:latest cloudevent-viewer:$TAG
+docker build -t cloudevent-player:latest .
+docker tag cloudevent-player:latest cloudevent-player:$TAG
 
 # Run locally
-docker run --name cloudevent-viewer -p 8888:80 cloudevent-viewer:$TAG
+docker run --name cloudevent-player -p 8888:80 cloudevent-player:$TAG
 
 # Publish to CCIE Gitlab
 docker login ccie-gitlab.ccie.cisco.com:4567
-docker tag cloudevent-viewer:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:$TAG
-docker tag cloudevent-viewer:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:latest
-docker push ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:$TAG
-docker push ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-viewer:latest
+docker tag cloudevent-player:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:$TAG
+docker tag cloudevent-player:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:latest
+docker push ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:$TAG
+docker push ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:latest
 
 ```

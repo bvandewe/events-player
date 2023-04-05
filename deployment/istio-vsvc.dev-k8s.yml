@@ -11,6 +11,6 @@ spec:
   http:
   - route:
     - destination:
-        host: cloudevent-viewer
+        host: cloudevent-player
         port:
           number: 8888
