@@ -24,7 +24,7 @@ export const sseEventsController = (() => {
             var hasError = false;
             try {
                 // 
-                var eventData = JSON.parse(event.data.replace(/'/g, "\""));
+                var eventData = JSON.parse(event.data.replace(/'/g, "\"").replace(/\\\"/g, '"'));
                 var cloudEventData = eventData.cloudevent;
             } catch (error) {
                 // Simulate a Validation Error for now
@@ -39,15 +39,19 @@ export const sseEventsController = (() => {
                     ]
                 }
                 toastController.showToast(result);
-                var eventData = event.data.replace(/'/g, "\"");
+                var eventData = event.data.replace(/'/g, "\"").replace(/\\\"/g, '"');
                 // Assuming .data is the last attribute in the event... (!!!)
+                // Removing anything after `, "data"` and adding `}}` should make it parsable
                 var strippedEventData = eventData.substring(0, eventData.indexOf(", \"data\"")) + "}}";
-                // var rawEventData = eventData.substring(eventData.indexOf("\"data\""));                
+                // Capturing the raw data
+                var eventDataStr = eventData.substring(eventData.indexOf(", \"data\""));
                 eventData = JSON.parse(strippedEventData);
                 var cloudEventData = eventData.cloudevent;
-                cloudEventData.data = result;
-                cloudEventData.source = "ERROR: " + cloudEventData.source;
-                cloudEventData.type = "ERROR: " + cloudEventData.type;
+                // cloudEventData.data = result;
+                // Adding the raw string back as "data"
+                cloudEventData.data = eventDataStr.substring(9);
+                cloudEventData.source = "WARN: " + cloudEventData.source;
+                cloudEventData.type = "WARN: " + cloudEventData.type;
             }
             var eventBox = document.createElement('div');
             var eventHeader = document.createElement('div');
@@ -66,12 +70,22 @@ export const sseEventsController = (() => {
             eventNumber.classList.add('event-count');
         
             eventTimestamp.innerHTML = eventData.time + ' ';
+
             eventTimestamp.classList.add('event-timestamp');
         
             eventLeftTitle.appendChild(eventNumber);
             eventLeftTitle.appendChild(eventTimestamp);
             eventLeftTitle.classList.add('event-left-title');
         
+            if (hasError) {
+                var warningSpan = document.createElement('span');
+                warningSpan.classList.add('badge');
+                warningSpan.classList.add('error');
+                warningSpan.style.color = "white";
+                warningSpan.innerHTML = "Parsing error";
+                eventLeftTitle.appendChild(warningSpan);
+            }
+
             eventSource.innerHTML = cloudEventData.source + ' ';
             eventSource.classList.add('event-source');
         
@@ -81,9 +95,6 @@ export const sseEventsController = (() => {
             eventHeader.appendChild(eventLeftTitle);
             eventHeader.appendChild(eventSource);
             eventHeader.appendChild(eventType);
-            if (hasError) {
-                eventHeader.classList.add("error");
-            }
         
             eventMessage.innerHTML = JSON.stringify(cloudEventData, null, 2);
             eventMessage.style.display = 'none';
