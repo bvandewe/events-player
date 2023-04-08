@@ -1,5 +1,13 @@
 # CHANGE LOG
 
+## WIP
+
+- Added raw data as string to badly formatted event data
+- Added a badge to badly formatted events
+- Added deployment files for CCIE360 events
+
+## 0.1.8
+
 - Renamed project to event-player
 - Fixed handling of badly formatted event data
 
