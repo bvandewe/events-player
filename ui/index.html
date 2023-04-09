@@ -1,33 +1,26 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.2">
     <title>CloudEvents Player</title>
-    <link rel="stylesheet" href="scss/app.scss"> 
+    <link rel="stylesheet" href="scss/app.scss">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa&family=Roboto">
+    <link rel="stylesheet" href="../node_modules/bootstrap-icons/font/bootstrap-icons.css">
     <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> -->
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.ico">
     <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.ico">
-    <script src="https://kit.fontawesome.com/9cdabcae81.js" crossorigin="anonymous"></script>
+    <!-- <script src="https://kit.fontawesome.com/9cdabcae81.js" crossorigin="anonymous"></script> -->
 </head>
+
 <body data-bs-theme="dark">
-    <header>
     {% include "html/nav.html" %}
-    </header>
-    <main>
-        <div class="container" data-browser_queue_size="{{ browser_queue_size }}">
-            <div id="events-stack">
-            </div>
-        </div>
-    </main>
-    <footer>
-        <p>&copy; {{ year }} - CloudEvents Player <a href="{{ repo_url }}" target="_blank">v{{ tag }}</a> - 
-        Built by <span><i class="fa fa-hand"></i></span> with lots of <span><i class="fa fa-coffee"></i></span>.</p>
-    </footer>
-    {% include "html/generator.html" %}
+    {% include "html/main.html" %}
+    {% include "html/footer.html" %}
+    {% include "html/offcanvas.html" %}
     {% include "html/help.html" %}
-    {% include "html/confirm.html" %}
-    <div class="toast-message"></div>
-    <script type="module" src="js/app.js"></script>    
+    {% include "html/toast.html" %}
+    <script type="module" src="js/app.js"></script>
 </body>
+
 </html>

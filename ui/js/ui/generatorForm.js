@@ -3,6 +3,24 @@ import {taskController} from "../sse/task";
 
 export const generatorForm = (() => {
 
+    const initSliders = () => {
+        
+        var eventIterations = document.getElementById("eventIterations");
+        var eventIterationsValue = document.getElementById("eventIterationsValue");
+        eventIterations.addEventListener("input", function() {
+            var selectedValue = eventIterations.value;
+            eventIterationsValue.innerHTML = selectedValue;
+        });
+        
+        var eventDelay = document.getElementById("eventDelay");
+        var eventDelayValue = document.getElementById("eventDelayValue");
+        eventDelay.addEventListener("input", function() {
+            var selectedValue = eventDelay.value;
+            eventDelayValue.innerHTML = selectedValue;
+        });
+    };
+
+
     const handleSubmit = (event) => {
         event.preventDefault();
         const formData = new FormData(event.target);
@@ -20,6 +38,7 @@ export const generatorForm = (() => {
                 console.log('Form submitted successfully:', result);
                 Promise.all(
                     [
+                        console.log(result),
                         taskController.handleTaskStatus(result.task_id), 
                         toastController.showToast(result)
                     ]
@@ -27,11 +46,14 @@ export const generatorForm = (() => {
             })
             .catch(error => {
                 console.error('Error submitting form:', error);            
-                toastController.showToast(result);
+                // toastController.showToast(result);
             });
     };
 
     const init = () => {
+
+        initSliders();
+        
         const form = document.getElementById('generatorForm');
         form.addEventListener('submit', (event) => {
             handleSubmit(event);

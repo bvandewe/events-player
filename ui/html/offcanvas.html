@@ -1,0 +1,66 @@
+<!-- OffCanvas -->
+<div class="offcanvas offcanvas-bottom show p-4 shadow-lg" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+    id="generatorPanel" aria-labelledby="staticBackdropLabel">
+    <div class="offcanvas-header">
+        <h4 class="offcanvas-title mx-auto text-primary title" id="generatorPanelLabel">Generate CloudEvents</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">        
+        <div>            
+            <form id="generatorForm">
+                <div class="row mb-3">
+                    <label for="event_gateway" class="col-1 col-form-label text-end">Gateway</label>
+                    <select class="col-10 form-select" id="event_gateway" name="event_gateway" aria-label="Select a gateway">
+                        <option selected>Select a gateway</option>
+                        {% for gateway_url in default_events_gateways.urls %}
+                        <option value="{{ gateway_url }}">{{ gateway_url }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="row mb-3">
+                    <label for="event_source" class="col-1 col-form-label text-end">Source</label>
+                    <input type="text" class="col-10 form-control" id="event_source" name="event_source" 
+                    placeholder="https://dummy.source.com/sys-admin" onkeydown="return event.key !== ' '"
+                    value="{{ default_events_settings.event_source }}">
+                </div>
+                <div class="row mb-3">
+                    <label for="event_type" class="col-1 col-form-label text-end">Type</label>
+                    <input type="text" class="col-10 form-control" id="event_type" name="event_type"
+                    placeholder="com.source.dummy.test.requested.v1" onkeydown="return event.key !== ' '"
+                    value="{{ default_events_settings.event_type }}">
+                </div>
+                <div class="row mb-3">
+                    <label for="event_subject" class="col-1 col-form-label text-end">Subject</label>
+                    <input type="text" class="col-10 form-control" id="event_subject" name="event_subject" 
+                    placeholder="123" onkeydown="return event.key !== ' '"
+                    value="{{ default_events_settings.event_subject }}">
+                </div>
+                <div class="row mb-4">
+                    <label for="event_data" class="col-1 col-form-label text-end">Data</label>
+                    <textarea class="col-10 form-control eventData" id="event_data" rows="6" name="event_data">{{ default_events_settings.event_data | tojson(indent=2) }}</textarea>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6 row d-flex align-items-center">
+                        <label for="eventIterations" class="col-3 col-form-label text-end">Iterations: <span id="eventIterationsValue">1</span></label>
+                        <input type="range" min="1" max="100" value="1" class="col-8 form-range" id="eventIterations" name="iterations">
+                    </div>
+                    <div class="col-6 row d-flex align-items-center">
+                        <label for="eventDelay" class="col-3 col-form-label text-end">Delay: <span id="eventDelayValue">150</span> ms</label>
+                        <input type="range" min="1" max="2000" value="150" class="col-8 form-range" id="eventDelay" name="delay">
+                    </div>
+                </div>
+
+                <div class="row mb-1">
+                    <button type="submit" class="col-6 btn btn-primary mx-auto mt-3">Send</button>
+                </div>
+                <div class="row mb-3">
+                    <div class="progress row col-6 mx-auto" id="task-progress-bar-container" role="progressbar" aria-label="Generator task progress" 
+                    aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" style="height: 0px">
+                        <div class="progress-bar" id="task-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>

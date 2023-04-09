@@ -1,49 +1,51 @@
-<!-- The Help Modal -->
-<div id="helpModal" class="modal">
-
-    <!-- Modal content -->
+<!-- Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
-
         <div class="modal-header">
-            <span class="modal-close">&times;</span>
-            <h2>Help and Usage</h2>
+        <h1 class="modal-title fs-5" id="helpModalLabel">Help and Usage</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-            <h3>Usage</h3>
-            <p>
+            <!-- <h3>Usage</h3> -->
+            <p class="lh-base">
                 This micro-app serves as a test subscriber for <a href="https://cloudevents.io/">CloudEvents</a>. 
                 It exposes a <span class="code">POST /events/pub</span> endpoint that Publishers can use to send events.
                 Upon reception of a valid CloudEvent, the app distributes it to all browsers that are connected at that time, if any.
                 It can also generate test events and send them to the selected CloudEvent Gateway.
                 (Gateways can be added by Administrators with an Environment variable).
             </p>
-            <p>
+            <p class="lh-base mb-5">
                 Open the generator, select the localhost Gateway, and send an event. It will appear in the UI.
                 <br>
                 Select another Gateway, send an event, and if the event matches a subscription directed towards the CloudEvent Player, it should receive the event back.
             </p>
-            <hr>
-            <h3>Connection Status</h3>
-            <ul>
-                <li><span class="badge" style="background-color: green"><i class="fa fa-plug"></i></span><span>The connection to the backend is established and refreshed every 15s.</span></li>
-                <li><span class="badge glow" style="background-color: #4DCEF3"><i class="fa fa-plug"></i></span><span>An event was received within the last 10s.</span></li>
-                <li><span class="badge blink" style="background-color: #800000; color: white;"><i class="fa fa-plug"></i></span><span>The connection to the backend is broken. Trying to re-establish it every 2s.</span></li>
+            
+            <h3 class="mb-3">Connection Status</h3>
+            <ul class="list-group mb-5">
+                <li class="list-group-item"><span class="badge me-3" style="background-color: green"><i class="bi bi-plug-fill"></i></span><span>The connection to the backend is established and refreshed every 15s.</span></li>
+                <li class="list-group-item"><span class="badge glow me-3" style="background-color: #4DCEF3"><i class="bi bi-plug-fill"></i></span><span>An event was received within the last 10s.</span></li>
+                <li class="list-group-item"><span class="badge blink me-3" style="background-color: #800000; color: white;"><i class="bi bi-plug-fill"></i></span><span>The connection to the backend is broken. Trying to re-establish it every 2s.</span></li>
             </ul>
             <!-- <p>&nbsp;</p> -->
-            <hr>
-            <h3>Keyboard Shortcuts</h3>
-            <ul>
-                <li><span class="badge">CTRL</span> or <span class="badge">META</span>+<span class="badge">UpArrow</span><span>Open the Generator</span></li>            
-                <li><span class="badge">Escape</span> or <span class="badge">META</span>+<span class="badge">UpDown</span><span>Close the Generator</span></li>            
-                <li><span class="badge">META</span>+<span class="badge">f</span><span>Focus/Unfocus on the Search/Filter box</span></li>
+            
+            <h3 class="mb-3">Keyboard Shortcuts</h3>
+            <ul class="list-group">
+                <li class="list-group-item"><span class="badge">CTRL</span> or <span class="badge">META</span>+<span class="badge">UpArrow</span><span>Open the Generator</span></li>            
+                <li class="list-group-item"><span class="badge">Escape</span> or <span class="badge">META</span>+<span class="badge">UpDown</span><span>Close the Generator</span></li>            
+                <li class="list-group-item"><span class="badge">META</span>+<span class="badge">f</span><span>Focus/Unfocus on the Search/Filter box</span></li>
             </ul>
             <p>&nbsp;</p>
-
+            <h3 class="mb-3">Settings</h3>
+            <ul class="list-group">
+                <li class="list-group-item"><span class="badge">CTRL</span> or <span class="badge">META</span>+<span class="badge">UpArrow</span><span>Open the Generator</span></li>            
+                <li class="list-group-item"><span class="badge">Escape</span> or <span class="badge">META</span>+<span class="badge">UpDown</span><span>Close the Generator</span></li>            
+                <li class="list-group-item"><span class="badge">META</span>+<span class="badge">f</span><span>Focus/Unfocus on the Search/Filter box</span></li>
+            </ul>
         </div>
-        <!-- <div class="modal-footer">
-            <h3>Modal Footer</h3>
-        </div> -->
-
+        <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>        
+        </div>
     </div>
-
+    </div>
 </div>
