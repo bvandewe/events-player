@@ -6,14 +6,14 @@ export const keyboardController = (() => {
             //console.log(event.key);
             //event.stopPropagation();
             if (event.key === "Escape" || (event.metaKey && event.key === "ArrowDown")) {
-                document.getElementById("generatorModal").style.height = "0";
-                document.getElementById("helpModal").style.display = "none";
+                document.getElementById("generatorPanel").classList.remove("show");
+                // document.getElementById("helpModal").style.display = "none";
             }
             if (event.key === "Control" || (event.metaKey && event.key === "ArrowUp")) {
-                document.getElementById("generatorModal").style.height = "650px";
+                document.getElementById("generatorPanel").classList.add("show");
             }
             if ( event.metaKey && event.key === "f" ) {
-                var filterInput = document.getElementById("filter-input");        
+                var filterInput = document.getElementById("search-input");        
                 if (document.activeElement === filterInput) {
                     document.activeElement.blur();
                     event.preventDefault();
