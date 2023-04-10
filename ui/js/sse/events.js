@@ -260,4 +260,4 @@ export const sseEventsController = (() => {
         resetEventsCount
     }
 
-})()
+})();

@@ -20,7 +20,6 @@ export const generatorForm = (() => {
         });
     };
 
-
     const handleSubmit = (event) => {
         event.preventDefault();
         const formData = new FormData(event.target);
