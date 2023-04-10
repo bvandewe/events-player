@@ -1,3 +1,9 @@
-#settingsIcon {
+
+.actionLink {
     cursor: pointer;
+    
+    &:hover {
+        cursor: pointer;
+        color: $primary;
+    }
 }

@@ -1,9 +1,10 @@
 //Keyboard Shortcuts
 export const keyboardController = (() => {
-
-    const init = () => {
+    var bootstrap;
+    const init = (bs) => {
+        bootstrap = bs;
         document.addEventListener("keydown", function (event) {
-            //console.log(event.key);
+            // console.log(event.key);
             //event.stopPropagation();
             if (event.key === "Escape" || (event.metaKey && event.key === "ArrowDown")) {
                 document.getElementById("generatorPanel").classList.remove("show");
@@ -22,6 +23,10 @@ export const keyboardController = (() => {
                     filterInput.focus();
                     event.preventDefault();
                 }
+            }
+            if (event.metaKey && event.key === "/") {
+                const myModal = new bootstrap.Modal('#helpModal');
+                myModal.show();
             }
         });
     };
