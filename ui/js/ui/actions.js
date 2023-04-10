@@ -29,7 +29,6 @@ export const actionsController = (() => {
 
     };
 
-
     const confirmClearEvents = () => {
         // if there are events, show Confirmation dialog when clicking on the Viewer nav button
         var clearListLink = document.getElementById('clearListLink');
@@ -69,8 +68,8 @@ export const actionsController = (() => {
 
     };
 
-return {
-    init
-}
+    return {
+        init
+    }
 
 })();
