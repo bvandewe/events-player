@@ -212,7 +212,7 @@ export const sseEventsController = (() => {
                 eventData: cloudEventData,
                 eventId: uuid
             };
-            item = createAccordionItem(accordionData);
+            const item = createAccordionItem(accordionData);
             eventsStack.prepend(item);
         }
     };

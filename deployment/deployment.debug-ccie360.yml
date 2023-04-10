@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: ccie360-events
-        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:0.1.8
+        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:0.1.9
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -27,6 +27,6 @@ spec:
         - name: api_browser_queue_size
           value: "1000"
         - name: api_tag
-          value: "0.1.8"
+          value: "0.1.9"
         - name: api_default_generator_event
-          value: '{"event_source": "https://portal.ccie.cisco.com", "event_type":"com.cisco.certs.ccie360.test.requested.v1"}'
+          value: '{"event_source": "https://dummy-portal.ccie.cisco.com", "event_type":"com.cisco.certs.ccie360.test.requested.v1"}'

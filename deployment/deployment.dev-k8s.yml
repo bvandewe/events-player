@@ -17,14 +17,14 @@ spec:
     spec:
       containers:
       - name: cloudevent-player
-        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:0.1.8
+        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:0.1.9
         imagePullPolicy: Always
         ports:
         - containerPort: 80
         env:
         - name: api_default_generator_gateways
-          value: '{"urls": ["http://localhost/events/pub", "http://k.ccie.cisco.com:32051/events/pub", "https://events-player.k.ccie.cisco.com/events/pub", "https://pubhook.k.certs.cloud/c3c588d1-dc7f-424e-ad22-dbd4e6ebcbd9"]}'
+          value: '{"urls": ["http://localhost/events/pub", "http://k.ccie.cisco.com:32051/events/pub", "https://events-player.k.ccie.cisco.com/events/pub", "https://ccie360-events.k.ccie.cisco.com/events/pub", "https://pubhook.k.certs.cloud/c3c588d1-dc7f-424e-ad22-dbd4e6ebcbd9"]}'
         - name: api_browser_queue_size
           value: "1000"
         - name: api_tag
-          value: "0.1.8"
+          value: "0.1.9"

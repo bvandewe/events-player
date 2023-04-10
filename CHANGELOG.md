@@ -2,6 +2,10 @@
 
 ## WIP
 
+
+## 0.1.9
+
+- Completed conversion to Bootstrap 5.3.1 in Dark-mode
 - Added raw data as string to badly formatted event data
 - Added a badge to badly formatted events
 - Added deployment files for CCIE360 events
