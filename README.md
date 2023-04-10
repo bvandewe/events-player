@@ -4,7 +4,7 @@ This micro-app can be used as a test subscriber of [CloudEvents](https://cloudev
 
 It provides a web-based interface to quickly visualize events that it received on its `POST /events/pub` endpoint.
 
-![Demo](assets/cloudevent-player_demo_0.1.2.gif)
+![Demo](assets/cloudevent-player_demo_0.1.9.gif)
 
 ## Limitations
 
@@ -61,7 +61,7 @@ Have to downgrade to 1.74: https://code.visualstudio.com/updates/v1_74 Then, dis
 # Update CHANGELOG.md !!
 
 # Upgrade Version
-TAG="0.1.8"
+TAG="0.1.9"
 
 # Build locally
 docker build -t cloudevent-player:latest .
