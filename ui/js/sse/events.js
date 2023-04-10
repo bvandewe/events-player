@@ -2,13 +2,13 @@ import {toastController} from "../ui/toast";
 import { v4 as uuidv4 } from 'uuid';
 
 export const sseEventsController = (() => {
-
+    
     const sseEventPath = '/stream/events';
     var sseConnectionStatus = document.getElementById('connectionStatusIndicator');
     var eventsStack = document.getElementById('events-stack');
     var eventsCount = 0;
+    var maxQueueSize = 0;
     var sseConnectionTimer;
-
 
     const createAccordionItem = ({eventCount, timestamp, hasError, eventSource, eventType, eventData, eventId }) => {
 
@@ -40,11 +40,32 @@ export const sseEventsController = (() => {
         span2.textContent = `${timestamp}`;
         
         // create the badge element with class "bg-info ms-2", and set its text content
-        const isValid = hasError != true ? "Plain JSON" : "Escaped JSON";
-        const badgeColor = hasError != true ? "success" : "warning";
+        var badgeText;
+        var badgeColor;
+
+        switch (hasError) {
+            case "none": 
+                badgeText = "Plain JSON";
+                badgeColor = "success";
+            break;
+
+            case "backend-error":
+                badgeText = "Invalid JSON";
+                badgeColor = "danger";
+            break;
+
+            case "parse-error":
+                badgeText = "Escaped JSON";
+                badgeColor = "warning";
+            break;
+
+            default:
+            break;
+        }
+        
         const badge = document.createElement('span');
-        badge.classList.add('badge', `text-bg-${badgeColor}`, 'ms-2');
-        badge.textContent = isValid;
+        badge.classList.add('badge', `text-bg-${badgeColor}`, 'ms-2', 'p-1');
+        badge.textContent = badgeText;
 
         // append the badge element to the second span element
         span2.appendChild(badge);
@@ -60,7 +81,7 @@ export const sseEventsController = (() => {
 
         // create the badge element with class "bg-secondary", and set its text content
         const badge2 = document.createElement('span');
-        badge2.classList.add('badge', 'bg-secondary');
+        badge2.classList.add('badge', 'bg-secondary', 'p-1');
         badge2.textContent = `${eventSource}`;
 
         // append the badge element to the fourth span element
@@ -94,7 +115,6 @@ export const sseEventsController = (() => {
 
         return accordionItem;
     };
-
 
     const resetEventsCount = () => {
         eventsCount = 0;
@@ -145,19 +165,26 @@ export const sseEventsController = (() => {
 
     const handleNewEvent = (event) => {
         if ("data" in event){
-            var hasError = false;
+            var hasError = "none";
             try {
-                // 
+                // Happy path: event.data is parseable
                 var eventData = JSON.parse(event.data.replace(/'/g, "\"").replace(/\\\"/g, '"'));
                 var cloudEventData = eventData.cloudevent;
+
+                if (typeof cloudEventData.data === 'object') {
+                    if (Object.keys(cloudEventData.data).length == 1 && cloudEventData.data.hasOwnProperty('error')) {
+                        hasError = "backend-error";
+                    }
+                }
+
             } catch (error) {
                 // Simulate a Validation Error for now
-                hasError = true;
+                hasError = "parse-error";
                 var result = {
                     "detail": [
                         {
                             "loc": ["event.data"], 
-                            "msg": "Event data is not valid JSON!", 
+                            "msg": "Event data is not valid JSON, maybe a JSON object encoded as a String, or including single quotes somewhere?", 
                             "type": "JSON.parse"
                         }
                     ]
@@ -199,15 +226,16 @@ export const sseEventsController = (() => {
         handleConnectionStatus("newtimer");
 
         // Keep the stack to its max-size ??? > eventsCount
-        if (eventsStack.childElementCount > eventsCount) {
+        if (eventsStack.childElementCount > maxQueueSize) {
             let lastEvent = eventsStack.lastChild;
             eventsStack.removeChild(lastEvent);
         }
     };
     
-    const init = () => {
+    const init = (queueSize) => {
         var eventSource = new EventSource(sseEventPath);
-        
+        maxQueueSize = parseInt(queueSize);
+
         eventSource.addEventListener('open', 
             handleConnectionStatus("open")
         );
@@ -223,6 +251,8 @@ export const sseEventsController = (() => {
         sseConnectionStatus.addEventListener('animationend', () => {
             sseConnectionStatus.classList.remove('glow', 'blink');
         });
+
+
     };
 
     return {

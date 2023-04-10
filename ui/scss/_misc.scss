@@ -1,37 +1,41 @@
 /* SCROLLBAR */
 /* width */
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 15px;
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
-    background: var(--lighter-background-color)
+    background: $gray-600;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-    background: var(--background-color)
+    background: $gray-900;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-color)
+    background: $primary;
 }
 
 /* Misc */
-.badge {
-    background-color: var(--primary-color);
-    color: var(--background-color);
-    padding: 0.07rem 0.1rem;
-    text-align: center;
-    border-radius: 5px;
-    margin: 0.4rem;
-}
+// .badge {
+//     background-color: var(--primary-color);
+//     color: var(--background-color);
+//     padding: 0.07rem 0.1rem;
+//     text-align: center;
+//     border-radius: 5px;
+//     margin: 0.4rem;
+// }
 
 .code {
     font-family: monospace;
-    background-color: var(--lighter-background-color);
+    display: inline-block;
+    background-color: $gray-500;
+    color: $gray-800;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 .blink {
@@ -68,5 +72,5 @@
 }
 
 .error {
-    background-color: var(--error-background-color);
+    background-color: rgba(128, 0, 0);
 }

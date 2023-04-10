@@ -1,24 +1,36 @@
 <!-- Modal -->
 <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
         <div class="modal-header">
         <h1 class="modal-title fs-5" id="helpModalLabel">Help and Usage</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-            <!-- <h3>Usage</h3> -->
-            <p class="lh-base">
-                This micro-app serves as a test subscriber for <a href="https://cloudevents.io/">CloudEvents</a>. 
-                It exposes a <span class="code">POST /events/pub</span> endpoint that Publishers can use to send events.
+            <h3 class="mb-3">Overview</h3>
+            <h4 class="mb-3">Event Subscriber (handle events)</h4>
+            <p class="lh-lg">
+                This micro-app serves as a test subscriber for <a href="https://cloudevents.io/">CloudEvents</a>: 
+                it displays CloudEvents on the UI as they are received on its <span class="code">POST /events/pub</span> endpoint.
                 Upon reception of a valid CloudEvent, the app distributes it to all browsers that are connected at that time, if any.
                 It can also generate test events and send them to the selected CloudEvent Gateway.
                 (Gateways can be added by Administrators with an Environment variable).
             </p>
-            <p class="lh-base mb-5">
-                Open the generator, select the localhost Gateway, and send an event. It will appear in the UI.
-                <br>
-                Select another Gateway, send an event, and if the event matches a subscription directed towards the CloudEvent Player, it should receive the event back.
+            <p class="lh-lg mb-5">
+                As a quick test: open the <a href="" data-bs-toggle="offcanvas" data-bs-target="#generatorPanel" aria-controls="generatorPanel">generator</a>, 
+                select the localhost Gateway, and send an event. It will appear in the UI.                
+            </p>
+            
+            <h4 class="mb-3">Event Publisher (emit events)</h4>
+            <p class="lh-lg">
+                The generator sends customized events to the selected Gateway. 
+                When clicking the "Send" button, the backend app starts a background task that generates the event 
+                with the selected parameters, including Source, Type, Subject and Data.
+                The Iteration parameter defines how many events are sent sequentially and
+                the Delay parameter defines how long the backend waits before running the next iteration.
+            </p>
+            <p class="lh-lg mb-5">
+                
             </p>
             
             <h3 class="mb-3">Connection Status</h3>
@@ -38,12 +50,12 @@
             <p>&nbsp;</p>
             <h3 class="mb-3">Settings</h3>
             <ul class="list-group">
-                <li class="list-group-item"><span class="badge">CTRL</span> or <span class="badge">META</span>+<span class="badge">UpArrow</span><span>Open the Generator</span></li>            
-                <li class="list-group-item"><span class="badge">Escape</span> or <span class="badge">META</span>+<span class="badge">UpDown</span><span>Close the Generator</span></li>            
-                <li class="list-group-item"><span class="badge">META</span>+<span class="badge">f</span><span>Focus/Unfocus on the Search/Filter box</span></li>
+                <li class="list-group-item"><span>TODO</span></li>                
+                <li class="list-group-item"><span>Enable local storage</span></li>                
             </ul>
         </div>
         <div class="modal-footer">
+        <a href="/api/docs" class="btn btn-primary" target="_blank">API Documentation</a>        
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>        
         </div>
     </div>

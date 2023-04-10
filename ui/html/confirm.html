@@ -1,11 +1,17 @@
-<div id="confirmModal" class="confirm-modal">
-    <div class="confirm-container">
-      <h1>Clear All Events?</h1>
-      <p>Are you sure you want to delete all events?</p>
-
-      <div class="clearfix">
-        <button type="button" class="cancelbtn" onclick="document.getElementById('confirmModal').style.display='none'" >Cancel</button>
-        <button type="button" id="confirmDeleteBtn" class="deletebtn">Delete</button>
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="confirmModalLabel">Clear All Events?</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete all events?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="deleteAllEventsBtn" class="btn btn-primary">Yes, delete all events</button>
       </div>
     </div>
+  </div>
 </div>
