@@ -124,7 +124,7 @@ export const sseEventsController = (() => {
         var eventCountSpan = document.getElementById('event-count');
         eventsCount++;
         eventCountSpan.innerHTML = eventsCount;
-        document.title = "CloudEvents Viewer (" + eventsCount + ")";
+        document.title = "CloudEvents Player (" + eventsCount + ")";
     };
 
     const handleConnectionStatus = (status) => {
