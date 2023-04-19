@@ -1,7 +1,19 @@
 # CHANGE LOG
 
-## WIP
+## CURRENT_CHANGES
 
+- 
+
+## 0.1.11
+
+- Added `publish.sh` script thanks to ChatGPT!
+- Fixed HTTP error handling when sending event to the gateway
+
+## 0.1.10
+
+- Fixed search form with preventDefault on submit event
+- Fixed wrong page title when event was received
+- Fixed validator to support optional charset in Header
 
 ## 0.1.9
 

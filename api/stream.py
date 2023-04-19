@@ -77,15 +77,26 @@ async def task_status_generator(task_id: str):
     try:
         if task_id in active_tasks:
             task = active_tasks[task_id]
-            while serialized_task := task.json():
+            if task.progress >= 0:
+                while serialized_task := task.json():
+                    yield {
+                        "data": serialized_task
+                    }
+                    await asyncio.sleep(0.25)
+                    if task_id in active_tasks:
+                        task = active_tasks[task_id]
+                    else:
+                        break
+            else:
+                # task.progress == -1 if there was an HTTP error code when sending the event
                 yield {
-                    "data": serialized_task
+                    "data": {
+                        "id": "Unknown",
+                        "status": "Errored when sending the event",
+                        "progress": -1,
+                        "client_id": "Unknown"
+                    }
                 }
-                await asyncio.sleep(0.25)
-                if task_id in active_tasks:
-                    task = active_tasks[task_id]
-                else:
-                    break
         else:
             yield {
                 "data": {
