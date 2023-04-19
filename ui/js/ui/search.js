@@ -19,6 +19,10 @@ export const searchController = (() => {
     const init = () => {
         var filterInput = document.getElementById('search-input');
         filterInput.addEventListener('keyup', onFilterInputChange);
+        var searchForm = document.getElementById('search-form');
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+        });
     };
 
 return {

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: cloudevent-player
-        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:0.1.9
+        image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -27,4 +27,4 @@ spec:
         - name: api_browser_queue_size
           value: "1000"
         - name: api_tag
-          value: "0.1.9"
+          value: "0.1.10"

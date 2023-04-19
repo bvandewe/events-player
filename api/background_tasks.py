@@ -20,6 +20,12 @@ from .models import EventGeneratorRequest, EventGeneratorTask
 log = logging.getLogger(__name__)
 
 
+class MyCustomException(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
 async def handle_event(payload: dict):
     try:
         print(f"Handling event to {len(sse_clients)} clients: {payload}")
@@ -52,23 +58,36 @@ async def handle_generator_request(generator_request: EventGeneratorRequest,
                 "data": data
             }
             log.debug(f"Event payload: {event}")
-            async with httpx.AsyncClient() as client:
-                response = await client.post(generator_request.event_gateway,
-                                             json=event,
-                                             headers={"Content-Type": "application/cloudevents+json"}
-                                             )
-                response.raise_for_status()
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(generator_request.event_gateway,
+                                                 json=event,
+                                                 headers={"Content-Type": "application/cloudevents+json"}
+                                                 )
+                    response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                active_tasks.pop(task.id)
+                message = f"HTTP error occurred: {exc}"
+                progress = -1
+                raise MyCustomException(message)
 
-            progress = round((i + 1) / int(generator_request.iterations) * 100)
+            else:
+                progress = round((i + 1) / int(generator_request.iterations) * 100)
+
             task.progress = progress
-            if progress < 100:
+            if progress > 0 and progress < 100:
                 task.status = "Running"
+            elif progress == -1:
+                break
             else:
                 task.status = "Completed"
 
             # Update current task progress
-            if task.id in active_tasks:
+            if task.id in active_tasks and task.progress >= 0:
                 active_tasks[task.id] = task
+            elif task.progress == -1:
+                active_tasks.pop(task.id)
+                raise Exception(f"Task {task.id} didnt complete or failed!")
             else:
                 raise Exception(f"Task {task.id} does not exist!")
 

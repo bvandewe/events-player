@@ -1,4 +1,3 @@
-import aioredis
 import logging
 import typing
 
