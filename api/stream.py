@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import logging
+import json
 
 from fastapi import (
     APIRouter,
@@ -27,7 +28,7 @@ async def build_sse_payload(payload: dict):
     time_str = now.strftime("%H:%M:%S.%f")
     timestamp = f"{date_str} at {time_str}"
     sse_event_payload = {}
-    sse_event_payload["time"] = timestamp
+    sse_event_payload["timed"] = timestamp
     sse_event_payload["cloudevent"] = payload
     return sse_event_payload
 

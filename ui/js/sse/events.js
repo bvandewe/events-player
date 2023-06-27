@@ -168,7 +168,14 @@ export const sseEventsController = (() => {
             var hasError = "none";
             try {
                 // Happy path: event.data is parseable
-                var eventData = JSON.parse(event.data.replace(/'/g, "\"").replace(/\\\"/g, '"'));
+                // var eventData = JSON.parse(event.data.replace(/'/g, "\"").replace(/\\\"/g, '"'));
+                var cleanedData = event.data.replace(/'/g, "\"")        //replace single-quotes to double-quotes
+                                    .replace(/\\\"/g, '"')          //replace escaped double-quotes to double-quotes
+                                    .replace(/True/g, 'true')       //replace (Python/Ruby?) boolean to JSON boolean
+                                    .replace(/False/g, 'false')     //replace (Python/Ruby?) boolean to JSON boolean
+                                    .replace(/None/g, 'null');       //replace (Python/Ruby?) None to String
+
+                var eventData = JSON.parse(cleanedData);
                 var cloudEventData = eventData.cloudevent;
 
                 if (typeof cloudEventData.data === 'object') {

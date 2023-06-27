@@ -4,6 +4,10 @@
 
 - 
 
+## 0.1.12
+
+- Fixed handling of Null, None, True and False values in JS
+
 ## 0.1.11
 
 - Added `publish.sh` script thanks to ChatGPT!
