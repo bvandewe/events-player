@@ -2,7 +2,7 @@
 
 ## CURRENT_CHANGES
 
-- 
+- Fixed eventData `pre-wrap` to avoid horizontal scrolling
 
 ## 0.1.12
 
