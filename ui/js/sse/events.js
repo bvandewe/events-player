@@ -11,6 +11,7 @@ export const sseEventsController = (() => {
     var sseConnectionTimer;
 
     const createAccordionItem = ({eventCount, timestamp, hasError, eventSource, eventType, eventData, eventId }) => {
+        console.log(`Rx event: ${eventType} from ${eventSource} at ${timestamp}`);
 
         // create the div element with class "accordion-item"
         const accordionItem = document.createElement('div');
@@ -36,7 +37,7 @@ export const sseEventsController = (() => {
 
         // create the second span element with classes "align-middle" and "text-secondary", and set its text content
         const span2 = document.createElement('span');
-        span2.classList.add('align-middle', 'text-secondary');
+        span2.classList.add('align-middle', 'text-secondary', 'event-timestamp');
         span2.textContent = `${timestamp}`;
         
         // create the badge element with class "bg-info ms-2", and set its text content
@@ -212,7 +213,7 @@ export const sseEventsController = (() => {
             const uuid = uuidv4();
             var accordionData = {
                 eventCount: eventsCount,
-                timestamp: eventData.time,
+                timestamp: cloudEventData.time,
                 hasError: hasError,
                 eventSource: cloudEventData.source,
                 eventType: cloudEventData.type,
