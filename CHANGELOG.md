@@ -4,6 +4,10 @@
 
 - 
 
+## 0.1.14
+
+- Fixed event timestamp in UI
+
 ## 0.1.13
 
 - Fixed eventData `pre-wrap` to avoid horizontal scrolling
