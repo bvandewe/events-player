@@ -7,7 +7,7 @@ services:
     ports:
       - 8884:80
     environment:
-      api_tag: "0.1.13"
+      api_tag: "0.1.14"
       api_repository_url: "https://ccie-gitlab.ccie.cisco.com/mozart/infrastructure/eventing/cloudevent-player"
       api_log_level: DEBUG
       api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
