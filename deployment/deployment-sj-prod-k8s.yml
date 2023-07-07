@@ -1,32 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: lds-events
+  name: cloudevent-player
   namespace: mozart
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: lds-events
+      app: cloudevent-player
       version: v1
   template:
     metadata:
       labels:
-        app: lds-events
+        app: cloudevent-player
         version: v1
     spec:
       containers:
-      - name: lds-events
+      - name: cloudevent-player
         image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
         env:
         - name: api_default_generator_gateways
-          value: '{"urls": ["http://localhost/events/pub", "http://k.ccie.cisco.com:32051/events/pub"]}'
+          value: '{"urls": ["http://localhost/events/pub", "http://sj-k.ccie.cisco.com:32051/events/pub", "https://events-player.sj-k.ccie.cisco.com/events/pub", "https://ccie360-events.sj-k.ccie.cisco.com/events/pub", "https://lds-events.sj-k.ccie.cisco.com/events/pub"]}'
         - name: api_browser_queue_size
           value: "1000"
         - name: api_tag
           value: "0.1.14"
-        - name: api_default_generator_event
-          value: '{"event_source": "https://dummy-portal.ccie.cisco.com", "event_type":"com.cisco.certs.lds.test.requested.v1"}'

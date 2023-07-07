@@ -27,4 +27,4 @@ spec:
         - name: api_browser_queue_size
           value: "1000"
         - name: api_tag
-          value: "0.1.13"
+          value: "0.1.14"
