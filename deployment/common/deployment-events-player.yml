@@ -25,6 +25,8 @@ spec:
         - name: api_default_generator_gateways
           value: '{"urls": ["http://localhost/events/pub", "http://k.ccie.cisco.com:32051/events/pub", "http://sj-k.ccie.cisco.com:32051/events/pub", "http://aws-k.ccie.cisco.com:32051/events/pub", "https://events-player.k.ccie.cisco.com/events/pub", "https://events-player.sj-k.ccie.cisco.com/events/pub", "https://events-player.aws-k.certs.cloud/events/pub", "https://ccie360-events.k.ccie.cisco.com/events/pub", "https://lds-events.k.ccie.cisco.com/events/pub"]}'
         - name: api_browser_queue_size
-          value: "1000"
+          value: "1500"
         - name: api_tag
           value: "0.1.14"
+        - name: api_default_generator_event
+          value: '{"event_source": "https://dummy-source.ccie.cisco.com", "event_type":"com.cisco.certs.dummy.test.requested.v1"}'
