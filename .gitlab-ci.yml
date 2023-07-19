@@ -48,7 +48,7 @@ delete-dev-k8s:
   script: 
     - *k8s_delete
   only:
-    - master
+    - main
 
 
 ### Stage DEPLOY
