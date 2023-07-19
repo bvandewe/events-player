@@ -29,4 +29,4 @@ spec:
         - name: api_tag
           value: "0.1.14"
         - name: api_default_generator_event
-          value: '{"event_source": "https://dummy-portal.ccie.cisco.com", "event_type":"com.cisco.certs.lds.test.requested.v1"}'
+          value: '{"event_source": "https://dummy-lds.certs.cisco.com", "event_type":"com.cisco.certs.lds.test.requested.v1"}'
