@@ -49,3 +49,10 @@ docker tag cloudevent-player:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infra
 docker tag cloudevent-player:latest ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:latest
 docker push ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:$TAG
 docker push ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player:latest
+
+
+# docker login gitlab.aws-k.certs.cloud
+# docker tag cloudevent-player:latest gitlab-registry.internal.certs.cloud/mozart/infrastructure/eventing/cloudevent-player:$TAG
+# docker tag cloudevent-player:latest gitlab-registry.internal.certs.cloud/mozart/infrastructure/eventing/cloudevent-player:latest
+# docker tag cloudevent-player:latest gitlab.aws-k.certs.cloud/mozart/infrastructure/eventing/cloudevent-player:latest
+# docker push gitlab.aws-k.certs.cloud/mozart/infrastructure/eventing/cloudevent-player
