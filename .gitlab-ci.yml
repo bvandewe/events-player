@@ -46,7 +46,7 @@ deploy-dev-k8s:
   - *k8s_deploy_common
   - *k8s_deploy_specific
   only:
-    - master
+    - main
 
 deploy-sj-prod-k8s:
   when: manual
@@ -61,7 +61,7 @@ deploy-sj-prod-k8s:
   - *k8s_deploy_common
   - *k8s_deploy_specific
   only:
-    - master
+    - main
 
 deploy-aws-prod-k8s:
   when: manual
@@ -76,4 +76,4 @@ deploy-aws-prod-k8s:
   - *k8s_deploy_common
   - *k8s_deploy_specific
   only:
-    - master
+    - main
