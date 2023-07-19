@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Make app and page title configurable from ENV VARs
 - [x] Add feedback about the background task(s) progress and status
 - [x] Add version/tag in UI
 - [x] Use FastAPI built-in SSEEvent
