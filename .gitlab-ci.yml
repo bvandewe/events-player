@@ -36,6 +36,7 @@ check-aws-gitlab-repo:
 
 ### Stage DEPLOY
 deploy-dev-k8s:
+  when: manual
   variables:
     K8S_ENV: dev-k8s
     kube_config: $kube_config_gitlab_cicd_ns_mozart_dev_k8s
