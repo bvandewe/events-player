@@ -3,29 +3,31 @@ image: bitnami/kubectl:1.22.3
 
 ## Scripts
 # Define the script as a YAML anchor
-.k8s_deploy_template: &k8s_deploy_common
+.k8s_delete: &k8s_delete
+    - echo "$kube_config" > /tmp/kube_config
+    - export KUBECONFIG=/tmp/kube_config
+    - cd ${CI_PROJECT_DIR}/deployment
+    - kubectl delete -f common/
+    - kubectl delete -f $K8S_ENV/
+
+.k8s_deploy_template: &k8s_deploy
     - echo "$kube_config" > /tmp/kube_config
     - export KUBECONFIG=/tmp/kube_config
     - kubectl version --client
     - cd ${CI_PROJECT_DIR}/deployment
     - kubectl apply -f common/
-
-.k8s_deploy: &k8s_deploy_specific
-    # - echo "$kube_config" > /tmp/kube_config
-    # - export KUBECONFIG=/tmp/kube_config
     - kubectl apply -f $K8S_ENV/
-    - kubectl get pod -n mozart
 
 ## The pipeline stages
 stages:
   - test
+  - delete
   - deploy
 
 ## The Jobs
 
 ### Stage TEST
 check-aws-gitlab-repo:
-  when: manual
   stage: test
   image: python
   tags:
@@ -33,6 +35,21 @@ check-aws-gitlab-repo:
   script:
     - pip install httpx
     - /cache/ccie-gitlab-runner-tools/create-gitlab-repo.py $aws_gitlab_url ${CI_PROJECT_PATH} $aws_gitlab_token
+
+delete-dev-k8s:
+  when: manual
+  variables:
+    K8S_ENV: dev-k8s
+    kube_config: $kube_config_gitlab_cicd_ns_mozart_dev_k8s
+  tags:
+    - mozart-k8s-runner
+  image: bitnami/kubectl:1.22.3
+  stage: delete
+  script: 
+    - *k8s_delete
+  only:
+    - master
+
 
 ### Stage DEPLOY
 deploy-dev-k8s:
@@ -45,8 +62,7 @@ deploy-dev-k8s:
   image: bitnami/kubectl:1.22.3
   stage: deploy
   script:
-  - *k8s_deploy_common
-  - *k8s_deploy_specific
+    - *k8s_deploy
   only:
     - main
 
@@ -60,8 +76,7 @@ deploy-sj-prod-k8s:
   image: bitnami/kubectl:1.22.3
   stage: deploy
   script:
-  - *k8s_deploy_common
-  - *k8s_deploy_specific
+    - *k8s_deploy
   only:
     - main
 
@@ -75,7 +90,6 @@ deploy-aws-prod-k8s:
   image: bitnami/kubectl:1.22.3
   stage: deploy
   script:
-  - *k8s_deploy_common
-  - *k8s_deploy_specific
+    - *k8s_deploy
   only:
     - main
