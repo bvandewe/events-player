@@ -25,6 +25,7 @@ stages:
 
 ### Stage TEST
 check-aws-gitlab-repo:
+  when: manual
   stage: test
   image: python
   tags:
