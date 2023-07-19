@@ -1,0 +1,15 @@
+apiVersion: eventing.mozart.cisco.com/v1alpha1
+kind: Subscription
+metadata:
+  name: events-player
+  namespace: mozart
+spec:
+  channel: kafka
+  filter:
+    attributes:
+      type: com.cisco.*
+  stream:
+    isDurable: true
+  subscribers:
+    - mode: unicast
+      url: https://events-player.sj-k.ccie.cisco.com/events/pub

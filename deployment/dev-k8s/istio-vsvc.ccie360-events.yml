@@ -1,7 +1,7 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: debug-ccie360
+  name: ccie360-events
   namespace: mozart
 spec:
   gateways:
