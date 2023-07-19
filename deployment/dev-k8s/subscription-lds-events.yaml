@@ -1,0 +1,15 @@
+apiVersion: eventing.mozart.cisco.com/v1alpha1
+kind: Subscription
+metadata:
+  name: lds-events
+  namespace: mozart
+spec:
+  channel: kafka
+  filter: 
+    attributes:
+      type: "com.cisco.certs.lds.*"
+  stream: 
+    isDurable: true
+  subscribers:
+    - mode: unicast
+      url: https://lds-events.k.ccie.cisco.com/events/pub
