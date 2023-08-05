@@ -35,6 +35,8 @@ check-aws-gitlab-repo:
   script:
     - pip install httpx
     - /cache/ccie-gitlab-runner-tools/create-gitlab-repo.py $aws_gitlab_url ${CI_PROJECT_PATH} $aws_gitlab_token
+  only:
+    - tags
 
 ### Stage BUILD
 docker-publish:
@@ -47,7 +49,8 @@ docker-publish:
   script:
     - docker build -t cloudevent-player:latest .
     - docker tag cloudevent-player:latest cloudevent-player:$CI_COMMIT_TAG
-    - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/cloudevent-player --all-tags
+    - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/cloudevent-player:latest
+    - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/cloudevent-player:$CI_COMMIT_TAG
     # push to aws-gitlab
     - docker login -u $aws_gitlab_username -p $aws_gitlab_token $aws_gitlab_registry
     - docker tag $CI_REGISTRY/$CI_PROJECT_PATH/cloudevent-player:latest $aws_gitlab_registry/${CI_PROJECT_PATH}/cloudevent-player:latest
