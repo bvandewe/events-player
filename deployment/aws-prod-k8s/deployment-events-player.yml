@@ -27,6 +27,6 @@ spec:
         - name: api_browser_queue_size
           value: "1500"
         - name: api_tag
-          value: "0.1.14"
+          value: "0.1.15"
         - name: api_default_generator_event
           value: '{"event_source": "https://dummy-source.ccie.cisco.com", "event_type":"com.cisco.certs.dummy.test.requested.v1"}'
