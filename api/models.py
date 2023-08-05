@@ -11,22 +11,22 @@ class EventGeneratorRequest(BaseModel):
     iterations: int = 1
     delay: int = 100
 
-    @validator('iterations')
+    @validator("iterations")
     def check_positive_iterations(cls, value):
         int_value = int(value)
         if int_value < 0:
-            raise ValueError('Iterations value must be a positive integer')
+            raise ValueError("Iterations value must be a positive integer")
         return int_value
 
-    @validator('delay')
+    @validator("delay")
     def check_positive_delay(cls, value):
         int_value = int(value)
         if int_value < 0:
-            raise ValueError('Delay value must be a positive integer')
+            raise ValueError("Delay value must be a positive integer")
         return int_value
 
     class Config:
-        extra = 'forbid'
+        extra = "forbid"
 
 
 class EventGeneratorTask(BaseModel):

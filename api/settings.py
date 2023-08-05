@@ -4,7 +4,8 @@ from pydantic import BaseSettings, BaseModel, SecretStr, AnyUrl
 
 class DefaultGateways(BaseModel):
     urls: typing.List[AnyUrl] = [
-        AnyUrl(url="http://localhost/events/pub", scheme="http")]
+        AnyUrl(url="http://localhost/events/pub", scheme="http")
+    ]
 
 
 class DefaultEvent(BaseModel):
@@ -29,9 +30,11 @@ class ApiSettings(BaseSettings):
 
     class Config:
         # .env file must be present in parent directory when starting the app from uvicorn
-        env_prefix = 'api_'  # all names must start with this in env. or docker-compose!
-        env_file = '.env', '.env.prod'
-        env_file_encoding = 'utf-8'  # just to be safe, depending on who checks out the repo...
+        env_prefix = "api_"  # all names must start with this in env. or docker-compose!
+        env_file = ".env", ".env.prod"
+        env_file_encoding = (
+            "utf-8"  # just to be safe, depending on who checks out the repo...
+        )
         case_sensitive = False
 
 

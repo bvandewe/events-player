@@ -3,16 +3,10 @@ import datetime
 import logging
 import json
 
-from fastapi import (
-    APIRouter,
-    Request
-)
+from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse
 
-from .globals import (
-    sse_clients,
-    active_tasks
-)
+from .globals import sse_clients, active_tasks
 from .constants import MAX_QUEUE_SIZE
 
 
@@ -47,9 +41,7 @@ async def event_generator(client_id: str | None, request: Request):
                     break
                 else:
                     sse_message_payload = await build_sse_payload(sse_message_payload)
-                    yield {
-                        "data": sse_message_payload
-                    }
+                    yield {"data": sse_message_payload}
                 await asyncio.sleep(0.05)
 
         except Exception as e:
@@ -61,9 +53,11 @@ async def event_generator(client_id: str | None, request: Request):
 
 
 # Stream events
-@router.get(path="/stream/events",
-            tags=['Server Sent Event (SSE) Stream'],
-            operation_id="sse_stream")
+@router.get(
+    path="/stream/events",
+    tags=["Server Sent Event (SSE) Stream"],
+    operation_id="sse_stream",
+)
 async def sse_stream(request: Request):
     client_id = None
     if request.client:
@@ -80,9 +74,7 @@ async def task_status_generator(task_id: str):
             task = active_tasks[task_id]
             if task.progress >= 0:
                 while serialized_task := task.json():
-                    yield {
-                        "data": serialized_task
-                    }
+                    yield {"data": serialized_task}
                     await asyncio.sleep(0.25)
                     if task_id in active_tasks:
                         task = active_tasks[task_id]
@@ -95,7 +87,7 @@ async def task_status_generator(task_id: str):
                         "id": "Unknown",
                         "status": "Errored when sending the event",
                         "progress": -1,
-                        "client_id": "Unknown"
+                        "client_id": "Unknown",
                     }
                 }
         else:
@@ -104,7 +96,7 @@ async def task_status_generator(task_id: str):
                     "id": "Unknown",
                     "status": "Unknown or Complete",
                     "progress": -1,
-                    "client_id": "Unknown"
+                    "client_id": "Unknown",
                 }
             }
 
@@ -113,9 +105,11 @@ async def task_status_generator(task_id: str):
 
 
 # Stream Task status
-@router.get(path="/stream/task/{task_id}",
-            tags=['Server Sent Event (SSE) Stream'],
-            operation_id="get_task_status")
+@router.get(
+    path="/stream/task/{task_id}",
+    tags=["Server Sent Event (SSE) Stream"],
+    operation_id="get_task_status",
+)
 def get_task(request: Request, task_id: str):
     client_id = f"{request.client.host}:{request.client.port}"
     log.info(f"New SSE client for /stream/task/{task_id}: {client_id}")
