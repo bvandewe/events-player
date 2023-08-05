@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: events-player
-        image: gitlab-registry.internal.certs.cloud/mozart/infrastructure/eventing/cloudevent-player:latest
+        image: gitlab-registry.internal.certs.cloud/mozart/infrastructure/eventing/cloudevent-player/cloudevent-player:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
