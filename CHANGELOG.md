@@ -4,6 +4,10 @@
 
 - 
 
+## 0.1.15
+
+- Fixed formatting, added push for AWS
+
 ## 0.1.14
 
 - Fixed event timestamp in UI
