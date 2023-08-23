@@ -23,6 +23,7 @@ async def build_sse_payload(payload: dict):
     timestamp = f"{date_str} at {time_str}"
     sse_event_payload = {}
     sse_event_payload["timed"] = timestamp
+    # sse_event_payload["cloudevent"] = json.dumps(payload)
     sse_event_payload["cloudevent"] = payload
     return sse_event_payload
 

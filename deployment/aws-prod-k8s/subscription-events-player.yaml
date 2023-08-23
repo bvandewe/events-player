@@ -12,4 +12,4 @@ spec:
     isDurable: true
   subscribers:
     - mode: unicast
-      url: https://events-player.aws-k.certs.cloud/events/pub
+      url: https://events-player.expert.certs.cloud/events/pub
