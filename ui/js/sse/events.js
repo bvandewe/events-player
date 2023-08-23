@@ -1,8 +1,8 @@
-import {toastController} from "../ui/toast";
+import { toastController } from "../ui/toast";
 import { v4 as uuidv4 } from 'uuid';
 
 export const sseEventsController = (() => {
-    
+
     const sseEventPath = '/stream/events';
     var sseConnectionStatus = document.getElementById('connectionStatusIndicator');
     var eventsStack = document.getElementById('events-stack');
@@ -10,7 +10,7 @@ export const sseEventsController = (() => {
     var maxQueueSize = 0;
     var sseConnectionTimer;
 
-    const createAccordionItem = ({eventCount, timestamp, hasError, eventSource, eventType, eventData, eventId }) => {
+    const createAccordionItem = ({ eventCount, timestamp, hasError, eventSource, eventType, eventData, eventId }) => {
         console.log(`Rx event: ${eventType} from ${eventSource} at ${timestamp}`);
 
         // create the div element with class "accordion-item"
@@ -39,31 +39,31 @@ export const sseEventsController = (() => {
         const span2 = document.createElement('span');
         span2.classList.add('align-middle', 'text-secondary', 'event-timestamp');
         span2.textContent = `${timestamp}`;
-        
+
         // create the badge element with class "bg-info ms-2", and set its text content
         var badgeText;
         var badgeColor;
 
         switch (hasError) {
-            case "none": 
+            case "none":
                 badgeText = "Plain JSON";
                 badgeColor = "success";
-            break;
+                break;
 
             case "backend-error":
                 badgeText = "Invalid JSON";
                 badgeColor = "danger";
-            break;
+                break;
 
             case "parse-error":
                 badgeText = "Escaped JSON";
                 badgeColor = "warning";
-            break;
+                break;
 
             default:
-            break;
+                break;
         }
-        
+
         const badge = document.createElement('span');
         badge.classList.add('badge', `text-bg-${badgeColor}`, 'ms-2', 'p-1');
         badge.textContent = badgeText;
@@ -106,7 +106,7 @@ export const sseEventsController = (() => {
         const accordionBody = document.createElement('div');
         accordionBody.classList.add('accordion-body', 'eventData');
         accordionBody.textContent = JSON.stringify(eventData, null, 2);
-        
+
         // append the accordionBody element to the accordionCollapse element
         accordionCollapse.appendChild(accordionBody);
 
@@ -133,15 +133,15 @@ export const sseEventsController = (() => {
             case "open":
                 console.log("Connection opened");
                 sseConnectionStatus.style.backgroundColor = "green";
-                sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");        
-            case "connect": 
-                sseConnectionStatus.style.backgroundColor = "#4DCEF3" ;
-                sseConnectionStatus.style.color = "#1a1d20" ;
+                sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
+            case "connect":
+                sseConnectionStatus.style.backgroundColor = "#4DCEF3";
+                sseConnectionStatus.style.color = "#1a1d20";
                 sseConnectionStatus.classList.add('glow');
                 sseConnectionStatus.classList.remove('blink');
-                sseConnectionStatus.setAttribute("title", "Connected - happy to see some traffic here!");    
+                sseConnectionStatus.setAttribute("title", "Connected - happy to see some traffic here!");
                 break;
-            case "error": 
+            case "error":
                 console.log("Connection error");
                 sseConnectionStatus.style.backgroundColor = "#800000";
                 sseConnectionStatus.style.color = "#FFF";
@@ -153,7 +153,7 @@ export const sseEventsController = (() => {
                 sseConnectionTimer = setTimeout(() => {
                     sseConnectionStatus.style.backgroundColor = "green";
                     sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
-                  }, 10000);
+                }, 10000);
                 break;
             case "cleartimer":
                 clearTimeout(sseConnectionTimer);
@@ -161,22 +161,25 @@ export const sseEventsController = (() => {
             default:
                 break;
         }
-        
+
     };
 
     const handleNewEvent = (event) => {
-        if ("data" in event){
+        if ("data" in event) {
             var hasError = "none";
             try {
                 // Happy path: event.data is parseable
-                // var eventData = JSON.parse(event.data.replace(/'/g, "\"").replace(/\\\"/g, '"'));
-                var cleanedData = event.data.replace(/'/g, "\"")        //replace single-quotes to double-quotes
-                                    .replace(/\\\"/g, '"')          //replace escaped double-quotes to double-quotes
-                                    .replace(/True/g, 'true')       //replace (Python/Ruby?) boolean to JSON boolean
-                                    .replace(/False/g, 'false')     //replace (Python/Ruby?) boolean to JSON boolean
-                                    .replace(/None/g, 'null');       //replace (Python/Ruby?) None to String
+                // Example event.data with single quote:
+                //   "{'timed': '2023-08-23 at 07:14:52.277365', 'cloudevent': {'specversion': '1.0', 'id': 'd1ca5fc6-68b8-45d2-9151-2f066abc017e', 'time': '2023-08-23T07:14:52.233089', 'datacontenttype': 'application/json', 'type': 'com.source.dummy.test.requested.v1', 'source': 'https://dummy.source.com/sys-admin', 'subject': '', 'data': {'foo': "bar 'test'"}}}"
+                var eventData = JSON.parse(event.data.replace(/'/g, "\"").replace(/\\\"/g, '"'));  // < shouldnt be required
+                var cleanedData = event.data.replace(/'/g, "\"")        //replace single-quotes to double-quotes < shouldnt be required
+                    .replace(/\\\"/g, '"')          //replace escaped double-quotes to double-quotes < shouldnt be required
+                    .replace(/True/g, 'true')       //replace (Python/Ruby?) boolean to JSON boolean < shouldnt be required
+                    .replace(/False/g, 'false')     //replace (Python/Ruby?) boolean to JSON boolean < shouldnt be required
+                    .replace(/None/g, 'null');       //replace (Python/Ruby?) None to String < shouldnt be required
 
                 var eventData = JSON.parse(cleanedData);
+                // var eventData = JSON.parse(event.data);
                 var cloudEventData = eventData.cloudevent;
 
                 if (typeof cloudEventData.data === 'object') {
@@ -186,13 +189,13 @@ export const sseEventsController = (() => {
                 }
 
             } catch (error) {
-                // Simulate a Validation Error for now
+                // error = SyntaxError: Expected ',' or '}' after property value in JSON at position 334 at JSON.parse ...
                 hasError = "parse-error";
                 var result = {
                     "detail": [
                         {
-                            "loc": ["event.data"], 
-                            "msg": "Event data is not valid JSON, maybe a JSON object encoded as a String, or including single quotes somewhere?", 
+                            "loc": ["event.data"],
+                            "msg": "Event data is not valid JSON, maybe a JSON object encoded as a String, or including single or double quotes somewhere?",
                             "type": "JSON.parse"
                         }
                     ]
@@ -224,7 +227,7 @@ export const sseEventsController = (() => {
             eventsStack.prepend(item);
         }
     };
-    
+
     const handleSseEvent = (event) => {
         console.log(event);
         incrementEventsCount();
@@ -239,20 +242,20 @@ export const sseEventsController = (() => {
             eventsStack.removeChild(lastEvent);
         }
     };
-    
+
     const init = (queueSize) => {
         var eventSource = new EventSource(sseEventPath);
         maxQueueSize = parseInt(queueSize);
 
-        eventSource.addEventListener('open', 
+        eventSource.addEventListener('open',
             handleConnectionStatus("open")
         );
-        
+
         eventSource.addEventListener('message', (event) => {
             handleSseEvent(event)
         });
-        
-        eventSource.addEventListener('error', 
+
+        eventSource.addEventListener('error',
             handleConnectionStatus("error")
         );
 
