@@ -2,8 +2,6 @@ name: subscribers
 services:
   # http://localhost:8884
   event-player:
-    # image: cloudevent-player:latest
-    # image: ghcr.io/bvandewe/cloudevents-player:0.1.15
     image: ghcr.io/bvandewe/cloudevents-player:latest
     ports:
       - 8884:80
