@@ -38,8 +38,9 @@ check-aws-gitlab-repo:
   only:
     - tags
 
-### Stage BUILD
-docker-publish:
+# Trigger CI to: (build the image + tag it + push it to Gitlab' Registry)
+# whenever a new Tag is created in any branch
+publish-job:
   stage: publish
   image: docker:git
   services:
@@ -47,18 +48,13 @@ docker-publish:
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
-    - docker build -t cloudevent-player:latest .
-    - docker build --build-arg CI_JOB_TOKEN=${CI_JOB_TOKEN} -f ./Dockerfile -t $CI_REGISTRY/$CI_PROJECT_PATH/cloudevent-player:latest -t $CI_REGISTRY/$CI_PROJECT_PATH/cloudevent-player:$CI_COMMIT_TAG .
-    - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/cloudevent-player:latest
-    - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/cloudevent-player:$CI_COMMIT_TAG
-    # push to aws-gitlab
-    - docker login -u $aws_gitlab_username -p $aws_gitlab_token $aws_gitlab_registry
-    - docker tag $CI_REGISTRY/$CI_PROJECT_PATH/cloudevent-player:latest $aws_gitlab_registry/${CI_PROJECT_PATH}/cloudevent-player:latest
-    - docker tag $CI_REGISTRY/$CI_PROJECT_PATH/cloudevent-player:$CI_COMMIT_TAG $aws_gitlab_registry/${CI_PROJECT_PATH}/cloudevent-player:$CI_COMMIT_TAG
-    - docker push $aws_gitlab_registry/${CI_PROJECT_PATH}/cloudevent-player:latest
-    - docker push $aws_gitlab_registry/${CI_PROJECT_PATH}/cloudevent-player:$CI_COMMIT_TAG
-  after_script:
-    - docker logout $CI_REGISTRY
+    - echo "Publishing the container image with the tag '$CI_COMMIT_TAG'"
+    - docker build -f Dockerfile -t $CI_PROJECT_NAME:$CI_COMMIT_TAG .
+    - docker tag $CI_PROJECT_NAME:$CI_COMMIT_TAG $CI_REGISTRY/$CI_PROJECT_PATH/$CI_PROJECT_NAME:$CI_COMMIT_TAG
+    - docker tag $CI_PROJECT_NAME:$CI_COMMIT_TAG $CI_REGISTRY/$CI_PROJECT_PATH/$CI_PROJECT_NAME:latest
+    - docker tag $CI_PROJECT_NAME:$CI_COMMIT_TAG $CI_PROJECT_NAME:latest
+    - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}:latest
+    - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}:$CI_COMMIT_TAG
   only:
     - tags
 
