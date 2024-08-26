@@ -55,27 +55,3 @@ The SSE stream can be accessed at `/stream` using a browser or any SSE client. T
 
 The debugger fails with vscode v1.75 (currently the latest version).
 Have to downgrade to 1.74: https://code.visualstudio.com/updates/v1_74 Then, disable automatic updates (settings > 'update': set to "none")
-
-### Cheat Sheet
-
-```sh
-# Update CHANGELOG.md !!
-
-# Upgrade Version
-TAG="0.1.10"
-
-# Build locally
-docker build -t cloudevent-player:latest .
-docker tag cloudevent-player:latest cloudevent-player:$TAG
-
-# Run locally
-docker run --name cloudevent-player -p 8888:80 cloudevent-player:$TAG
-
-# Publish to Registry
-docker login $REGISTRY
-docker tag cloudevent-player:latest $REGISTRY/cloudevent-player:$TAG
-docker tag cloudevent-player:latest $REGISTRY/cloudevent-player:latest
-docker push $REGISTRY/cloudevent-player:$TAG
-docker push $REGISTRY/cloudevent-player:latest
-
-```
