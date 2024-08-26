@@ -4,11 +4,32 @@ This micro-app can be used as a test **subscriber** and/or test **emitter** of [
 
 It is very useful in an event-driven architecture in order to monitor events and test subscriptions.
 
+## Getting Started
+
+Run two instances locally and send events between each other:
+
+```mermaid
+flowchart LR
+    A((player:8080)) -->|emits|B((player:8081))
+    B -->|emits|A
+
+```
+
+```sh
+# http://localhost:8080
+docker run -d --rm -it -p 8080:80 -e api_default_generator_gateways='{"urls": ["http://localhost/events/pub", "http://host.docker.internal:8080/events/pub", "http://host.docker.internal:8081/events/pub"]}' ghcr.io/bvandewe/events-player:latest
+
+# http://localhost:8081
+docker run -d --rm -it -p 8081:80 -e api_default_generator_gateways='{"urls": ["http://localhost/events/pub", "http://host.docker.internal:8080/events/pub", "http://host.docker.internal:8081/events/pub"]}' ghcr.io/bvandewe/events-player:latest
+
+```
+
+![Demo](assets/cloudevent-player_demo_0.2.gif)
+
 The app provides a web-based interface that enables users to visualize events as they are received on the `POST /events/pub` endpoint. The UI provides simple web-form that enables users to generate event(s) and emit/transmit them to a selected customizable event gateway.
 
 It can very easily be deployed locally (included in a `docker-compose` file) or remotely (in Kubernetes or Docker) and may be configured as a subscriber to an event channel (like [Cloud Streams](https://github.com/neuroglia-io/cloud-streams)).
 
-![Demo](assets/cloudevent-player_demo_0.1.gif)
 
 ## Limitations
 
