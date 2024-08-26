@@ -2,7 +2,9 @@
 
 ## CURRENT_CHANGES
 
-- 
+## 0.1.16
+
+- Added publishing for ghcr.io
 
 ## 0.1.15
 
