@@ -11,27 +11,22 @@
 TAG="0.1.15"
 
 # Build locally
-docker build -t cloudevent-player:latest .
-docker tag cloudevent-player:latest cloudevent-player:$TAG
+docker build -t event-player:latest .
+docker tag event-player:latest event-player:$TAG
+docker tag event-player:latest  ghcr.io/bvandewe/events-player:$TAG
+docker tag event-player:latest  ghcr.io/bvandewe/events-player:latest
 
+# Run two instances locally:
 
-# Run locally
-docker run --name cloudevent-player -p 8888:80 cloudevent-player:$TAG
-docker run --rm -it -p 8080:80 ghcr.io/bvandewe/cloudevents-player:latest
-
-# Open local WebUI
 # http://localhost:8080
+docker run -d --rm -it -p 8080:80 -e api_default_generator_gateways='{"urls": ["http://localhost/events/pub", "http://host.docker.internal:8081/events/pub"]}' ghcr.io/bvandewe/events-player:latest
+
+# http://localhost:8081
+docker run -d --rm -it -p 8081:80 -e api_default_generator_gateways='{"urls": ["http://localhost/events/pub", "http://host.docker.internal:8081/events/pub"]}' ghcr.io/bvandewe/events-player:latest
 
 # Push to Github Registry
 docker login ghcr.io
-docker tag cloudevent-player:latest  ghcr.io/bvandewe/cloudevents-player:latest
-docker push ghcr.io/bvandewe/cloudevents-player:latest
-
-# Push to Gitlab Registry
-docker login $REGISTRY
-docker tag cloudevent-player:latest $REGISTRY/cloudevent-player:$TAG
-docker tag cloudevent-player:latest $REGISTRY/cloudevent-player:latest
-docker push $REGISTRY/cloudevent-player:$TAG
-docker push $REGISTRY/cloudevent-player:latest
+docker tag event-player:latest  ghcr.io/bvandewe/events-player:latest
+docker push ghcr.io/bvandewe/events-player:latest
 
 ```
