@@ -1,0 +1,23 @@
+name: subscribers
+services:
+  # http://localhost:8884
+  event-player:
+    image: event-player
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      [
+        "sh",
+        "-c",
+        "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m uvicorn api.app:app --host 0.0.0.0 --port 80 --reload",
+      ]
+    ports:
+      - 8884:80
+      - 5675:5678  # Configure in .vscode/launch.json for Vscode Remote Debugger
+    environment:
+      api_log_level: DEBUG
+      api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://host.docker.internal:8884/events/pub", "http://event-player/events/pub"]}'
+      # api_tag: "0.1.15"
+      # api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      # api_browser_queue_size: 1000
