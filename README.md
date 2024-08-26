@@ -40,12 +40,12 @@ The SSE stream can be accessed at `/stream` using a browser or any SSE client. T
 1. Pull and run the Docker image:
 
     ```sh
-    docker run --name cloudevent-viewer -p 8888:80 $REGISTRY/cloudevent-viewer:latest
+    docker run --rm -it -p 8080:80 ghcr.io/bvandewe/cloudevents-player:latest
     ```
 
-2. Browse to http://localhost:8888
+2. Browse to http://localhost:8080
 
-3. Emit Cloudevent to http://localhost:8888/events/pub
+3. Emit Cloudevent to http://localhost:8080/events/pub
 
 4. Enjoy!
 

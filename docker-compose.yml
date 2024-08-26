@@ -1,16 +1,15 @@
-version: '3.4'
-
 name: subscribers
 services:
+  # http://localhost:8884
   event-player:
     # image: cloudevent-player:latest
-    image: ghcr.io/bvandewe/cloudevents-player:0.1.15
+    # image: ghcr.io/bvandewe/cloudevents-player:0.1.15
+    image: ghcr.io/bvandewe/cloudevents-player:latest
     ports:
       - 8884:80
     environment:
-      api_tag: "0.1.15"
-      api_repository_url: "https://github.com/bvandewe/cloudevents-player"
       api_log_level: DEBUG
-      api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-      api_default_generator_gateways: '{"urls": ["http://localhost/events/pub", "http://host.docker.internal/events/pub", "http://event-player/events/pub"]}'
-      api_browser_queue_size: 1000
+      api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://host.docker.internal/events/pub", "http://event-player/events/pub"]}'
+      # api_tag: "0.1.15"
+      # api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      # api_browser_queue_size: 1000
