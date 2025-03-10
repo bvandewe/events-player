@@ -8,7 +8,7 @@ RUN npm run build
 
 # Package
 FROM python:3.10-slim
-EXPOSE 80
+EXPOSE 8080
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
@@ -24,4 +24,4 @@ COPY --from=build /app/static /app/static
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8080"]

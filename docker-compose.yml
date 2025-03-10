@@ -4,7 +4,7 @@ services:
   event-player:
     image: ghcr.io/bvandewe/cloudevents-player:latest
     ports:
-      - 8884:80
+      - 8884:8080
     environment:
       api_log_level: DEBUG
       api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://host.docker.internal/events/pub", "http://event-player/events/pub"]}'

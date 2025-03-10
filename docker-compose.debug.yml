@@ -10,10 +10,10 @@ services:
       [
         "sh",
         "-c",
-        "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m uvicorn api.app:app --host 0.0.0.0 --port 80 --reload",
+        "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m uvicorn api.app:app --host 0.0.0.0 --port 8080 --reload",
       ]
     ports:
-      - 8884:80
+      - 8884:8080
       - 5675:5678  # Configure in .vscode/launch.json for Vscode Remote Debugger
     environment:
       api_log_level: DEBUG
