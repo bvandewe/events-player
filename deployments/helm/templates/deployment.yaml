@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+          - containerPort: {{ .Values.ports.containerPort }}
+        env:
+          - name: API_LOG_LEVEL
+            value: "{{ .Values.environment.api_log_level }}"
+          - name: API_LOG_FORMAT
+            value: "{{ .Values.environment.api_log_format }}"
+          - name: API_DEFAULT_GENERATOR_GATEWAYS
+            value: "{{ .Values.environment.api_default_generator_gateways }}"
+          - name: API_BROWSER_QUEUE_SIZE
+            value: "{{ .Values.environment.api_browser_queue_size }}"
