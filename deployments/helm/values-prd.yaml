@@ -1,0 +1,6 @@
+virtualService:
+  host: test-events.expert.certs.cloud
+environment:
+  api_log_level: WARNING
+  api_default_generator_gateways: '{\"urls\": [\"http://localhost/events/pub\", \"http://lds-sessions-adapter.mozart/api/v1/events/pub\"]}'
+  api_browser_queue_size: 2000

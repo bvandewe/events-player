@@ -1,0 +1,4 @@
+apiVersion: v2
+version: 0.1.0
+name: events-player
+description: A Helm chart for deploying events-player

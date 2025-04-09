@@ -18,6 +18,6 @@ services:
     environment:
       api_log_level: DEBUG
       api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://host.docker.internal:8884/events/pub", "http://event-player/events/pub"]}'
-      # api_tag: "0.1.15"
+      api_tag: "0.1.17"
       # api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
       # api_browser_queue_size: 1000
