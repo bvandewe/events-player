@@ -1,4 +1,4 @@
-name: subscribers
+name: mozart-dev
 services:
   # http://localhost:8884
   event-player:
@@ -14,7 +14,7 @@ services:
       ]
     ports:
       - 8884:8080
-      - 5675:5678  # Configure in .vscode/launch.json for Vscode Remote Debugger
+      - 5675:5678
     environment:
       api_log_level: DEBUG
       api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://host.docker.internal:8884/events/pub", "http://event-player/events/pub"]}'
