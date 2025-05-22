@@ -13,9 +13,10 @@ EXPOSE 8080
 ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
-COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
 WORKDIR /app
+COPY poetry.lock pyproject.toml /app/
+# RUN python -m pip install -r requirements.txt
+RUN pip install poetry && poetry config virtualenvs.create false && poetry install --no-root --no-interaction --no-ansi
 COPY . /app
 
 RUN mkdir /app/static
