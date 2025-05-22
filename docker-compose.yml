@@ -2,7 +2,8 @@ name: subscribers
 services:
   # http://localhost:8884
   event-player:
-    image: ghcr.io/bvandewe/cloudevents-player:latest
+    # image: ghcr.io/bvandewe/cloudevents-player:latest
+    image: ccie-gitlab.ccie.cisco.com:4567/mozart/infrastructure/eventing/cloudevent-player/cloudevent-player:0.1.17
     ports:
       - 8884:8080
     environment:
