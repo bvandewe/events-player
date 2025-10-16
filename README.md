@@ -4,6 +4,8 @@ This micro-app can be used as a test **subscriber** and/or test **emitter** of [
 
 It is very useful in an event-driven architecture in order to monitor events and test subscriptions.
 
+Full Documentation hosted at <https://bvandewe.github.io/events-player/>
+
 ## Getting Started
 
 Run two instances locally and send events between each other:
@@ -30,7 +32,6 @@ The app provides a web-based interface that enables users to visualize events as
 
 It can very easily be deployed locally (included in a `docker-compose` file) or remotely (in Kubernetes or Docker) and may be configured as a subscriber to an event channel (like [Cloud Streams](https://github.com/neuroglia-io/cloud-streams)).
 
-
 ## Limitations
 
 There is currently NO PERSISTANCE anywhere so refreshing the page on the browser will reset the state.  
@@ -50,9 +51,9 @@ The root URL shows a simple HTML page that automatically appends new CloudEvents
 The app backend validates and handles CloudEvents via the `POST /events/pub` endpoint and streams events to all currently connected clients/browsers via [SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
 
 - The payload must have the `Content-Type` header set to `application/cloudevents+json`.
-- The event must be formatted as per the CloudEvents [Specifications v1.0.2](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md) in [JSON Format](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/formats/json-format.md).  
+- The event must be formatted as per the CloudEvents [Specifications v1.0.2](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md) in [JSON Format](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/formats/json-format.md).
 
-When a valid event is received, a FastAPI background task simply pushes a copy of the event into the queue of each currently connected client/browser.  
+When a valid event is received, a FastAPI background task simply pushes a copy of the event into the queue of each currently connected client/browser.
 
 The SSE stream can be accessed at `/stream` using a browser or any SSE client. The stream sends a JSON payload for each received event, with the event payload and a timestamp indicating when the event was received.
 
@@ -60,13 +61,13 @@ The SSE stream can be accessed at `/stream` using a browser or any SSE client. T
 
 1. Pull and run the Docker image:
 
-    ```sh
-    docker run --rm -it -p 8080:80 ghcr.io/bvandewe/cloudevents-player:latest
-    ```
+   ```sh
+   docker run --rm -it -p 8080:80 ghcr.io/bvandewe/cloudevents-player:latest
+   ```
 
-2. Browse to http://localhost:8080
+2. Browse to <http://localhost:8080>
 
-3. Emit Cloudevent to http://localhost:8080/events/pub
+3. Emit Cloudevent to <http://localhost:8080/events/pub>
 
 4. Enjoy!
 
@@ -75,4 +76,4 @@ The SSE stream can be accessed at `/stream` using a browser or any SSE client. T
 `Hint`:
 
 The debugger fails with vscode v1.75 (currently the latest version).
-Have to downgrade to 1.74: https://code.visualstudio.com/updates/v1_74 Then, disable automatic updates (settings > 'update': set to "none")
+Have to downgrade to 1.74: <https://code.visualstudio.com/updates/v1_74> Then, disable automatic updates (settings > 'update': set to "none")
