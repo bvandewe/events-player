@@ -1,5 +1,46 @@
 # CHANGE LOG
 
+## 0.2.0 - 2025-10-16
+
+### Documentation
+
+- Complete MkDocs documentation site with Material theme
+- Added comprehensive documentation pages:
+  - Quick Start guide with tabbed installation options (Pull vs Build)
+  - Installation guide with Docker, local, and Kubernetes deployment
+  - Usage guide with code examples (curl, Python, JavaScript)
+  - Configuration reference with all environment variables
+  - Deployment guide for Docker, Kubernetes, and cloud platforms
+- Added demo GIF to homepage
+- Added Mermaid diagrams for architecture and demo setup
+- Custom styling with Montserrat font and teal/black color scheme
+- Horizontal tabs for Pull vs Build installation methods
+
+### Features
+
+- Request ID tracing middleware with contextvars for distributed tracing
+- CloudEvent Pydantic model with validation
+- Comprehensive test suite (42 tests, 34 passing)
+- SSE JSON serialization fixes for Python boolean/null types
+- Health check endpoint improvements
+
+### Container & Deployment
+
+- GitHub Container Registry support (`ghcr.io/bvandewe/events-player`)
+- Updated all documentation to use correct container image name
+- Repository standardized to `https://github.com/bvandewe/events-player`
+
+### Configuration
+
+- Documented all environment variables with examples
+- Added configuration examples for dev/staging/production
+- Kubernetes ConfigMap examples
+
+### Breaking Changes
+
+- Container image name changed from `cloudevent-player` to `events-player`
+- Repository URL standardized across all documentation
+
 ## CURRENT_CHANGES
 
 ## 0.1.16

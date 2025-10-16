@@ -1,0 +1,217 @@
+/**
+ * Custom CSS for CML Lablets Documentation
+ * Cisco branding and enhanced styling for technical documentation
+ */
+
+:root {
+  /* Simplified Color Palette - Black, White, Teal Accent */
+  --cloudevents-teal: #10aef7;
+  --cloudevents-black: #1A1A1A;
+  --cloudevents-white: #FFFFFF;
+  --cloudevents-gray: #5C5C5C;
+  --cloudevents-light-gray: #F5F5F5;
+}
+
+/* Global Font Family */
+body,
+.md-typeset {
+  font-family: "Montserrat", BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+}
+
+/* Enhanced navigation styling - solid color, no gradient */
+.md-header {
+  background: var(--cloudevents-black);
+}
+
+.md-tabs {
+  background: var(--cloudevents-black);
+}
+
+.md-tabs__item {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.md-tabs__item:hover,
+.md-tabs__item--active {
+  color: white;
+  border-bottom: 2px solid var(--cloudevents-teal);
+}
+
+/* ADR Status badges */
+.adr-status {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: 0.8em;
+  font-weight: bold;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.adr-status.proposed {
+  background-color: #FFF3CD;
+  color: #856404;
+  border: 1px solid #FFEAA7;
+}
+
+.adr-status.accepted {
+  background-color: #D4EDDA;
+  color: #155724;
+  border: 1px solid #C3E6CB;
+}
+
+.adr-status.deprecated {
+  background-color: #F8D7DA;
+  color: #721C24;
+  border: 1px solid #F5C6CB;
+}
+
+.adr-status.superseded {
+  background-color: #E2E3E5;
+  color: #383D41;
+  border: 1px solid #D6D8DB;
+}
+
+/* Enhanced code blocks */
+.highlight pre {
+  border-left: 4px solid var(--cloudevents-teal);
+}
+
+.highlight .filename {
+  background: var(--cloudevents-black);
+  color: white;
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  border-radius: 4px 4px 0 0;
+  margin: 0;
+}
+
+/* Mermaid diagram styling */
+.mermaid {
+  text-align: center;
+  margin: 2em 0;
+  background: white;
+  border-radius: 8px;
+  padding: 1em;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.mermaid:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+[data-md-color-scheme="slate"] .mermaid {
+  background: var(--md-code-bg-color);
+}
+
+/* Enhanced admonitions */
+.md-typeset .admonition.cisco {
+  border-color: var(--cisco-blue);
+}
+
+.md-typeset .admonition.cisco > .admonition-title {
+  background-color: var(--cisco-blue);
+  color: white;
+}
+
+.md-typeset .admonition.architecture {
+  border-color: var(--cisco-purple);
+}
+
+.md-typeset .admonition.architecture > .admonition-title {
+  background-color: var(--cisco-purple);
+  color: white;
+}
+
+.md-typeset .admonition.decision {
+  border-color: var(--cisco-green);
+}
+
+.md-typeset .admonition.decision > .admonition-title {
+  background-color: var(--cisco-green);
+  color: white;
+}
+
+/* Tool documentation styling */
+.tool-command {
+  background: var(--md-code-bg-color);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-family: var(--md-code-font-family);
+  color: var(--cisco-blue);
+  font-weight: 500;
+}
+
+.tool-output {
+  background: #F8F9FA;
+  border: 1px solid #E9ECEF;
+  padding: 1em;
+  border-radius: 6px;
+  font-family: var(--md-code-font-family);
+  color: #495057;
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+  .adr-metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .mermaid {
+    margin: 1em -1em;
+    border-radius: 0;
+  }
+}
+
+/* Print styles */
+@media print {
+  .mermaid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .adr-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+}
+
+/* Animation for interactive elements */
+@keyframes cisco-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.cisco-interactive:hover {
+  animation: cisco-pulse 0.6s ease-in-out;
+}
+
+/* Footer styling */
+.md-footer {
+  background: var(--cisco-dark-blue);
+}
+
+.md-footer-meta {
+  background: var(--cisco-dark-blue);
+}
+
+/* Custom scroll bar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cisco-light-gray);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cisco-blue);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cisco-dark-blue);
+}

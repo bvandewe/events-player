@@ -1,2 +1,5 @@
 [flake8]
-ignore = E501,E722,DS101 ; line too long, bare except, docstring in public class
+# E501: line too long
+# E722: bare except
+# DS101: docstring in public class
+ignore = E501,E722,DS101

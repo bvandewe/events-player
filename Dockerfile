@@ -3,7 +3,8 @@ FROM node:16-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
-COPY . .
+# Copy UI source files maintaining the directory structure
+COPY src/ui/ ./src/ui/
 RUN npm run build
 
 # Package
@@ -13,13 +14,15 @@ EXPOSE 8080
 ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
+# Add src to Python path
+ENV PYTHONPATH=/app/src
 WORKDIR /app
 COPY poetry.lock pyproject.toml /app/
 # RUN python -m pip install -r requirements.txt
 RUN pip install poetry && poetry config virtualenvs.create false && poetry install --no-root --no-interaction --no-ansi
-COPY . /app
+COPY src /app/src
 
-RUN mkdir /app/static
+RUN mkdir -p /app/static
 COPY --from=build /app/static /app/static
 
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
