@@ -59,10 +59,17 @@ Output in `site/` directory
 
 ## 📦 GitHub Pages Setup
 
+⚠️ **CRITICAL**: Change Source to "GitHub Actions" (not branch deployment!)
+
+### One-Time Setup
+
 1. Go to **Settings** > **Pages** in your GitHub repository
-2. Under **Source**, select **"GitHub Actions"**
+2. Under **Source**, select **"GitHub Actions"** (NOT "Deploy from a branch")
 3. Push to `main` branch or trigger workflow manually
 4. Check **Actions** tab for deployment status
+
+**Current Issue**: If set to "Deploy from a branch", the documentation won't build.
+See `GITHUB_PAGES_FIX.md` for detailed instructions.
 
 ## 📦 GitLab Pages Setup
 
