@@ -53,9 +53,10 @@ pages:
   stage: deploy
   image: python:3.10-slim
   before_script:
-    - pip install mkdocs mkdocs-material pymdown-extensions
+    - pip install --upgrade pip
+    - pip install -r docs-requirements.txt
   script:
-    - mkdocs build --clean
+    - mkdocs build --clean --verbose
     - mv site public
   artifacts:
     paths:
