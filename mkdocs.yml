@@ -1,6 +1,7 @@
 site_name: Cloudevent Player
 site_description: CloudEvent Player API and UI
 site_author: Bruno van de Werve
+site_url: https://bvandewe.github.io/events-player/
 repo_url: https://github.com/bvandewe/events-player
 repo_name: events-player
 docs_dir: docs
