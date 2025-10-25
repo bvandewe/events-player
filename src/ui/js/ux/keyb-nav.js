@@ -11,10 +11,15 @@ export const keyboardController = (() => {
                 // document.getElementById("helpModal").style.display = "none";
             }
             if (event.key === "Control" || (event.metaKey && event.key === "ArrowUp")) {
+                // Check if user has access to generator
+                if (window.generatorAccessDenied) {
+                    console.log('[Keyboard] Generator access denied for current user');
+                    return;
+                }
                 document.getElementById("generatorPanel").classList.add("show");
             }
-            if ( event.metaKey && event.key === "f" ) {
-                var filterInput = document.getElementById("search-input");        
+            if (event.metaKey && event.key === "f") {
+                var filterInput = document.getElementById("search-input");
                 if (document.activeElement === filterInput) {
                     document.activeElement.blur();
                     event.preventDefault();
@@ -31,7 +36,7 @@ export const keyboardController = (() => {
         });
     };
 
-    return {        
+    return {
         init
     };
 

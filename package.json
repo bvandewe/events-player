@@ -4,6 +4,7 @@
   "description": "This micro-app can be used as a test subscriber and/or emitter of [CloudEvents](https://cloudevents.io/).",
   "scripts": {
     "start": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html --public-url /static/ --dist-dir static",
+    "dev": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html --public-url /static/ --dist-dir static --hmr-port 1234",
     "build": "npm run copy && parcel build src/ui/index.html src/ui/html/*.html --public-url /static/ --dist-dir static",
     "copy": "copyfiles -f src/ui/img/*.* static/img"
   },

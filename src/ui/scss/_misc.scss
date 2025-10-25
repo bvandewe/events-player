@@ -78,3 +78,22 @@
 .event-timestamp {
     font-size: 0.8rem;
 }
+
+/* Event accordion header - prevent wrapping */
+.accordion-button {
+    white-space: nowrap;
+    overflow: hidden;
+    
+    span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 1;
+        min-width: 0; // Allow flex items to shrink below content size
+    }
+    
+    // Ensure the entire button scrolls horizontally if needed
+    &:hover {
+        overflow-x: auto;
+    }
+}

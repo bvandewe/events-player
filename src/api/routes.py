@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import uuid
+from typing import Optional, Dict
 
 from fastapi import (
     APIRouter,
@@ -16,6 +17,7 @@ from fastapi import (
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
 
 from .settings import settings
 from .globals import active_tasks, sse_clients
@@ -23,6 +25,13 @@ from .models import EventGeneratorRequest, EventGeneratorTask, CloudEvent
 from .background_tasks import handle_event, handle_generator_request
 from .validator import validate_cloud_event
 from .constants import MAX_QUEUE_SIZE, SLOW_CLIENT_THRESHOLD
+from .auth import (
+    get_current_user_optional,
+    get_current_user_required,
+    require_admin,
+    require_operator,
+    exchange_oauth_code,
+)
 
 
 log = logging.getLogger(__name__)
@@ -33,7 +42,9 @@ router = APIRouter()
 
 # Root Route
 @router.get(path="/", tags=["Frontend"], operation_id="get_root", response_class=HTMLResponse)
-async def get_ui(request: Request):
+async def get_ui(
+    request: Request, current_user: Optional[dict] = Depends(get_current_user_optional)
+):
     tag = settings.tag
     year = datetime.datetime.now().year
     default_events_settings = settings.default_generator_event.model_dump()
@@ -41,6 +52,12 @@ async def get_ui(request: Request):
     default_events_settings["event_data"] = json.dumps(default_events_settings["event_data"])
     default_events_gateways = settings.default_generator_gateways.model_dump()
     log.debug("Received request on root: %s", request)
+
+    # Extract user roles for authorization
+    user_roles = current_user.get("roles", []) if current_user else []
+    is_admin = "admin" in user_roles
+    is_operator = "operator" in user_roles or is_admin
+
     return templates.TemplateResponse(
         "index.html",
         {
@@ -51,8 +68,122 @@ async def get_ui(request: Request):
             "default_events_settings": default_events_settings,
             "default_events_gateways": default_events_gateways,
             "browser_queue_size": settings.browser_queue_size,
+            # Auth configuration for frontend
+            "keycloak_url": settings.keycloak_url_external or settings.keycloak_url,
+            "keycloak_realm": settings.keycloak_realm,
+            "keycloak_client_id": settings.keycloak_client_id,
+            "auth_mode": settings.auth_mode,
+            # User authorization info
+            "user_authenticated": current_user is not None,
+            "user_is_admin": is_admin,
+            "user_is_operator": is_operator,
         },
     )
+
+
+# Authentication Endpoints
+
+
+class OAuthCallbackRequest(BaseModel):
+    """OAuth callback request model"""
+
+    code: str
+    redirect_uri: str
+    code_verifier: str  # PKCE code verifier
+
+
+@router.get(
+    path="/api/auth/info",
+    tags=["System"],
+    operation_id="get_auth_info",
+    summary="Get current authentication status",
+)
+async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional)):
+    """
+    Return current authentication status and user information.
+
+    This endpoint helps the frontend determine:
+    - Whether the user is authenticated (Istio mode with JWT)
+    - User information if authenticated
+    - Whether to show login button
+    """
+    if user:
+        return {
+            "authenticated": True,
+            "user": {
+                "user_id": user.get("user_id"),
+                "email": user.get("email"),
+                "username": user.get("username"),
+                "full_name": user.get("full_name"),
+                "roles": user.get("roles", []),
+                "groups": user.get("groups", []),
+            },
+            "mode": "istio" if settings.auth_jwks_url and not settings.keycloak_url else "unknown",
+        }
+
+    return {
+        "authenticated": False,
+        "user": None,
+        "mode": "keycloak" if settings.keycloak_url else "none",
+        "keycloak_config": (
+            {
+                "url": settings.keycloak_url_external or settings.keycloak_url,
+                "realm": settings.keycloak_realm,
+                "client_id": settings.keycloak_client_id,
+            }
+            if settings.keycloak_url
+            else None
+        ),
+    }
+
+
+@router.post(
+    path="/api/auth/callback",
+    tags=["System"],
+    operation_id="oauth_callback",
+    summary="OAuth callback handler",
+)
+async def oauth_callback(callback_request: OAuthCallbackRequest):
+    """
+    Exchange OAuth authorization code for access token.
+
+    This endpoint is called by the frontend after the user completes
+    the OAuth flow with Keycloak.
+    """
+    try:
+        # Exchange code for token
+        token_data = await exchange_oauth_code(
+            callback_request.code,
+            callback_request.redirect_uri,
+            callback_request.code_verifier,
+        )
+
+        # Validate the access token to get user info
+        from .auth import jwt_validator
+
+        token_payload = await jwt_validator.validate_token(token_data["access_token"])
+        user_info = jwt_validator.extract_user_info(token_payload)
+
+        return {
+            "access_token": token_data["access_token"],
+            "refresh_token": token_data.get("refresh_token"),
+            "expires_in": token_data.get("expires_in", 300),
+            "token_type": token_data.get("token_type", "Bearer"),
+            "user_info": {
+                "user_id": user_info.get("user_id"),
+                "email": user_info.get("email"),
+                "username": user_info.get("username"),
+                "full_name": user_info.get("full_name"),
+                "roles": user_info.get("roles", []),
+                "groups": user_info.get("groups", []),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error(f"OAuth callback error: {e}")
+        raise HTTPException(status_code=500, detail=f"OAuth callback failed: {str(e)}")
 
 
 # Publisher Route
@@ -61,8 +192,19 @@ async def generate_events(
     request: Request,
     generator_request: EventGeneratorRequest,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(require_operator),  # Require admin or operator role
 ):
     log.debug("Received request on generator: %s", generator_request)
+
+    # Only admin can use iterations > 1 or custom delay (non-default)
+    # Default delay is 100ms, operators can use default settings (iterations=1, delay=100)
+    if generator_request.iterations > 1 or generator_request.delay != 100:
+        if "admin" not in current_user.get("roles", []):
+            raise HTTPException(
+                status_code=403,
+                detail="Only administrators can use iterations > 1 or custom delay settings",
+            )
+
     try:
         task_id = str(uuid.uuid4())
         client_id = ""

@@ -32,6 +32,16 @@ The app provides a web-based interface that enables users to visualize events as
 
 It can very easily be deployed locally (included in a `docker-compose` file) or remotely (in Kubernetes or Docker) and may be configured as a subscriber to an event channel (like [Cloud Streams](https://github.com/neuroglia-io/cloud-streams)).
 
+## Features
+
+- 🎯 **Event Generation**: Generate CloudEvents with customizable properties and data payloads
+- 📡 **Real-Time Monitoring**: Watch events via Server-Sent Events (SSE) streaming
+- 🔍 **Event Inspection**: Examine CloudEvent structure with syntax-highlighted JSON
+- 🔄 **Pub/Sub Support**: Acts as both publisher and subscriber
+- 🔐 **Authentication & Authorization**: OAuth 2.0 with Keycloak and role-based access control (admin, operator, user roles)
+- 🆔 **Request Tracing**: Built-in Request ID tracing for debugging
+- 🏥 **Health Monitoring**: Health check endpoint for monitoring systems
+
 ## Limitations
 
 There is currently NO PERSISTANCE anywhere so refreshing the page on the browser will reset the state.  
@@ -72,6 +82,20 @@ The SSE stream can be accessed at `/stream` using a browser or any SSE client. T
 4. Enjoy!
 
 ## Development
+
+### OAuth/Keycloak Setup
+
+When running the development environment with `docker-compose -f docker-compose.debug.yml up -d`, Keycloak is available at:
+
+- **URL**: <http://localhost:8090>
+- **Admin Username**: `admin`
+- **Admin Password**: `admin`
+
+The master realm is automatically configured to allow HTTP access (development only). See `deployments/keycloak/HTTP_CONFIGURATION.md` for details.
+
+⚠️ **Security Note**: The HTTP configuration is for development only and should NEVER be used in production!
+
+### VS Code Debugging
 
 `Hint`:
 
