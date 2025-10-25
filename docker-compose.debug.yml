@@ -1,4 +1,3 @@
-name: mozart-dev
 services:
   # http://localhost:8884
   event-player:
@@ -20,7 +19,7 @@ services:
     environment:
       PYTHONPATH: /app/src
       api_log_level: DEBUG
-      api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://host.docker.internal:8884/events/pub", "http://event-player/events/pub"]}'
+      api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://localhost:8080/events/pub", "http://event-player:8080/events/pub"]}'
       api_tag: "0.2.0"
       # api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
       # api_browser_queue_size: 1000
