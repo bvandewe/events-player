@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse
 
 from .globals import sse_clients, active_tasks
-from .constants import MAX_QUEUE_SIZE
+from .constants import MAX_QUEUE_SIZE, SLOW_CLIENT_THRESHOLD, ADAPTIVE_QUEUE_CHECK_INTERVAL
 
 
 log = logging.getLogger(__name__)
@@ -38,11 +38,24 @@ async def build_sse_payload(payload: dict):
 async def event_generator(client_id: str | None, request: Request):
     if client_id is not None:
         try:
+            last_queue_check = asyncio.get_event_loop().time()
+
             while True:
                 # If client closes connection, stop sending events
                 if await request.is_disconnected():
                     log.debug("Client %s disconnected", client_id)
                     break
+
+                # Adaptive backpressure - check queue depth periodically
+                current_time = asyncio.get_event_loop().time()
+                if current_time - last_queue_check > ADAPTIVE_QUEUE_CHECK_INTERVAL:
+                    queue_size = sse_clients[client_id].qsize()
+                    if queue_size > SLOW_CLIENT_THRESHOLD:
+                        log.warning(
+                            f"Client {client_id} queue at {queue_size}/{MAX_QUEUE_SIZE} "
+                            f"({queue_size/MAX_QUEUE_SIZE*100:.0f}% full) - slow consumer"
+                        )
+                    last_queue_check = current_time
 
                 try:
                     # Use timeout to make the stream more responsive to server shutdown

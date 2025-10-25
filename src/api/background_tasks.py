@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import uuid
+from typing import Set
 
 import httpx
 from fastapi import HTTPException
@@ -16,13 +17,51 @@ from .settings import settings
 log = logging.getLogger(__name__)
 
 
-async def handle_event(payload: dict):
+async def _send_to_client(client_id: str, queue: asyncio.Queue, payload: dict):
+    """
+    Send event to a single client with error handling.
+    Uses put_nowait to avoid blocking if queue is full.
+    """
     try:
-        log.info("Handling event to %s clients: %s", len(sse_clients), payload)
-        for client_queue in sse_clients.values():
-            await client_queue.put(payload)
+        queue.put_nowait(payload)
+    except asyncio.QueueFull:
+        log.warning(
+            f"Queue full for client {client_id}, dropping event and disconnecting slow client"
+        )
+        # Disconnect slow clients to protect system performance
+        if client_id in sse_clients:
+            del sse_clients[client_id]
+            log.info(f"Disconnected slow client {client_id}")
+    except Exception as e:
+        log.error(f"Error sending to client {client_id}: {e}")
+
+
+async def handle_event(payload: dict):
+    """
+    Broadcast event to all SSE clients using async fan-out.
+    This prevents slow clients from blocking event distribution.
+    """
+    try:
+        if not sse_clients:
+            log.debug("No SSE clients connected, skipping event broadcast")
+            return
+
+        log.info("Broadcasting event to %s clients", len(sse_clients))
+
+        # Create tasks for all clients in parallel (async fan-out)
+        tasks: Set[asyncio.Task] = set()
+
+        for client_id, client_queue in list(sse_clients.items()):
+            task = asyncio.create_task(_send_to_client(client_id, client_queue, payload))
+            tasks.add(task)
+            # Clean up completed tasks to prevent memory leak
+            task.add_done_callback(tasks.discard)
+
+        # Fire and forget - events are delivered asynchronously
+        # This prevents blocking the main event handler
 
     except Exception as e:
+        log.error(f"Error in handle_event: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}") from e
 
 
