@@ -1,0 +1,211 @@
+/**
+ * Authorization Helper Module
+ * 
+ * Provides client-side authorization checks based on user roles.
+ * Works in conjunction with server-side authorization enforcement.
+ */
+
+class AuthorizationManager {
+    constructor() {
+        this.userRoles = [];
+        this.isAuthenticated = false;
+    }
+
+    /**
+     * Initialize authorization manager with user info from authManager
+     */
+    init(authManager) {
+        if (authManager && authManager.userInfo) {
+            this.isAuthenticated = true;
+            this.userRoles = authManager.userInfo.roles || [];
+            console.log('[Authorization] User roles:', this.userRoles);
+        } else {
+            this.isAuthenticated = false;
+            this.userRoles = [];
+            console.log('[Authorization] No authenticated user');
+        }
+
+        // Apply UI restrictions
+        this.applyUIRestrictions();
+    }
+
+    /**
+     * Check if user has admin role
+     */
+    isAdmin() {
+        return this.userRoles.includes('admin');
+    }
+
+    /**
+     * Check if user has operator or admin role
+     */
+    isOperator() {
+        return this.userRoles.includes('operator') || this.isAdmin();
+    }
+
+    /**
+     * Check if user has basic user role
+     */
+    isUser() {
+        return this.userRoles.includes('user');
+    }
+
+    /**
+     * Apply UI restrictions based on user roles
+     */
+    applyUIRestrictions() {
+        console.log('[Authorization] Applying UI restrictions...');
+
+        // Restrict generator panel access to operators and admins
+        if (!this.isOperator()) {
+            this.hideGeneratorPanel();
+        }
+
+        // Restrict iterations and delay controls to admins only
+        if (!this.isAdmin()) {
+            this.disableAdminControls();
+        }
+
+        // Restrict event expansion to operators and admins
+        if (!this.isOperator()) {
+            this.disableEventExpansion();
+        }
+    }
+
+    /**
+     * Hide the generator panel for non-operators
+     */
+    hideGeneratorPanel() {
+        console.log('[Authorization] Hiding generator panel for non-operator user');
+
+        // Close the generator panel if it's open
+        const generatorPanel = document.getElementById('generatorPanel');
+        if (generatorPanel) {
+            generatorPanel.classList.remove('show');
+        }
+
+        // Hide the generator navigation link
+        const generatorLinks = document.querySelectorAll('[data-bs-target="#generatorPanel"]');
+        generatorLinks.forEach(link => {
+            link.style.display = 'none';
+        });
+
+        // Disable keyboard shortcuts for generator
+        this.disableGeneratorShortcuts();
+    }
+
+    /**
+     * Disable admin-only controls in the generator
+     */
+    disableAdminControls() {
+        console.log('[Authorization] Disabling admin-only controls');
+
+        const iterationsInput = document.getElementById('eventIterations');
+        const delayInput = document.getElementById('eventDelay');
+
+        if (iterationsInput) {
+            // Lock to default value for operators (but keep enabled so it's in FormData)
+            iterationsInput.min = 1;
+            iterationsInput.max = 1;
+            iterationsInput.value = 1;
+            iterationsInput.style.opacity = '0.7';
+            iterationsInput.title = 'Only administrators can change iterations';
+        }
+
+        if (delayInput) {
+            // Lock to default value for operators (but keep enabled so it's in FormData)
+            delayInput.min = 100;
+            delayInput.max = 100;
+            delayInput.value = 100;
+            delayInput.style.opacity = '0.7';
+            delayInput.title = 'Only administrators can change delay';
+        }
+
+        // Also disable the labels
+        const iterationsLabel = document.querySelector('label[for="eventIterations"]');
+        const delayLabel = document.querySelector('label[for="eventDelay"]');
+
+        if (iterationsLabel) {
+            iterationsLabel.style.opacity = '0.5';
+        }
+        if (delayLabel) {
+            delayLabel.style.opacity = '0.5';
+        }
+    }
+
+    /**
+     * Disable event expansion for non-operators
+     */
+    disableEventExpansion() {
+        console.log('[Authorization] Disabling event expansion for non-operator user');
+
+        // Prevent accordion buttons from toggling
+        const accordionButtons = document.querySelectorAll('.accordion-button');
+        accordionButtons.forEach(button => {
+            button.style.cursor = 'not-allowed';
+            button.removeAttribute('data-bs-toggle');
+            button.removeAttribute('data-bs-target');
+            button.setAttribute('aria-expanded', 'false');
+            button.title = 'Only operators and administrators can view event details';
+        });
+
+        // Listen for new accordion items being added
+        const eventsStack = document.getElementById('events-stack');
+        if (eventsStack) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('accordion-item')) {
+                            const button = node.querySelector('.accordion-button');
+                            if (button) {
+                                button.style.cursor = 'not-allowed';
+                                button.removeAttribute('data-bs-toggle');
+                                button.removeAttribute('data-bs-target');
+                                button.setAttribute('aria-expanded', 'false');
+                                button.title = 'Only operators and administrators can view event details';
+                            }
+                        }
+                    });
+                });
+            });
+
+            observer.observe(eventsStack, { childList: true });
+        }
+
+        // Disable the expand/collapse all button
+        const expandCollapseLink = document.getElementById('expandCollapseLink');
+        if (expandCollapseLink) {
+            expandCollapseLink.style.display = 'none';
+        }
+    }
+
+    /**
+     * Disable keyboard shortcuts for opening the generator
+     */
+    disableGeneratorShortcuts() {
+        // This will be handled by the keyb-nav.js module
+        // We'll add a flag that it can check
+        window.generatorAccessDenied = true;
+    }
+
+    /**
+     * Show an authorization error message
+     */
+    showAuthorizationError(message) {
+        const toastController = window.toastController;
+        if (toastController) {
+            toastController.showToast({
+                detail: [{
+                    loc: ['authorization'],
+                    msg: message || 'You do not have permission to perform this action',
+                    type: 'authorization_error'
+                }]
+            });
+        } else {
+            alert(message || 'You do not have permission to perform this action');
+        }
+    }
+}
+
+// Create singleton instance
+export const authorizationManager = new AuthorizationManager();

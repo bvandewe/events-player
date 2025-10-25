@@ -10,7 +10,7 @@ export const sseEventsController = (() => {
     var maxQueueSize = 0;
     var sseConnectionTimer;
 
-    const createAccordionItem = ({ eventCount, timestamp, hasError, eventSource, eventType, eventData, eventId }) => {
+    const createAccordionItem = ({ eventCount, timestamp, hasError, eventSource, eventSubject, eventType, eventData, eventId }) => {
         console.log(`Rx event: ${eventType} from ${eventSource} at ${timestamp}`);
 
         // create the div element with class "accordion-item"
@@ -40,59 +40,37 @@ export const sseEventsController = (() => {
         span2.classList.add('align-middle', 'text-secondary', 'event-timestamp');
         span2.textContent = `${timestamp}`;
 
-        // create the badge element with class "bg-info ms-2", and set its text content
-        var badgeText;
-        var badgeColor;
-
-        switch (hasError) {
-            case "none":
-                badgeText = "Plain JSON";
-                badgeColor = "success";
-                break;
-
-            case "backend-error":
-                badgeText = "Invalid JSON";
-                badgeColor = "danger";
-                break;
-
-            case "parse-error":
-                badgeText = "Escaped JSON";
-                badgeColor = "warning";
-                break;
-
-            default:
-                break;
-        }
-
-        const badge = document.createElement('span');
-        badge.classList.add('badge', `text-bg-${badgeColor}`, 'ms-2', 'p-1');
-        badge.textContent = badgeText;
-
-        // append the badge element to the second span element
-        span2.appendChild(badge);
-
         // create the third span element with classes "mx-auto", "align-middle", and "text-info-emphasis", and set its text content
         const span3 = document.createElement('span');
-        span3.classList.add('mx-auto', 'align-middle', 'text-info-emphasis');
-        span3.textContent = `${eventType}`;
+        span3.classList.add('mx-auto', 'align-middle', 'text-info-emphasis', 'd-flex', 'gap-3', 'justify-content-evenly', 'flex-grow-1');
 
-        // create the fourth span element with classes "ms-auto", "fs-5", and "align-middle", and set its text content
-        const span4 = document.createElement('span');
-        span4.classList.add('ms-auto', 'fs-5', 'align-middle');
+        // create type badge
+        const typeBadge = document.createElement('span');
+        typeBadge.classList.add('badge', 'text-bg-success', 'p-1', 'text-truncate');
+        typeBadge.textContent = eventType;
+        typeBadge.style.maxWidth = '33%';
 
-        // create the badge element with class "bg-secondary", and set its text content
-        const badge2 = document.createElement('span');
-        badge2.classList.add('badge', 'bg-secondary', 'p-1');
-        badge2.textContent = `${eventSource}`;
+        // create source badge
+        const sourceBadge = document.createElement('span');
+        sourceBadge.classList.add('badge', 'bg-secondary', 'p-1', 'text-truncate');
+        sourceBadge.textContent = eventSource;
+        sourceBadge.style.maxWidth = '33%';
 
-        // append the badge element to the fourth span element
-        span4.appendChild(badge2);
+        // create subject badge (if subject exists)
+        const subjectBadge = document.createElement('span');
+        subjectBadge.classList.add('badge', 'text-bg-warning', 'p-1', 'text-truncate');
+        subjectBadge.textContent = eventSubject || '(none)';
+        subjectBadge.style.maxWidth = '33%';
+
+        // append badges to span3
+        span3.appendChild(typeBadge);
+        span3.appendChild(sourceBadge);
+        span3.appendChild(subjectBadge);
 
         // append the span elements to the button element
         button.appendChild(span1);
         button.appendChild(span2);
         button.appendChild(span3);
-        button.appendChild(span4);
 
         // append the button element to the h2 element
         accordionHeader.appendChild(button);
@@ -219,6 +197,7 @@ export const sseEventsController = (() => {
                 timestamp: cloudEventData.time,
                 hasError: hasError,
                 eventSource: cloudEventData.source,
+                eventSubject: cloudEventData.subject,
                 eventType: cloudEventData.type,
                 eventData: cloudEventData,
                 eventId: uuid

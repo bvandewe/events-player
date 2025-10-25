@@ -48,6 +48,10 @@ Examine CloudEvent structure, validate schemas, and debug data payloads with an 
 
 Acts as both publisher and subscriber, allowing you to test complete event workflows.
 
+### 🔐 **Authentication & Authorization**
+
+OAuth 2.0 with Keycloak and role-based access control (RBAC) to secure event generation and monitoring. Supports admin, operator, and user roles with fine-grained permissions.
+
 ### 🆔 **Request Tracing**
 
 Built-in Request ID tracing for debugging across distributed systems.
@@ -75,9 +79,11 @@ Health check endpoint for integration with monitoring systems and orchestrators.
     docker pull ghcr.io/bvandewe/events-player:latest
 
     docker run -d \
-    --name event-player \
-    -p 8884:8080 \
+    --name events-player \
+    --add-host=host.docker.internal:host-gateway \
+    -p 8080:8080 \
     -e API_LOG_LEVEL=INFO \
+    -e 'API_DEFAULT_GENERATOR_GATEWAYS={"urls": ["http://host.docker.internal:8080/events/pub"]}' \
     ghcr.io/bvandewe/events-player:latest
     ```
 

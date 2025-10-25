@@ -48,5 +48,20 @@ class ApiSettings(BaseSettings):
     # HTTP client configuration
     http_client_timeout: float = 30.0
 
+    # Authentication & Authorization
+    auth_mode: str = "auto"  # auto, required, disabled
+    auth_jwks_url: str = ""  # JWKS endpoint for JWT validation
+    auth_issuer: str = ""  # Expected JWT issuer
+    auth_audience: str = ""  # Expected JWT audience
+    auth_required: bool = False  # Require auth for all endpoints
+    auth_algorithm: str = "RS256"  # JWT signature algorithm
+
+    # Keycloak OAuth settings (for local development)
+    keycloak_url: str = ""  # Keycloak base URL (for backend API calls)
+    keycloak_url_external: str = ""  # Keycloak URL for browser (frontend)
+    keycloak_realm: str = "events-player"  # Keycloak realm name
+    keycloak_client_id: str = ""  # OAuth client ID
+    keycloak_client_secret: str = ""  # OAuth client secret
+
 
 settings = ApiSettings()

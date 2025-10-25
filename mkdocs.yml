@@ -22,6 +22,8 @@ nav:
   - Usage:
     - User Guide: usage.md
     - Configuration: configuration.md
+  - Security:
+    - Authentication & Authorization: authentication.md
   - Deployment:
     - Deployment Guide: deployment.md
 

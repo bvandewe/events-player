@@ -2,12 +2,14 @@ import uuid
 from contextvars import ContextVar
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .description import description
 from .routes import router as api_router
 from .stream import router as streaming_router
 from .settings import settings
+from .auth import auth_middleware
 
 # Request ID context variable for tracing
 request_id_var: ContextVar[str] = ContextVar("request_id", default="")
@@ -38,6 +40,19 @@ app = FastAPI(
     ],
 )
 
+# CORS middleware for cross-origin requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8884",
+        "http://localhost:1234",
+        "http://localhost:8090",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Middleware for Request ID tracing
 @app.middleware("http")
@@ -51,6 +66,10 @@ async def add_request_id(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
     return response
+
+
+# Authentication middleware
+app.middleware("http")(auth_middleware)
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

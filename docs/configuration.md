@@ -95,6 +95,99 @@ The subject of the event in the context of the event producer.
 
 The event payload data. Must be valid JSON.
 
+### Authentication & Authorization
+
+For detailed authentication setup, see the [Authentication & Authorization](authentication.md) guide.
+
+#### `API_AUTH_MODE`
+
+- **Description**: Authentication mode
+- **Type**: String
+- **Default**: `"none"`
+- **Valid Values**: `none`, `keycloak`, `istio`, `auto`
+- **Example**: `API_AUTH_MODE=auto`
+
+Controls the authentication mechanism. Use `auto` for hybrid deployments, `keycloak` for standalone OAuth, `istio` for service mesh integration, or `none` to disable authentication.
+
+#### `API_AUTH_JWKS_URL`
+
+- **Description**: JWKS endpoint URL for JWT validation
+- **Type**: String (URL)
+- **Required**: When `auth_mode` is `istio` or `auto`
+- **Example**: `API_AUTH_JWKS_URL=http://keycloak:8080/realms/events-player/protocol/openid-connect/certs`
+
+Provides public keys for JWT signature verification.
+
+#### `API_AUTH_ISSUER`
+
+- **Description**: Expected JWT issuer (iss claim)
+- **Type**: String
+- **Required**: When `auth_mode` is `istio` or `auto`
+- **Example**: `API_AUTH_ISSUER=http://localhost:8090/realms/events-player`
+
+Must match the issuer in JWT tokens.
+
+#### `API_AUTH_AUDIENCE`
+
+- **Description**: Expected JWT audience (aud claim)
+- **Type**: String
+- **Required**: When `auth_mode` is `istio` or `auto`
+- **Example**: `API_AUTH_AUDIENCE=events-player-web`
+
+The intended audience for the JWT token.
+
+#### `API_AUTH_REQUIRED`
+
+- **Description**: Whether authentication is required for all endpoints
+- **Type**: Boolean (string)
+- **Default**: `"false"`
+- **Example**: `API_AUTH_REQUIRED=false`
+
+When false, authentication is optional. Protected endpoints still require authentication.
+
+#### `API_KEYCLOAK_URL`
+
+- **Description**: Internal Keycloak URL (for backend)
+- **Type**: String (URL)
+- **Required**: When `auth_mode` is `keycloak` or `auto`
+- **Example**: `API_KEYCLOAK_URL=http://keycloak:8080`
+
+Used by backend for token exchange. Can be internal Docker hostname.
+
+#### `API_KEYCLOAK_URL_EXTERNAL`
+
+- **Description**: External Keycloak URL (for frontend)
+- **Type**: String (URL)
+- **Required**: When `auth_mode` is `keycloak` or `auto`
+- **Example**: `API_KEYCLOAK_URL_EXTERNAL=http://localhost:8090`
+
+URL accessible from browsers for OAuth redirects.
+
+#### `API_KEYCLOAK_REALM`
+
+- **Description**: Keycloak realm name
+- **Type**: String
+- **Default**: `"events-player"`
+- **Example**: `API_KEYCLOAK_REALM=events-player`
+
+#### `API_KEYCLOAK_CLIENT_ID`
+
+- **Description**: Keycloak client ID for the web application
+- **Type**: String
+- **Default**: `"events-player-web"`
+- **Example**: `API_KEYCLOAK_CLIENT_ID=events-player-web`
+
+Must be a public client configured with PKCE support.
+
+#### `API_KEYCLOAK_CLIENT_SECRET`
+
+- **Description**: Client secret (leave empty for public clients)
+- **Type**: String
+- **Default**: `""`
+- **Example**: `API_KEYCLOAK_CLIENT_SECRET=`
+
+Public clients using PKCE don't require a client secret.
+
 ### Default Gateway URLs
 
 #### `API_DEFAULT_GENERATOR_GATEWAYS__URLS`

@@ -1,0 +1,126 @@
+{
+    "realm": "events-player",
+    "enabled": true,
+    "displayName": "CloudEvents Player",
+    "sslRequired": "none",
+    "registrationAllowed": true,
+    "loginWithEmailAllowed": true,
+    "duplicateEmailsAllowed": false,
+    "resetPasswordAllowed": true,
+    "editUsernameAllowed": false,
+    "bruteForceProtected": true,
+    "accessTokenLifespan": 300,
+    "ssoSessionIdleTimeout": 1800,
+    "ssoSessionMaxLifespan": 36000,
+    "internationalizationEnabled": true,
+    "supportedLocales": [
+        "en"
+    ],
+    "defaultLocale": "en",
+    "roles": {
+        "realm": [
+            {
+                "name": "admin",
+                "description": "Administrator role with full access"
+            },
+            {
+                "name": "operator",
+                "description": "Operator role with event management access"
+            },
+            {
+                "name": "user",
+                "description": "Basic user role with read-only access"
+            }
+        ]
+    },
+    "users": [
+        {
+            "username": "admin",
+            "enabled": true,
+            "emailVerified": true,
+            "email": "admin@events-player.local",
+            "firstName": "Admin",
+            "lastName": "User",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "admin123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "admin"
+            ]
+        },
+        {
+            "username": "operator",
+            "enabled": true,
+            "emailVerified": true,
+            "email": "operator@events-player.local",
+            "firstName": "Operator",
+            "lastName": "User",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "operator123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "operator"
+            ]
+        },
+        {
+            "username": "user",
+            "enabled": true,
+            "emailVerified": true,
+            "email": "user@events-player.local",
+            "firstName": "Regular",
+            "lastName": "User",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "user123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "user"
+            ]
+        }
+    ],
+    "clients": [
+        {
+            "clientId": "events-player-web",
+            "name": "CloudEvents Player Web Client",
+            "enabled": true,
+            "redirectUris": [
+                "http://localhost:8884/*",
+                "http://localhost:1234/*"
+            ],
+            "webOrigins": [
+                "http://localhost:8884",
+                "http://localhost:1234"
+            ],
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": true,
+            "publicClient": true,
+            "protocol": "openid-connect",
+            "attributes": {
+                "pkce.code.challenge.method": "S256"
+            },
+            "fullScopeAllowed": true
+        },
+        {
+            "clientId": "events-player-api",
+            "name": "CloudEvents Player API Client",
+            "enabled": true,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "events-player-api-secret",
+            "bearerOnly": true,
+            "standardFlowEnabled": false,
+            "protocol": "openid-connect"
+        }
+    ]
+}
