@@ -42,6 +42,10 @@ docker-build: ## Build Docker image
 	@echo "Building Docker image..."
 	docker-compose -f docker-compose.debug.yml build
 
+docker-dev: ## Build Docker image
+	@echo "Building and running Docker image..."
+	docker-compose -f docker-compose.debug.yml up --build -d
+
 docker-up: ## Start services using docker-compose
 	@echo "Starting services..."
 	docker-compose up -d
