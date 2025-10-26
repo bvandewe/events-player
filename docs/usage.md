@@ -4,14 +4,54 @@ Learn how to use CloudEvent Player to generate, monitor, and debug CloudEvents.
 
 ## Web Interface Overview
 
-The CloudEvent Player web interface consists of several key areas:
+The CloudEvent Player web interface provides multiple views for monitoring and analyzing CloudEvents:
+
+### Views
+
+1. **Events View** (Default)
+
+   - Real-time event stream with accordion items
+   - Full event details with syntax highlighting
+   - Click-to-filter functionality
+   - Keyboard navigation support
+
+2. **Timeline View**
+   - Visual chart showing event activity over time
+   - Interactive Chart.js timeline
+   - Time-based analysis of event patterns
+   - Same filtering capabilities as Events view
 
 ### Main Components
 
-1. **Event Generator Form** (Offcanvas panel)
-2. **Event Stream Display** (Main area)
-3. **Search and Filters** (Top bar)
-4. **Event Inspector** (Accordion items)
+1. **Navigation Bar**
+
+   - View switcher (Events/Timeline)
+   - Event counter showing filtered results
+   - Connection status indicator (SSE)
+   - User menu with role-based options
+
+2. **Filter Controls**
+
+   - **Search Box**: Quick text search across all event properties
+   - **Type Filter**: Filter by specific event types
+   - **Source Filter**: Filter by event sources
+   - **Subject Filter**: Filter by event subjects
+   - **Time Range Filter**: Filter events by time period (last hour, 6 hours, 24 hours, all)
+
+3. **Event Generator Form** (Offcanvas panel)
+
+   - Configure and generate CloudEvents
+   - Background task support for bulk generation
+   - Form validation and error handling
+
+4. **Admin Controls** (Admin role only)
+
+   - **Manage Tasks**: View and cancel running event generation tasks
+   - **Clear Storage**: Remove all stored events from browser
+
+5. **Event Display**
+   - **Events View**: Expandable accordion items with event details
+   - **Timeline View**: Chart-based visualization of event timeline
 
 ## Generating CloudEvents
 
@@ -208,18 +248,204 @@ Each CloudEvent displays:
 
 ### Search and Filter
 
-Use the search box to filter events:
+Use the comprehensive filtering system to find specific events:
 
-- Search by **type**
-- Search by **source**
-- Search by **subject**
-- Search by **data content**
+#### Quick Search
+
+- **Search Box** (Ctrl/Cmd + K): Filter events by any text
+  - Searches across type, source, subject, and data content
+  - Real-time filtering as you type
+  - Case-insensitive matching
+
+#### Filter Dropdowns
+
+- **Type Filter**: Select from available event types
+
+  - Auto-populates with types from received events
+  - Multi-select capability
+  - Clear individual or all selections
+
+- **Source Filter**: Filter by event source
+
+  - Shows all unique sources
+  - Same multi-select functionality
+
+- **Subject Filter**: Filter by event subject
+
+  - Filters events with matching subjects
+  - Supports null/empty subject filtering
+
+- **Time Range Filter**: Filter by time period
+  - Last Hour
+  - Last 6 Hours
+  - Last 24 Hours
+  - All Time (default)
+
+#### Click-to-Filter
+
+Click on any event property to automatically add it to filters:
+
+- Click event **type** → adds to type filter
+- Click event **source** → adds to source filter
+- Click event **subject** → adds to subject filter
+
+#### Filter Synchronization
+
+All filters are synchronized across views:
+
+- Set filters in Events view → automatically applied to Timeline view
+- Switch between views → filters remain consistent
+- Real-time event counter updates based on active filters
+
+#### Clearing Filters
+
+- Click **X** on individual filter chips to remove
+- Click **Clear Filters** button to remove all filters at once
+- Use keyboard shortcut `Ctrl/Cmd + L` to clear all
 
 Example searches:
 
 - `order.created` - Find order creation events
 - `payment-service` - Find events from payment service
 - `error` - Find events containing "error"
+
+## Timeline View
+
+The Timeline view provides a visual representation of event activity over time using Chart.js.
+
+### Accessing Timeline View
+
+Click **Timeline** in the navigation bar or use the view switcher to access the timeline visualization.
+
+### Features
+
+- **Time-Based Visualization**: See event patterns and activity trends
+- **Interactive Chart**: Hover over data points for details
+- **Synchronized Filters**: Same filters as Events view apply automatically
+- **Auto-Refresh**: Timeline updates as new events arrive
+- **Manual Refresh**: Click refresh button (Ctrl/Cmd + R) to update chart
+
+### Use Cases
+
+- **Pattern Recognition**: Identify peak activity periods
+- **Load Analysis**: Visualize event load distribution
+- **Debugging**: Correlate event bursts with system issues
+- **Monitoring**: Track event throughput over time
+
+## Client-Side Storage
+
+CloudEvent Player uses a two-tier storage architecture to persist events in your browser.
+
+### Storage Layers
+
+1. **IndexedDB** (Persistent)
+
+   - Survives browser restarts
+   - Stores full event history
+   - Configurable size limits
+   - Automatic cleanup of old events
+
+2. **In-Memory Cache** (Session)
+   - Fast access for current session
+   - Cleared on page refresh
+   - Used for real-time operations
+
+### Storage Benefits
+
+- **Offline Access**: View previously received events without server connection
+- **Fast Loading**: Quick retrieval from local storage
+- **Reduced Server Load**: Events cached locally
+- **Session Persistence**: Continue where you left off after browser restart
+
+### Managing Storage
+
+#### View Storage Stats
+
+Storage information is displayed in the UI:
+
+- Total events stored
+- Storage space used
+- Last sync timestamp
+
+#### Clear Storage (Admin Only)
+
+Administrators can clear all stored events:
+
+1. Click **Admin** menu in navigation bar
+2. Select **Clear Storage**
+3. Confirm the action
+4. All events are removed from IndexedDB and memory
+
+**Note**: Clearing storage does not affect events on the server or events currently being streamed via SSE.
+
+## Admin Task Management
+
+Administrators can manage background event generation tasks in real-time.
+
+### Accessing Task Manager
+
+1. Click **Admin** menu in navigation bar (Admin role only)
+2. Select **Manage Tasks**
+3. Task management modal opens
+
+### Task Manager Features
+
+#### Real-Time Task List
+
+- **Auto-Refresh**: Updates every 2 seconds while modal is open
+- **Task Status**: View status of all running tasks
+- **Progress Tracking**: See progress bars for each task
+- **Task Details**:
+  - Task ID
+  - Status (Pending, Running, Completed, Failed, Cancelled)
+  - Progress percentage
+  - Created timestamp
+
+#### Task Control
+
+**Cancel Individual Task**:
+
+- Click **Cancel** button next to specific task
+- Task stops gracefully
+- Events generated so far are preserved
+- Task status updates to "Cancelled"
+
+**Cancel All Tasks**:
+
+- Click **Cancel All Tasks** button at top of modal
+- All running tasks stop gracefully
+- Bulk cancellation for emergency scenarios
+- Confirmation toast appears
+
+### Task Lifecycle
+
+1. **Pending**: Task queued but not started
+2. **Running**: Task actively generating events
+3. **Completed**: Task finished successfully
+4. **Failed**: Task encountered an error
+5. **Cancelled**: Task stopped by administrator
+
+### Use Cases
+
+- **Resource Management**: Stop unnecessary event generation
+- **Emergency Control**: Halt all tasks during incidents
+- **Testing Cleanup**: Cancel test tasks when done
+- **Load Control**: Manage system load by canceling tasks
+
+## Keyboard Shortcuts
+
+CloudEvent Player supports keyboard shortcuts for efficient navigation:
+
+| Shortcut       | Action                      |
+| -------------- | --------------------------- |
+| `Ctrl/Cmd + K` | Focus search box            |
+| `Ctrl/Cmd + G` | Open event generator        |
+| `Ctrl/Cmd + R` | Refresh events/timeline     |
+| `Ctrl/Cmd + A` | Toggle all event accordions |
+| `Ctrl/Cmd + L` | Clear all filters           |
+| `Escape`       | Close offcanvas/modals      |
+
+**Note**: Keyboard shortcuts work across all views.
 
 ## Using as a Subscriber
 

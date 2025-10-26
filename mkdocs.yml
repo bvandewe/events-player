@@ -22,6 +22,17 @@ nav:
   - Usage:
     - User Guide: usage.md
     - Configuration: configuration.md
+  - Features:
+    - Overview: features/index.md
+    - Multiple Views: features/views.md
+    - Filtering System: features/filtering.md
+    - Client-Side Storage: features/storage.md
+    - Server-Sent Events: features/sse.md
+    - Background Tasks: features/tasks.md
+    - Role-Based Access Control: features/rbac.md
+    - Keyboard Shortcuts: features/keyboard-shortcuts.md
+    - State Management: features/state-management.md
+    - Performance: features/performance.md
   - Security:
     - Authentication & Authorization: authentication.md
   - Deployment:

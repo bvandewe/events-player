@@ -34,15 +34,24 @@ graph TB
 
 ### 🎯 **Event Generation**
 
-Generate CloudEvents with customizable properties, data payloads, and delivery options. Perfect for testing event-driven architectures without writing code.
+Generate CloudEvents with customizable properties, data payloads, and delivery options. Perfect for testing event-driven architectures without writing code. Support for background task management with admin controls.
 
 ### 📡 **Real-Time Monitoring**
 
-Watch events flow through your system with Server-Sent Events (SSE) streaming. See events as they arrive with syntax-highlighted JSON.
+Watch events flow through your system with Server-Sent Events (SSE) streaming. See events as they arrive with syntax-highlighted JSON in multiple views:
+
+- **Events List View**: Traditional list with accordion expansion
+- **Timeline Chart View**: Visual timeline with Chart.js showing event activity over time
+- **Shared Filtering**: Synchronized filters across all views for consistent data exploration
 
 ### 🔍 **Event Inspection**
 
-Examine CloudEvent structure, validate schemas, and debug data payloads with an intuitive web interface.
+Examine CloudEvent structure, validate schemas, and debug data payloads with an intuitive web interface. Features include:
+
+- Click-to-filter on event properties
+- Advanced search across event types, sources, and subjects
+- Time range filtering for focused analysis
+- Real-time event counter showing filtered results
 
 ### 🔄 **Pub/Sub Support**
 
@@ -50,7 +59,29 @@ Acts as both publisher and subscriber, allowing you to test complete event workf
 
 ### 🔐 **Authentication & Authorization**
 
-OAuth 2.0 with Keycloak and role-based access control (RBAC) to secure event generation and monitoring. Supports admin, operator, and user roles with fine-grained permissions.
+OAuth 2.0 with Keycloak and role-based access control (RBAC) to secure event generation and monitoring. Features include:
+
+- **Admin, Operator, and User roles** with fine-grained permissions
+- **Automatic token refresh** with OIDC offline_access for uninterrupted sessions
+- **Authorization Manager** for custom operator permissions
+- **Istio integration** for header-based authentication
+
+### 💾 **Client-Side Storage**
+
+Two-tier browser storage architecture for offline capability:
+
+- **IndexedDB**: Persistent storage for event history (survives browser restarts)
+- **In-Memory Cache**: Fast access for current session
+- **Storage Management**: Clear storage from UI with admin controls
+
+### 👨‍💼 **Admin Features**
+
+Admin-only capabilities for operational control:
+
+- **Task Management Modal**: View and cancel running event generation tasks
+- **Real-time Progress Tracking**: Monitor active tasks with progress bars
+- **Bulk Operations**: Cancel all tasks or individual tasks
+- **Audit Logging**: All admin actions are logged
 
 ### 🆔 **Request Tracing**
 
@@ -59,6 +90,15 @@ Built-in Request ID tracing for debugging across distributed systems.
 ### 🏥 **Health Monitoring**
 
 Health check endpoint for integration with monitoring systems and orchestrators.
+
+### ⌨️ **Keyboard Navigation**
+
+Full keyboard support for power users:
+
+- `Ctrl/Cmd + K`: Focus search
+- `Ctrl/Cmd + G`: Open event generator
+- `Ctrl/Cmd + R`: Refresh events
+- `Ctrl/Cmd + A`: Toggle all event accordions
 
 ## Use Cases
 
