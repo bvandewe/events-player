@@ -1,14 +1,16 @@
 import { toastController } from "../ui/toast";
 import { v4 as uuidv4 } from 'uuid';
+import { sseConnection } from './connection';
+import { filterController } from '../ui/filters';
+import { connectionStatus } from './connectionStatus';
 
 export const sseEventsController = (() => {
 
-    const sseEventPath = '/stream/events';
-    var sseConnectionStatus = document.getElementById('connectionStatusIndicator');
     var eventsStack = document.getElementById('events-stack');
-    var eventsCount = 0;
     var maxQueueSize = 0;
-    var sseConnectionTimer;
+    var eventStorageManager = null; // Will be initialized in init()
+    var activeFilters = { type: '', source: '', subject: null };
+    var timeRangeSelect = null; // Will be initialized in init()
 
     const createAccordionItem = ({ eventCount, timestamp, hasError, eventSource, eventSubject, eventType, eventData, eventId }) => {
         console.log(`Rx event: ${eventType} from ${eventSource} at ${timestamp}`);
@@ -96,50 +98,56 @@ export const sseEventsController = (() => {
     };
 
     const resetEventsCount = () => {
-        eventsCount = 0;
+        sseConnection.resetCount();
     };
 
     const incrementEventsCount = () => {
-        var eventCountSpan = document.getElementById('event-count');
-        eventsCount++;
-        eventCountSpan.innerHTML = eventsCount;
-        document.title = "CloudEvents Player (" + eventsCount + ")";
+        sseConnection.incrementCount();
     };
 
-    const handleConnectionStatus = (status) => {
-        switch (status) {
-            case "open":
-                console.log("Connection opened");
-                sseConnectionStatus.style.backgroundColor = "green";
-                sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
-            case "connect":
-                sseConnectionStatus.style.backgroundColor = "#4DCEF3";
-                sseConnectionStatus.style.color = "#1a1d20";
-                sseConnectionStatus.classList.add('glow');
-                sseConnectionStatus.classList.remove('blink');
-                sseConnectionStatus.setAttribute("title", "Connected - happy to see some traffic here!");
-                break;
-            case "error":
-                console.log("Connection error");
-                sseConnectionStatus.style.backgroundColor = "#800000";
-                sseConnectionStatus.style.color = "#FFF";
-                sseConnectionStatus.classList.remove('glow');
-                sseConnectionStatus.classList.add('blink');
-                sseConnectionStatus.setAttribute("title", "Disconnected... Trying to reconnect every 2s...");
-                break;
-            case "newtimer":
-                sseConnectionTimer = setTimeout(() => {
-                    sseConnectionStatus.style.backgroundColor = "green";
-                    sseConnectionStatus.setAttribute("title", "Connected - its quiet here though!");
-                }, 10000);
-                break;
-            case "cleartimer":
-                clearTimeout(sseConnectionTimer);
-                break;
-            default:
-                break;
+    /**
+     * Show filter banner when URL parameters are present
+     */
+    const showFilterBanner = (filters) => {
+        const { startTime, endTime, typeFilter, sourceFilter, subjectFilter } = filters;
+
+        // Find or create filter banner container
+        let banner = document.getElementById('filter-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'filter-banner';
+            banner.className = 'alert alert-info alert-dismissible fade show mb-3';
+            banner.setAttribute('role', 'alert');
+
+            // Insert before events stack
+            eventsStack.parentNode.insertBefore(banner, eventsStack);
         }
 
+        const filterParts = [];
+
+        if (startTime || endTime) {
+            const start = startTime ? new Date(startTime).toLocaleString() : 'start';
+            const end = endTime ? new Date(endTime).toLocaleString() : 'now';
+            filterParts.push(`<strong>Time:</strong> ${start} to ${end}`);
+        }
+
+        if (typeFilter) {
+            filterParts.push(`<strong>Type:</strong> ${typeFilter}`);
+        }
+
+        if (sourceFilter) {
+            filterParts.push(`<strong>Source:</strong> ${sourceFilter}`);
+        }
+
+        if (subjectFilter !== null) {
+            filterParts.push(`<strong>Subject:</strong> ${subjectFilter || '(empty)'}`);
+        }
+
+        banner.innerHTML = `
+            <i class="bi bi-funnel-fill me-2"></i>
+            <strong>Filtered View:</strong> ${filterParts.join(' | ')}
+            <button type="button" class="btn-close" onclick="window.location.href='/'"></button>
+        `;
     };
 
     const handleNewEvent = (event) => {
@@ -193,7 +201,7 @@ export const sseEventsController = (() => {
             }
             const uuid = uuidv4();
             var accordionData = {
-                eventCount: eventsCount,
+                eventCount: sseConnection.getCount(),
                 timestamp: cloudEventData.time,
                 hasError: hasError,
                 eventSource: cloudEventData.source,
@@ -202,6 +210,23 @@ export const sseEventsController = (() => {
                 eventData: cloudEventData,
                 eventId: uuid
             };
+
+            // Add event values to filter dropdowns
+            filterController.addEventValues(cloudEventData);
+
+            // Store event in storage manager (both tiers)
+            if (eventStorageManager) {
+                eventStorageManager.addEvent(cloudEventData).catch(err => {
+                    console.error('[Events] Failed to store event:', err);
+                });
+            }
+
+            // Check if event matches active filters
+            if (!filterController.matchesFilters(cloudEventData)) {
+                console.log('[Events] Event filtered out:', cloudEventData.type);
+                return; // Don't display this event
+            }
+
             const item = createAccordionItem(accordionData);
             eventsStack.prepend(item);
         }
@@ -210,10 +235,10 @@ export const sseEventsController = (() => {
     const handleSseEvent = (event) => {
         console.log(event);
         incrementEventsCount();
-        handleConnectionStatus("cleartimer");
-        handleConnectionStatus("connect");
+        connectionStatus.updateStatus("cleartimer");
+        connectionStatus.updateStatus("connect");
         handleNewEvent(event);
-        handleConnectionStatus("newtimer");
+        connectionStatus.updateStatus("newtimer");
 
         // Keep the stack to its max-size ??? > eventsCount
         if (eventsStack.childElementCount > maxQueueSize) {
@@ -222,32 +247,236 @@ export const sseEventsController = (() => {
         }
     };
 
-    const init = (queueSize) => {
-        var eventSource = new EventSource(sseEventPath);
+    /**
+     * Load events from IndexedDB storage and display them
+     * This allows the event list to persist across page reloads
+     */
+    const loadEventsFromStorage = async () => {
+        try {
+            console.log('[Events] Loading events from storage...');
+
+            if (!eventStorageManager) {
+                console.error('[Events] Storage manager not available');
+                return;
+            }
+
+            if (!eventStorageManager.initialized) {
+                console.warn('[Events] Storage manager not initialized, waiting...');
+                await eventStorageManager.init();
+            }
+
+            console.log('[Events] Storage stats:', eventStorageManager.getStats());
+
+            // Get URL parameters for filtering
+            const urlParams = new URLSearchParams(window.location.search);
+            const startTime = urlParams.get('startTime') ? parseInt(urlParams.get('startTime')) : null;
+            const endTime = urlParams.get('endTime') ? parseInt(urlParams.get('endTime')) : null;
+            const typeFilter = urlParams.get('type') || null;
+            const sourceFilter = urlParams.get('source') || null;
+            const subjectFilter = urlParams.has('subject') ? urlParams.get('subject') : null;
+
+            // Get time range from selector if not from URL
+            let timeRangeStart = startTime;
+            let timeRangeEnd = endTime;
+
+            if (!startTime && !endTime && timeRangeSelect && timeRangeSelect.value !== 'all') {
+                const minutes = parseInt(timeRangeSelect.value);
+                const now = Date.now();
+                timeRangeEnd = now;
+                timeRangeStart = now - (minutes * 60 * 1000);
+                console.log('[Events] Applying time range from selector:', {
+                    minutes,
+                    start: new Date(timeRangeStart).toISOString(),
+                    end: new Date(timeRangeEnd).toISOString()
+                });
+            }
+
+            let events = await eventStorageManager.getRecentEvents({ limit: maxQueueSize });
+
+            console.log('[Events] getRecentEvents returned:', events ? events.length : 'null/undefined', 'events');
+
+            // Apply filters from URL parameters or time range selector
+            if (events && (timeRangeStart || timeRangeEnd || typeFilter || sourceFilter || subjectFilter !== null)) {
+                console.log('[Events] Applying filters:', { startTime: timeRangeStart, endTime: timeRangeEnd, typeFilter, sourceFilter, subjectFilter });
+
+                events = events.filter(event => {
+                    // Time range filter
+                    if (timeRangeStart || timeRangeEnd) {
+                        // Handle timezone: if timestamp doesn't end with Z, assume UTC
+                        let eventTime = event.time;
+                        if (eventTime && !eventTime.endsWith('Z') && !eventTime.includes('+') && !eventTime.includes('-', 10)) {
+                            eventTime = eventTime + 'Z';
+                        }
+                        const eventTimestamp = new Date(eventTime).getTime();
+
+                        console.log('[Events] Checking event time:', {
+                            originalTime: event.time,
+                            correctedTime: eventTime,
+                            eventTimestamp,
+                            startTime: timeRangeStart,
+                            endTime: timeRangeEnd,
+                            inRange: (!timeRangeStart || eventTimestamp >= timeRangeStart) && (!timeRangeEnd || eventTimestamp < timeRangeEnd)
+                        });
+
+                        if (timeRangeStart && eventTimestamp < timeRangeStart) return false;
+                        if (timeRangeEnd && eventTimestamp >= timeRangeEnd) return false;
+                    }
+
+                    // Type filter (from URL or dropdown)
+                    const activeTypeFilter = typeFilter || activeFilters.type;
+                    if (activeTypeFilter && event.type !== activeTypeFilter) {
+                        console.log('[Events] Filtering out by type:', event.type, '!==', activeTypeFilter);
+                        return false;
+                    }
+
+                    // Source filter (from URL or dropdown)
+                    const activeSourceFilter = sourceFilter || activeFilters.source;
+                    if (activeSourceFilter && event.source !== activeSourceFilter) {
+                        console.log('[Events] Filtering out by source:', event.source, '!==', activeSourceFilter);
+                        return false;
+                    }
+
+                    // Subject filter (from URL or dropdown)
+                    const activeSubjectFilter = subjectFilter !== null ? subjectFilter : activeFilters.subject;
+                    if (activeSubjectFilter !== null && event.subject !== activeSubjectFilter) {
+                        console.log('[Events] Filtering out by subject:', event.subject, '!==', activeSubjectFilter);
+                        return false;
+                    }
+
+                    return true;
+                });
+
+                console.log('[Events] After filtering:', events.length, 'events');
+
+                // Show filter info banner (use original URL params for display)
+                showFilterBanner({ startTime, endTime, typeFilter, sourceFilter, subjectFilter });
+            }
+
+            if (events && events.length > 0) {
+                console.log(`[Events] Loaded ${events.length} events from storage`);
+
+                // Clear current display
+                eventsStack.innerHTML = '';
+                resetEventsCount();
+
+                // Render events in reverse order (oldest first, so newest ends up on top)
+                events.reverse().forEach(cloudEventData => {
+                    const uuid = uuidv4();
+                    const accordionData = {
+                        eventCount: sseConnection.getCount(),
+                        timestamp: cloudEventData.time,
+                        hasError: 'none',
+                        eventSource: cloudEventData.source,
+                        eventSubject: cloudEventData.subject,
+                        eventType: cloudEventData.type,
+                        eventData: cloudEventData,
+                        eventId: uuid
+                    };
+
+                    incrementEventsCount();
+                    const item = createAccordionItem(accordionData);
+                    eventsStack.prepend(item);
+                });
+
+                console.log(`[Events] Displayed ${events.length} events`);
+            } else {
+                console.log('[Events] No events found in storage (events array empty or null)');
+            }
+        } catch (error) {
+            console.error('[Events] Failed to load events from storage:', error);
+        }
+    };
+
+    const init = (queueSize, storageManager) => {
         maxQueueSize = parseInt(queueSize);
+        eventStorageManager = storageManager; // Store reference to storage manager
 
-        eventSource.addEventListener('open',
-            handleConnectionStatus("open")
-        );
+        // Initialize time range selector
+        timeRangeSelect = document.getElementById('eventTimeRange');
+        if (timeRangeSelect) {
+            timeRangeSelect.addEventListener('change', () => {
+                console.log('[Events] Time range changed:', timeRangeSelect.value);
+                loadEventsFromStorage();
+            });
+        }
 
-        eventSource.addEventListener('message', (event) => {
-            handleSseEvent(event)
+        // Wait for storage to initialize, then load events, then setup SSE
+        const setupSequence = async () => {
+            try {
+                // Ensure storage is initialized
+                if (eventStorageManager && !eventStorageManager.initialized) {
+                    await eventStorageManager.init();
+                }
+
+                // Load existing events from storage (this will set the counter correctly)
+                await loadEventsFromStorage();
+
+                // Initialize filter controller
+                await filterController.init({
+                    storageManager: eventStorageManager,
+                    selectors: {
+                        type: 'eventTypeFilter',
+                        source: 'eventSourceFilter',
+                        subject: 'eventSubjectFilter',
+                        clear: 'clearFiltersBtn'
+                    },
+                    onFilterChange: (filters) => {
+                        console.log('[Events] Filters changed:', filters);
+                        activeFilters = filters;
+                        // Reload events with new filters
+                        loadEventsFromStorage();
+                    }
+                });
+
+                // Now initialize SSE connection with the current counter value
+                // (which reflects filtered events if filters are active)
+                const currentCount = sseConnection.getCount();
+                console.log('[Events] Initializing SSE with counter:', currentCount);
+
+                // Initialize connection status manager
+                connectionStatus.init();
+
+                sseConnection.init({
+                    initialCount: currentCount,
+                    onMessage: (event) => {
+                        connectionStatus.updateStatus("connect");
+                        handleSseEvent(event);
+                    },
+                    onOpen: () => {
+                        connectionStatus.updateStatus("open");
+                    },
+                    onError: (error) => {
+                        connectionStatus.updateStatus("error");
+                    }
+                });
+            } catch (error) {
+                console.error('[Events] Failed to initialize:', error);
+            }
+        };
+
+        setupSequence();
+
+        // Listen for animation end on connection status indicator
+        const statusIndicator = document.getElementById('connectionStatusIndicator');
+        if (statusIndicator) {
+            statusIndicator.addEventListener('animationend', () => {
+                statusIndicator.classList.remove('glow', 'blink');
+            });
+        }
+
+        // Listen for page visibility changes to reload events when user returns
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && eventStorageManager && eventStorageManager.db) {
+                console.log('[Events] Page became visible, reloading events from storage...');
+                loadEventsFromStorage();
+            }
         });
-
-        eventSource.addEventListener('error',
-            handleConnectionStatus("error")
-        );
-
-        sseConnectionStatus.addEventListener('animationend', () => {
-            sseConnectionStatus.classList.remove('glow', 'blink');
-        });
-
-
     };
 
     return {
         init,
-        resetEventsCount
+        resetEventsCount,
+        loadEventsFromStorage  // Expose for manual refresh
     }
 
 })();

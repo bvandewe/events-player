@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "This micro-app can be used as a test subscriber and/or emitter of [CloudEvents](https://cloudevents.io/).",
   "scripts": {
-    "start": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html --public-url /static/ --dist-dir static",
-    "dev": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html --public-url /static/ --dist-dir static --hmr-port 1234",
-    "build": "npm run copy && parcel build src/ui/index.html src/ui/html/*.html --public-url /static/ --dist-dir static",
+    "start": "npm run copy && parcel serve src/ui/index.html src/ui/html/timeline.html src/ui/html/*.html --public-url /static/ --dist-dir static --no-scope-hoist",
+    "dev": "npm run copy && parcel serve src/ui/index.html src/ui/html/timeline.html src/ui/html/*.html --public-url /static/ --dist-dir static --hmr-port 1234 --no-scope-hoist",
+    "build": "npm run copy && parcel build src/ui/index.html src/ui/html/timeline.html src/ui/html/*.html --public-url /static/ --dist-dir static --no-scope-hoist",
     "copy": "copyfiles -f src/ui/img/*.* static/img"
   },
   "repository": {
@@ -24,6 +24,9 @@
   "dependencies": {
     "bootstrap": "^5.3.0-alpha2",
     "bootstrap-icons": "^1.10.4",
+    "chart.js": "^4.5.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
     "uuid": "^9.0.0"
   }
 }

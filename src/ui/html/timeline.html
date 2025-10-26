@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <title>Timeline - CloudEvents Player</title>
+    <link rel="stylesheet" href="../scss/app.scss">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa&family=Roboto">
+    <link rel="stylesheet" href="../../../node_modules/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.ico">
+</head>
+<body data-bs-theme="dark" 
+      data-browser_queue_size="{{ browser_queue_size }}"
+      data-auth_mode="{{ auth_mode }}"
+      data-auth_issuer="{{ keycloak_url }}/realms/{{ keycloak_realm }}"
+      data-auth_client_id="{{ keycloak_client_id }}"
+      data-auth_redirect_uri="{{ request.url.scheme }}://{{ request.url.netloc }}/timeline">
+
+    {% include "html/nav.html" %}
+
+    <!-- Main Content -->
+    <main class="container-fluid p-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-3">Event Activity Timeline</h2>
+                <p class="text-secondary">Visualize event activity and identify patterns over time</p>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <!-- Time Range -->
+                            <div class="col-md-3">
+                                <label for="timeRange" class="form-label">Time Range</label>
+                                <select class="form-select" id="timeRange">
+                                    <option value="5">Last 5 minutes</option>
+                                    <option value="15">Last 15 minutes</option>
+                                    <option value="30">Last 30 minutes</option>
+                                    <option value="60">Last 1 hour</option>
+                                    <option value="180">Last 3 hours</option>
+                                    <option value="360">Last 6 hours</option>
+                                    <option value="720">Last 12 hours</option>
+                                    <option value="1440">Last 24 hours</option>
+                                    <option value="all" selected>All time</option>
+                                </select>
+                            </div>
+
+                            <!-- Bucket Size -->
+                            <div class="col-md-3">
+                                <label for="bucketSize" class="form-label">Granularity</label>
+                                <select class="form-select" id="bucketSize">
+                                    <option value="10000">10 seconds</option>
+                                    <option value="30000">30 seconds</option>
+                                    <option value="60000" selected>1 minute</option>
+                                    <option value="300000">5 minutes</option>
+                                    <option value="600000">10 minutes</option>
+                                    <option value="1800000">30 minutes</option>
+                                    <option value="3600000">1 hour</option>
+                                </select>
+                            </div>
+
+                            <!-- Type Filter -->
+                            <div class="col-md-2">
+                                <label for="typeFilter" class="form-label">Event Type</label>
+                                <select class="form-select" id="typeFilter">
+                                    <option value="">All Types</option>
+                                </select>
+                            </div>
+
+                            <!-- Source Filter -->
+                            <div class="col-md-2">
+                                <label for="sourceFilter" class="form-label">Source</label>
+                                <select class="form-select" id="sourceFilter">
+                                    <option value="">All Sources</option>
+                                </select>
+                            </div>
+
+                            <!-- Subject Filter -->
+                            <div class="col-md-2">
+                                <label for="subjectFilter" class="form-label">Subject</label>
+                                <select class="form-select" id="subjectFilter">
+                                    <option value="">All Subjects</option>
+                                </select>
+                            </div>
+
+                            <!-- Refresh Button -->
+                            <div class="col-12">
+                                <button class="btn btn-primary" id="refreshChart">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                                </button>
+                                <button class="btn btn-outline-secondary" id="autoRefreshToggle">
+                                    <i class="bi bi-play-fill"></i> Auto-refresh (Off)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body" style="height: 400px; position: relative;">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Total Events</h6>
+                        <h3 class="card-title" id="statTotalEvents">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Peak Rate</h6>
+                        <h3 class="card-title" id="statPeakRate">0/min</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Average Rate</h6>
+                        <h3 class="card-title" id="statAvgRate">0/min</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Quiet Periods</h6>
+                        <h3 class="card-title" id="statQuietPeriods">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include "html/footer.html" %}
+    {% include "html/offcanvas.html" %}
+    {% include "html/help.html" %}
+    {% include "html/toast.html" %}
+    {% include "html/confirm.html" %}
+    {% include "html/clearStorageModal.html" %}
+
+    <script type="module" src="../js/timeline.js"></script>
+</body>
+</html>

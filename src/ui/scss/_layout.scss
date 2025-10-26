@@ -5,7 +5,8 @@ body {
     margin: 0;
     padding: 0;
     font-family: "Roboto", Helvetica, Arial, sans-serif;
-    overflow-x: auto;
+    overflow-x: hidden; // Prevent horizontal scrollbar
+    overflow-y: hidden; // Body doesn't scroll, main does
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -13,11 +14,14 @@ body {
 
 header {
     border-top: 1px solid $primary;
+    flex-shrink: 0; // Never shrink the header
 }
 
 main {
     flex-grow: 1;
-    overflow-y: auto;
+    overflow-y: auto; // Main content scrolls independently
+    overflow-x: hidden;
+    position: relative; // Establish stacking context
 }
 
 footer {

@@ -13,12 +13,17 @@
  * - User info extraction
  */
 
+import * as bootstrap from 'bootstrap';
+import EventStorageManager from '../storage/eventStorage.js';
+import { toastController } from '../ui/toast.js';
+
 class AuthManager {
     constructor() {
         this.token = null;
         this.userInfo = null;
         this.keycloakConfig = null;
         this.mode = null; // 'istio' | 'keycloak' | 'none'
+        this.tokenCheckInterval = null; // For periodic token validation
     }
 
     /**
@@ -88,6 +93,37 @@ class AuthManager {
 
         // Render UI
         this.renderAuthUI();
+
+        // Start periodic token validation (every 60 seconds)
+        this.startTokenValidation();
+    }
+
+    /**
+     * Start periodic token validation
+     */
+    startTokenValidation() {
+        // Clear any existing interval
+        if (this.tokenCheckInterval) {
+            clearInterval(this.tokenCheckInterval);
+        }
+
+        // Check token every 60 seconds
+        this.tokenCheckInterval = setInterval(() => {
+            if (this.token && this.userInfo) {
+                console.log('[Auth] Checking token validity...');
+                this.isAuthenticated(); // This will trigger handleTokenExpiry if expired
+            }
+        }, 60000); // 60 seconds
+    }
+
+    /**
+     * Stop token validation
+     */
+    stopTokenValidation() {
+        if (this.tokenCheckInterval) {
+            clearInterval(this.tokenCheckInterval);
+            this.tokenCheckInterval = null;
+        }
     }
 
     /**
@@ -296,6 +332,92 @@ class AuthManager {
     }
 
     /**
+     * Clear all local storage (events and metadata)
+     * Available to all users, regardless of authentication
+     */
+    clearStorage() {
+        console.log('[Auth] Showing clear storage confirmation modal...');
+
+        // Show the modal
+        const modalElement = document.getElementById('clearStorageModal');
+        if (!modalElement) {
+            console.error('[Auth] Clear storage modal not found');
+            alert('Modal not found. Please refresh the page.');
+            return;
+        }
+
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Set up the confirmation button handler
+        const confirmButton = document.getElementById('confirmClearStorageBtn');
+        if (!confirmButton) {
+            console.error('[Auth] Confirm button not found');
+            return;
+        }
+
+        // Remove any existing event listeners to prevent duplicates
+        const newConfirmButton = confirmButton.cloneNode(true);
+        confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+
+        // Add click handler
+        newConfirmButton.addEventListener('click', async () => {
+            console.log('[Auth] Clearing all storage...');
+
+            try {
+                // Hide the modal
+                modal.hide();
+
+                const storageManager = EventStorageManager.getInstance();
+                await storageManager.clearAll();
+
+                // Clear the UI
+                const eventsStack = document.getElementById('events-stack');
+                if (eventsStack) {
+                    eventsStack.innerHTML = '';
+                }
+
+                // Update event count
+                document.title = "CloudEvents Player (0)";
+                const eventCountElement = document.getElementById('event-count');
+                if (eventCountElement) {
+                    eventCountElement.textContent = '0';
+                }
+
+                // Show success toast
+                const toastEl = document.getElementById('liveToast');
+                if (toastEl) {
+                    toastEl.classList.remove('text-bg-warning', 'text-bg-danger', 'text-bg-primary');
+                    toastEl.classList.add('text-bg-success');
+                    const toastBody = toastEl.querySelector('.toast-body');
+                    toastBody.textContent = 'Storage cleared successfully!';
+                    const toast = bootstrap.Toast.getOrCreateInstance(toastEl);
+                    toast.show();
+                }
+
+                // Reload after a short delay to allow user to see the toast
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+
+            } catch (error) {
+                console.error('[Auth] Error clearing storage:', error);
+
+                // Show error toast
+                const toastEl = document.getElementById('liveToast');
+                if (toastEl) {
+                    toastEl.classList.remove('text-bg-success', 'text-bg-primary');
+                    toastEl.classList.add('text-bg-danger');
+                    const toastBody = toastEl.querySelector('.toast-body');
+                    toastBody.textContent = 'Failed to clear storage. Check console for details.';
+                    const toast = bootstrap.Toast.getOrCreateInstance(toastEl);
+                    toast.show();
+                }
+            }
+        });
+    }
+
+    /**
      * Get Authorization headers for API calls
      */
     getAuthHeaders() {
@@ -321,7 +443,66 @@ class AuthManager {
      * Check if user is authenticated
      */
     isAuthenticated() {
-        return this.userInfo !== null;
+        // Check if token exists and is not expired
+        if (!this.token || !this.userInfo) {
+            return false;
+        }
+
+        // Check token expiration if exp claim exists
+        if (this.userInfo.exp) {
+            const now = Math.floor(Date.now() / 1000);
+            if (now >= this.userInfo.exp) {
+                console.warn('[Auth] Token expired');
+                this.handleTokenExpiry();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Handle token expiration
+     */
+    handleTokenExpiry() {
+        console.log('[Auth] Token expired, switching to read-only mode');
+
+        // Show expiry warning in UI
+        this.showExpiryWarning();
+
+        // Clear token but keep userInfo for display
+        sessionStorage.removeItem('access_token');
+        this.token = null;
+
+        // Update UI to show login button
+        this.renderAuthUI();
+    }
+
+    /**
+     * Show token expiry warning
+     */
+    showExpiryWarning() {
+        const authContainer = document.getElementById('authContainer');
+        if (!authContainer) return;
+
+        // Create warning badge
+        const warning = document.createElement('div');
+        warning.className = 'alert alert-warning alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+        warning.style.zIndex = '9999';
+        warning.style.maxWidth = '500px';
+        warning.innerHTML = `
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Session Expired</strong><br>
+            Your session has expired. You can still view events, but you need to log in again to send new events.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        document.body.appendChild(warning);
+
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+            warning.remove();
+        }, 10000);
     }
 
     /**
@@ -398,6 +579,30 @@ class AuthManager {
                 menu.appendChild(divider);
             }
 
+            // Clear Storage button (available to all authenticated users)
+            const clearStorageItem = document.createElement('li');
+            const clearStorageLink = document.createElement('a');
+            clearStorageLink.className = 'dropdown-item';
+            clearStorageLink.href = '#';
+            clearStorageLink.onclick = (e) => {
+                e.preventDefault();
+                this.clearStorage();
+            };
+
+            const clearIcon = document.createElement('i');
+            clearIcon.className = 'bi bi-trash3 me-2';
+            clearStorageLink.appendChild(clearIcon);
+            clearStorageLink.appendChild(document.createTextNode('Clear Storage'));
+            clearStorageItem.appendChild(clearStorageLink);
+            menu.appendChild(clearStorageItem);
+
+            // Divider before logout
+            const logoutDivider = document.createElement('li');
+            const logoutHr = document.createElement('hr');
+            logoutHr.className = 'dropdown-divider';
+            logoutDivider.appendChild(logoutHr);
+            menu.appendChild(logoutDivider);
+
             // Logout button
             const logoutItem = document.createElement('li');
             const logoutLink = document.createElement('a');
@@ -418,19 +623,76 @@ class AuthManager {
             dropdown.appendChild(menu);
             userDiv.appendChild(dropdown);
             authContainer.appendChild(userDiv);
-
         } else if (this.mode === 'keycloak') {
-            // Show login button
-            const loginButton = document.createElement('button');
-            loginButton.className = 'btn btn-primary';
-            loginButton.onclick = () => this.login();
+            // Show user icon dropdown with Clear Storage option
+            const userDiv = document.createElement('div');
+            userDiv.className = 'auth-user-info';
 
+            // Create dropdown
+            const dropdown = document.createElement('div');
+            dropdown.className = 'dropdown';
+
+            const button = document.createElement('button');
+            button.className = 'btn btn-outline-secondary dropdown-toggle';
+            button.setAttribute('data-bs-toggle', 'dropdown');
+            button.setAttribute('aria-expanded', 'false');
+            button.setAttribute('aria-label', 'User menu');
+
+            // User icon
             const icon = document.createElement('i');
-            icon.className = 'bi bi-box-arrow-in-right me-2';
-            loginButton.appendChild(icon);
-            loginButton.appendChild(document.createTextNode('Login'));
+            icon.className = 'bi bi-person-circle';
+            button.appendChild(icon);
 
-            authContainer.appendChild(loginButton);
+            dropdown.appendChild(button);
+
+            // Dropdown menu
+            const menu = document.createElement('ul');
+            menu.className = 'dropdown-menu dropdown-menu-end';
+
+            // Clear Storage button
+            const clearStorageItem = document.createElement('li');
+            const clearStorageLink = document.createElement('a');
+            clearStorageLink.className = 'dropdown-item';
+            clearStorageLink.href = '#';
+            clearStorageLink.onclick = (e) => {
+                e.preventDefault();
+                this.clearStorage();
+            };
+
+            const clearIcon = document.createElement('i');
+            clearIcon.className = 'bi bi-trash3 me-2';
+            clearStorageLink.appendChild(clearIcon);
+            clearStorageLink.appendChild(document.createTextNode('Clear Storage'));
+            clearStorageItem.appendChild(clearStorageLink);
+            menu.appendChild(clearStorageItem);
+
+            // Divider
+            const divider = document.createElement('li');
+            const hr = document.createElement('hr');
+            hr.className = 'dropdown-divider';
+            divider.appendChild(hr);
+            menu.appendChild(divider);
+
+            // Login button
+            const loginItem = document.createElement('li');
+            const loginLink = document.createElement('a');
+            loginLink.className = 'dropdown-item';
+            loginLink.href = '#';
+            loginLink.onclick = (e) => {
+                e.preventDefault();
+                this.login();
+            };
+
+            const loginIcon = document.createElement('i');
+            loginIcon.className = 'bi bi-box-arrow-in-right me-2';
+            loginLink.appendChild(loginIcon);
+            loginLink.appendChild(document.createTextNode('Login'));
+            loginItem.appendChild(loginLink);
+            menu.appendChild(loginItem);
+
+            dropdown.appendChild(menu);
+            userDiv.appendChild(dropdown);
+            authContainer.appendChild(userDiv);
         }
 
         // Show the container
