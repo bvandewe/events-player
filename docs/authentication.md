@@ -170,7 +170,7 @@ docker run -d \
 
 2. **Create a Realm**
 
-- Login to Keycloak admin console: http://localhost:8090
+- Login to Keycloak admin console: <http://localhost:8090>
 - Create a new realm named `events-player`
 
 3. **Create Realm Roles**
@@ -193,6 +193,8 @@ Create a public client for the web UI:
 - **Standard Flow Enabled**: ON
 - **Direct Access Grants Enabled**: ON
 - **PKCE Code Challenge Method**: S256
+
+**Important**: No additional client configuration is needed for token refresh. The application automatically requests the `offline_access` scope during OAuth login, which instructs Keycloak to issue refresh tokens. This is standard OIDC behavior.
 
 5. **Create Client for Backend** (optional)
 
@@ -363,7 +365,7 @@ services:
 
 ### Test as Admin
 
-1. Navigate to http://localhost:8884
+1. Navigate to <http://localhost:8884>
 2. Click the "Login" button
 3. Login with:
    - Username: `admin`
@@ -486,9 +488,85 @@ location.reload();
 
 **Solution**: Check Web Origins in Keycloak client configuration
 
-```
+```text
 Web Origins: http://localhost:8884
 ```
+
+### Token Refresh Not Working
+
+**Problem**: Automatic token refresh fails, user forced to log in again
+
+**Solution**: Ensure the OAuth flow requests the `offline_access` scope
+
+The application automatically requests this scope during login. If you've customized the OAuth flow, verify:
+
+```javascript
+// In auth.js - OAuth authorization request
+scope: "openid profile email offline_access"; // offline_access required
+```
+
+**Keycloak Configuration**: No special client configuration needed. The `offline_access` scope is a standard OIDC scope that instructs Keycloak to issue refresh tokens.
+
+**Debugging**:
+
+1. Open browser DevTools → Application → Session Storage
+2. Check for `refresh_token` key after login
+3. If missing, verify the OAuth scope parameter includes `offline_access`
+
+## Token Management
+
+### Automatic Token Refresh
+
+CloudEvent Player implements automatic OIDC token refresh to prevent user session interruptions:
+
+#### How It Works
+
+1. **Proactive Refresh**: Tokens are automatically refreshed 5 minutes before expiry
+2. **Background Monitoring**: System checks token expiry every 60 seconds
+3. **Seamless Updates**: Refresh happens in background without user interaction
+4. **401 Retry**: API calls that fail with 401 automatically retry after refresh
+
+#### Token Storage
+
+Tokens are stored in browser sessionStorage:
+
+- `access_token`: Current JWT access token
+- `refresh_token`: Token used to obtain new access tokens
+- `token_expires_at`: Timestamp for proactive refresh calculation
+
+#### Refresh Flow
+
+1. System detects token will expire within 5 minutes
+2. Calls `/api/auth/refresh` endpoint with refresh token
+3. Backend exchanges refresh token with Keycloak for new access token
+4. New tokens stored in sessionStorage
+5. User session continues uninterrupted
+
+#### Manual Token Refresh
+
+Tokens also refresh automatically when:
+
+- Any API call receives a 401 response
+- User attempts an operation requiring authentication
+- Token validation detects expiry
+
+#### Session Expiry
+
+If token refresh fails (e.g., refresh token expired or revoked):
+
+1. User sees notification about session expiry
+2. Application switches to read-only mode
+3. User prompted to log in again
+4. All stored tokens cleared from sessionStorage
+
+### Token Validation
+
+The application validates tokens on every API request:
+
+- Checks token presence in sessionStorage
+- Verifies token expiry timestamp
+- Automatically refreshes if expired or expiring soon
+- Falls back to login if refresh fails
 
 ## API Endpoints
 
@@ -500,14 +578,64 @@ Web Origins: http://localhost:8884
 
 ### Protected Endpoints
 
-- `POST /api/generate` - Generate events (requires `operator` or `admin`)
-- `GET /api/tasks` - View tasks (requires authentication)
-- `DELETE /api/tasks` - Cancel tasks (requires authentication)
+#### Event Generation
 
-### Authentication Endpoints
+- `POST /api/generate` - Generate events (requires `operator` or `admin`)
+  - Submits background task for event generation
+  - Returns task ID for tracking
+  - Validates OAuth token before processing
+
+#### Task Management
+
+- `GET /api/tasks` - View all active tasks (requires `admin`)
+
+  - Lists running, pending, completed, and failed tasks
+  - Returns task status, progress, and timestamps
+  - Admin-only endpoint
+
+- `POST /api/task/{task_id}/cancel` - Cancel specific task (requires `admin`)
+
+  - Gracefully stops event generation task
+  - Events generated before cancellation are preserved
+  - Admin-only endpoint
+
+- `POST /api/tasks/cancel-all` - Cancel all running tasks (requires `admin`)
+  - Bulk cancellation for all active tasks
+  - Emergency control feature
+  - Admin-only endpoint
+
+#### Authentication Management
 
 - `GET /api/auth/info` - Get current authentication status and config
+
+  - Returns user info if authenticated
+  - Provides Keycloak configuration for login
+  - Public endpoint
+
 - `POST /api/auth/callback` - OAuth callback handler for token exchange
+
+  - Exchanges authorization code for tokens
+  - PKCE verification
+  - Returns access_token, refresh_token, and user info
+
+- `POST /api/auth/refresh` - Refresh access token
+  - Exchanges refresh_token for new access_token
+  - Extends user session without re-login
+  - Returns new tokens and updated expiry
+
+### Authorization Rules
+
+| Endpoint                     | Anonymous | User | Operator | Admin |
+| ---------------------------- | --------- | ---- | -------- | ----- |
+| `GET /`                      | ✅        | ✅   | ✅       | ✅    |
+| `GET /api/health`            | ✅        | ✅   | ✅       | ✅    |
+| `GET /api/auth/info`         | ✅        | ✅   | ✅       | ✅    |
+| `POST /api/auth/callback`    | ✅        | ✅   | ✅       | ✅    |
+| `POST /api/auth/refresh`     | ✅        | ✅   | ✅       | ✅    |
+| `POST /api/generate`         | ❌        | ❌   | ✅       | ✅    |
+| `GET /api/tasks`             | ❌        | ❌   | ❌       | ✅    |
+| `POST /api/task/*/cancel`    | ❌        | ❌   | ❌       | ✅    |
+| `POST /api/tasks/cancel-all` | ❌        | ❌   | ❌       | ✅    |
 
 ## Next Steps
 
