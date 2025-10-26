@@ -35,16 +35,16 @@ export const actionsController = (() => {
         confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'))
         const events = document.getElementsByClassName("accordion-item");
         console.log(`Deleting ${events.length} events`);
-        if( events.length > 0 ){
+        if (events.length > 0) {
             confirmModal.show();
         }
     };
 
     const deleteAllEvents = () => {
-        if (typeof confirmModal !== "undefined"){
+        if (typeof confirmModal !== "undefined") {
             var events = document.getElementsByClassName('accordion-item');
             const eventsArray = Array.from(events);
-            for (var i = 0; i < eventsArray.length; i++){
+            for (var i = 0; i < eventsArray.length; i++) {
                 eventsArray[i].remove();
             };
             document.title = "CloudEvents Viewer (0)";
@@ -60,9 +60,6 @@ export const actionsController = (() => {
         var expandCollapse = document.getElementById('expandCollapseLink');
         expandCollapse.addEventListener('click', toggleEventDetails);
 
-        var clearListLink = document.getElementById('clearListLink');
-        clearListLink.addEventListener('click', confirmClearEvents);
-        
         var deleteAllEventsBtn = document.getElementById('deleteAllEventsBtn');
         deleteAllEventsBtn.addEventListener('click', deleteAllEvents);
 
