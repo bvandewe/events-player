@@ -51,6 +51,11 @@ toastController.init(bootstrap);
 import { generatorForm } from "./ui/generatorForm"
 generatorForm.init();
 
+import { tasksModalController } from "./ui/tasksModal";
+tasksModalController.init();
+// Make it globally available for auth dropdown
+window.tasksModalController = tasksModalController;
+
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 

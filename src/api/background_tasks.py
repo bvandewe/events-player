@@ -79,6 +79,13 @@ async def handle_generator_request(
             generator_request.event_gateway,
         )
         for i in range(iterations):
+            # Check if task has been cancelled
+            if task.cancelled:
+                log.info("Task %s was cancelled, stopping generation", task.id)
+                task.status = "Cancelled"
+                active_tasks.pop(task.id, None)
+                return
+
             log.debug(
                 "POST event #%s/%s with type %s",
                 i + 1,

@@ -3,13 +3,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { sseConnection } from './connection';
 import { filterController } from '../ui/filters';
 import { connectionStatus } from './connectionStatus';
+import { appState } from '../state/appState';
 
 export const sseEventsController = (() => {
 
     var eventsStack = document.getElementById('events-stack');
     var maxQueueSize = 0;
     var eventStorageManager = null; // Will be initialized in init()
-    var activeFilters = { type: '', source: '', subject: null };
     var timeRangeSelect = null; // Will be initialized in init()
 
     const createAccordionItem = ({ eventCount, timestamp, hasError, eventSource, eventSubject, eventType, eventData, eventId }) => {
@@ -227,6 +227,9 @@ export const sseEventsController = (() => {
                 return; // Don't display this event
             }
 
+            // Increment counter only when event is actually displayed
+            incrementEventsCount();
+
             const item = createAccordionItem(accordionData);
             eventsStack.prepend(item);
         }
@@ -234,7 +237,7 @@ export const sseEventsController = (() => {
 
     const handleSseEvent = (event) => {
         console.log(event);
-        incrementEventsCount();
+        // Don't increment here - increment in handleNewEvent after filtering
         connectionStatus.updateStatus("cleartimer");
         connectionStatus.updateStatus("connect");
         handleNewEvent(event);
@@ -295,9 +298,22 @@ export const sseEventsController = (() => {
 
             console.log('[Events] getRecentEvents returned:', events ? events.length : 'null/undefined', 'events');
 
-            // Apply filters from URL parameters or time range selector
-            if (events && (timeRangeStart || timeRangeEnd || typeFilter || sourceFilter || subjectFilter !== null)) {
-                console.log('[Events] Applying filters:', { startTime: timeRangeStart, endTime: timeRangeEnd, typeFilter, sourceFilter, subjectFilter });
+            // Check if any filters are active (URL params or dropdown filters)
+            const stateFilters = appState.get('filters');
+            const hasActiveFilters = timeRangeStart || timeRangeEnd || typeFilter || sourceFilter ||
+                subjectFilter !== null || stateFilters.type || stateFilters.source ||
+                stateFilters.subject !== null;
+
+            // Apply filters from URL parameters or dropdown selections
+            if (events && hasActiveFilters) {
+                console.log('[Events] Applying filters:', {
+                    startTime: timeRangeStart,
+                    endTime: timeRangeEnd,
+                    typeFilter,
+                    sourceFilter,
+                    subjectFilter,
+                    stateFilters
+                });
 
                 events = events.filter(event => {
                     // Time range filter
@@ -322,22 +338,22 @@ export const sseEventsController = (() => {
                         if (timeRangeEnd && eventTimestamp >= timeRangeEnd) return false;
                     }
 
-                    // Type filter (from URL or dropdown)
-                    const activeTypeFilter = typeFilter || activeFilters.type;
+                    // Type filter (from URL or state)
+                    const activeTypeFilter = typeFilter || stateFilters.type;
                     if (activeTypeFilter && event.type !== activeTypeFilter) {
                         console.log('[Events] Filtering out by type:', event.type, '!==', activeTypeFilter);
                         return false;
                     }
 
-                    // Source filter (from URL or dropdown)
-                    const activeSourceFilter = sourceFilter || activeFilters.source;
+                    // Source filter (from URL or state)
+                    const activeSourceFilter = sourceFilter || stateFilters.source;
                     if (activeSourceFilter && event.source !== activeSourceFilter) {
                         console.log('[Events] Filtering out by source:', event.source, '!==', activeSourceFilter);
                         return false;
                     }
 
-                    // Subject filter (from URL or dropdown)
-                    const activeSubjectFilter = subjectFilter !== null ? subjectFilter : activeFilters.subject;
+                    // Subject filter (from URL or state)
+                    const activeSubjectFilter = subjectFilter !== null ? subjectFilter : stateFilters.subject;
                     if (activeSubjectFilter !== null && event.subject !== activeSubjectFilter) {
                         console.log('[Events] Filtering out by subject:', event.subject, '!==', activeSubjectFilter);
                         return false;
@@ -373,14 +389,19 @@ export const sseEventsController = (() => {
                         eventId: uuid
                     };
 
-                    incrementEventsCount();
+                    // Don't increment in loop - set count once at the end
                     const item = createAccordionItem(accordionData);
                     eventsStack.prepend(item);
                 });
 
+                // Set counter to the actual number of events loaded (filtered)
+                sseConnection.setCount(events.length);
+
                 console.log(`[Events] Displayed ${events.length} events`);
             } else {
                 console.log('[Events] No events found in storage (events array empty or null)');
+                // Set counter to 0 when no events
+                resetEventsCount();
             }
         } catch (error) {
             console.error('[Events] Failed to load events from storage:', error);
@@ -396,9 +417,16 @@ export const sseEventsController = (() => {
         if (timeRangeSelect) {
             timeRangeSelect.addEventListener('change', () => {
                 console.log('[Events] Time range changed:', timeRangeSelect.value);
+                appState.set('filters.timeRange', timeRangeSelect.value);
                 loadEventsFromStorage();
             });
         }
+
+        // Subscribe to filter changes from state
+        appState.subscribe('filters', (filters) => {
+            console.log('[Events] Filters changed via state:', filters);
+            loadEventsFromStorage();
+        });
 
         // Wait for storage to initialize, then load events, then setup SSE
         const setupSequence = async () => {
@@ -422,9 +450,8 @@ export const sseEventsController = (() => {
                     },
                     onFilterChange: (filters) => {
                         console.log('[Events] Filters changed:', filters);
-                        activeFilters = filters;
-                        // Reload events with new filters
-                        loadEventsFromStorage();
+                        // State is already updated by filterController
+                        // This callback triggers loadEventsFromStorage via state subscription
                     }
                 });
 

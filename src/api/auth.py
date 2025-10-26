@@ -517,3 +517,68 @@ async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error during token exchange: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to exchange token: {str(e)}")
+
+
+async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
+    """
+    Refresh the access token using a refresh token.
+
+    This is used to obtain a new access token without requiring the user
+    to log in again.
+
+    Args:
+        refresh_token: The refresh token obtained from the initial OAuth flow
+
+    Returns:
+        Dict containing:
+        {
+            "access_token": "...",
+            "refresh_token": "...",  # Optional, may be a new refresh token
+            "expires_in": 300,
+            "token_type": "Bearer"
+        }
+
+    Raises:
+        HTTPException: If token refresh fails
+    """
+    if not settings.keycloak_url or not settings.keycloak_realm:
+        raise HTTPException(status_code=500, detail="Keycloak not configured for token refresh")
+
+    token_endpoint = (
+        f"{settings.keycloak_url}/realms/{settings.keycloak_realm}"
+        f"/protocol/openid-connect/token"
+    )
+
+    # Prepare token refresh request
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": settings.keycloak_client_id,
+    }
+
+    # Add client secret if configured
+    if settings.keycloak_client_secret:
+        data["client_secret"] = settings.keycloak_client_secret
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                token_endpoint,
+                data=data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=10.0,
+            )
+
+            if response.status_code != 200:
+                logger.error(f"Token refresh failed: {response.status_code} - {response.text}")
+                raise HTTPException(
+                    status_code=401, detail=f"Token refresh failed: {response.text}"
+                )
+
+            token_data = response.json()
+            logger.info("Token refresh successful")
+            return token_data
+
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error during token refresh: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to refresh token: {str(e)}")
