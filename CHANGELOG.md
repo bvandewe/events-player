@@ -1,5 +1,191 @@
 # CHANGE LOG
 
+## 0.3.1 - 2025-10-26
+
+### Documentation
+
+#### Feature Documentation Reorganization
+
+- Split monolithic `features.md` (567 lines) into 10 focused documents in `docs/features/` folder:
+  - `index.md`: Features overview with navigation guide
+  - `views.md`: Multiple Views (Events List, Timeline Chart)
+  - `filtering.md`: Comprehensive filtering system
+  - `storage.md`: Two-tier storage architecture
+  - `sse.md`: Server-Sent Events real-time streaming
+  - `tasks.md`: Background task management
+  - `rbac.md`: Role-Based Access Control
+  - `keyboard-shortcuts.md`: Complete keyboard shortcuts reference
+  - `state-management.md`: Reactive state system
+  - `performance.md`: Performance optimization techniques
+- Updated `mkdocs.yml` with hierarchical navigation structure
+- Total: 3,665 lines of comprehensive, focused documentation
+
+#### Documentation Corrections
+
+- Fixed RBAC documentation inconsistencies:
+  - Clarified that ALL authenticated users can clear their own browser's local storage
+  - Updated permission matrix to reflect client-side storage model
+  - Removed admin-only references for storage clearing
+  - Added notes explaining browser-specific, per-user storage architecture
+- Each document now includes:
+  - Overview and key features
+  - Detailed implementation explanations
+  - Usage examples and best practices
+  - Troubleshooting guides
+  - Cross-links to related features
+
+### Features
+
+#### State Management System
+
+- Added centralized `AppState` class for reactive state management
+- Observer pattern for component synchronization
+- Dot notation support for nested state access
+- Debug mode with built-in logging
+- No external dependencies (pure JavaScript)
+- State persistence during browser session
+- Eliminates data duplication across views
+
+#### API Client Utilities
+
+- Added `apiClient` wrapper with automatic token refresh on 401 errors
+- Retry logic for failed requests after token refresh
+- Helper functions: `apiPost()`, `apiGet()`, `apiFetch()`
+- Prevents infinite retry loops
+- Seamless integration with existing authentication flow
+
+### Improvements
+
+- Updated filter controller to use centralized state management
+- Updated event generator form to use new API client
+- Improved cross-view synchronization through state subscriptions
+- Better error handling in API requests
+- Documentation notes for admin task cancellation and OIDC token refresh
+
+### Bug Fixes
+
+- Fixed storage clearing permissions (now correctly available to all users)
+- Fixed API authentication issues in generator form
+
+## 0.3.0 - 2025-10-26
+
+### Major Features
+
+#### Timeline Chart View
+
+- Added visual timeline view with Chart.js for event activity visualization
+- Interactive timeline showing event distribution over time
+- Synchronized filters between Events and Timeline views
+- Auto-refresh and manual refresh capabilities
+- Time-based pattern analysis and debugging
+
+#### Client-Side Storage Architecture
+
+- Two-tier storage system with IndexedDB and in-memory cache
+- Persistent event storage surviving browser restarts
+- Efficient event retrieval with database indexes
+- Storage management controls for administrators
+- Automatic cleanup and configurable retention
+
+#### State Management System
+
+- Reactive state management (`appState`) across all views
+- Centralized state for filters, events, and view settings
+- Observer pattern for component synchronization
+- Consistent data across multiple views
+- Framework-independent architecture
+
+#### Advanced Filtering System
+
+- Multi-dimensional filtering: type, source, subject, search, time range
+- Click-to-filter functionality on event properties
+- Filter chips with individual removal
+- Real-time event counter showing filtered results
+- Synchronized filters across all views
+- Time range filtering (last hour, 6h, 24h, all time)
+
+#### OIDC Token Refresh
+
+- Automatic access token refresh using refresh tokens
+- Proactive token refresh (5 minutes before expiry)
+- Background token monitoring (every 60 seconds)
+- Seamless session continuation without user interruption
+- Automatic retry of failed API calls after token refresh
+- Support for `offline_access` scope in OAuth flow
+- Read-only mode fallback on refresh failure
+
+#### Admin Task Management
+
+- Real-time task management modal for administrators
+- View all active event generation tasks
+- Cancel individual or all running tasks
+- Progress tracking with real-time updates
+- Auto-refresh every 2 seconds
+- Graceful task cancellation preserving generated events
+- Audit logging of admin actions
+
+#### Keyboard Shortcuts
+
+- Full keyboard navigation support
+- `Ctrl/Cmd + K`: Focus search
+- `Ctrl/Cmd + G`: Open event generator
+- `Ctrl/Cmd + R`: Refresh events/timeline
+- `Ctrl/Cmd + A`: Toggle all accordions
+- `Ctrl/Cmd + L`: Clear all filters
+- `Escape`: Close offcanvas/modals
+
+### User Interface Improvements
+
+- Enhanced navigation bar with view switcher
+- Connection status indicator for SSE
+- Real-time event counter with filter awareness
+- Sticky header for better scrolling experience
+- Dropdown filters with multi-select capability
+- Bootstrap Icons integration
+- Improved modal and toast notifications
+- Consistent page titles across views
+
+### Backend Enhancements
+
+- Admin-only task management endpoints
+  - `GET /api/tasks` - List all tasks
+  - `POST /api/task/{task_id}/cancel` - Cancel specific task
+  - `POST /api/tasks/cancel-all` - Cancel all tasks
+- Token refresh endpoint: `POST /api/auth/refresh`
+- Enhanced background task system with cancellation support
+- Improved error handling and validation
+- Request ID tracing for debugging
+
+### Bug Fixes
+
+- Fixed event counter double-increment issue
+- Fixed timezone/timestamp handling in UI
+- Fixed Bootstrap Icons missing on Timeline view
+- Fixed dropdown filter visibility issues
+- Fixed clearAll() duplicating filters
+- Fixed generator not working on Timeline view
+- Fixed timeline refresh and auto-refresh issues
+- Removed code duplication across views
+
+### Developer Experience
+
+- Comprehensive MkDocs documentation updates
+- New "Advanced Features" documentation page
+- Updated authentication documentation with token refresh details
+- API endpoint documentation with role-based access table
+- Architecture documentation for storage and state management
+- Code organization and modularization improvements
+
+### Breaking Changes
+
+- None (backward compatible)
+
+### Configuration
+
+- No new environment variables required
+- OAuth `offline_access` scope automatically requested
+- Keycloak client configuration unchanged (no special setup needed)
+
 ## 0.2.0 - 2025-10-16
 
 ### Documentation
