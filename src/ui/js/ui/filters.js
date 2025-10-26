@@ -3,10 +3,11 @@
  * Manages event type, source, and subject filters across views
  */
 
+import { appState } from '../state/appState';
+
 class FilterController {
     constructor() {
         this.storageManager = null;
-        this.filterChangeCallbacks = [];
 
         // Track unique values
         this.types = new Set();
@@ -19,7 +20,7 @@ class FilterController {
      * @param {Object} config - Configuration
      * @param {Object} config.storageManager - Event storage manager instance
      * @param {Object} config.selectors - DOM selectors for filter dropdowns
-     * @param {Function} config.onFilterChange - Callback when filters change
+     * @param {Function} config.onFilterChange - Callback when filters change (deprecated - use state subscription)
      */
     async init(config) {
         this.storageManager = config.storageManager;
@@ -28,8 +29,11 @@ class FilterController {
         this.subjectSelect = document.getElementById(config.selectors.subject);
         this.clearButton = config.selectors.clear ? document.getElementById(config.selectors.clear) : null;
 
+        // Support legacy callback for backward compatibility
         if (config.onFilterChange) {
-            this.filterChangeCallbacks.push(config.onFilterChange);
+            appState.subscribe('filters', (filters) => {
+                config.onFilterChange(filters);
+            });
         }
 
         // Load initial filter options from storage
@@ -38,7 +42,7 @@ class FilterController {
         // Setup event listeners
         this.setupEventListeners();
 
-        console.log('[Filters] Initialized');
+        console.log('[Filters] Initialized with state management');
     }
 
     /**
@@ -143,7 +147,8 @@ class FilterController {
     setupEventListeners() {
         const handleChange = () => {
             const filters = this.getActiveFilters();
-            this.filterChangeCallbacks.forEach(callback => callback(filters));
+            // Update state - this will notify all subscribers
+            appState.updateFilters(filters);
         };
 
         if (this.typeSelect) {
@@ -161,7 +166,7 @@ class FilterController {
         if (this.clearButton) {
             this.clearButton.addEventListener('click', () => {
                 this.clearFilters();
-                handleChange();
+                // State update handled in clearFilters()
             });
         }
     }
@@ -174,7 +179,8 @@ class FilterController {
         return {
             type: this.typeSelect ? this.typeSelect.value : '',
             source: this.sourceSelect ? this.sourceSelect.value : '',
-            subject: this.subjectSelect ? (this.subjectSelect.value || null) : null
+            subject: this.subjectSelect ? (this.subjectSelect.value || null) : null,
+            timeRange: appState.get('filters.timeRange') || 'all'
         };
     }
 
@@ -185,6 +191,9 @@ class FilterController {
         if (this.typeSelect) this.typeSelect.value = '';
         if (this.sourceSelect) this.sourceSelect.value = '';
         if (this.subjectSelect) this.subjectSelect.value = '';
+
+        // Update state - this will notify all subscribers
+        appState.clearFilters();
     }
 
     /**
@@ -201,6 +210,9 @@ class FilterController {
         if (filters.subject !== undefined && this.subjectSelect) {
             this.subjectSelect.value = filters.subject || '';
         }
+
+        // Update state with new filter values
+        appState.updateFilters(filters);
     }
 
     /**
@@ -209,7 +221,7 @@ class FilterController {
      * @returns {boolean} True if event matches filters
      */
     matchesFilters(event) {
-        const filters = this.getActiveFilters();
+        const filters = appState.get('filters');
 
         if (filters.type && event.type !== filters.type) {
             return false;

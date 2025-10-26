@@ -99,7 +99,7 @@ class AuthManager {
     }
 
     /**
-     * Start periodic token validation
+     * Start periodic token validation and proactive refresh
      */
     startTokenValidation() {
         // Clear any existing interval
@@ -108,9 +108,25 @@ class AuthManager {
         }
 
         // Check token every 60 seconds
-        this.tokenCheckInterval = setInterval(() => {
+        this.tokenCheckInterval = setInterval(async () => {
             if (this.token && this.userInfo) {
                 console.log('[Auth] Checking token validity...');
+
+                // Check if token expires soon (within 5 minutes)
+                const expiresAt = sessionStorage.getItem('token_expires_at');
+                if (expiresAt) {
+                    const timeUntilExpiry = parseInt(expiresAt) - Date.now();
+                    const fiveMinutes = 5 * 60 * 1000;
+
+                    // Proactively refresh if expiring within 5 minutes
+                    if (timeUntilExpiry < fiveMinutes && timeUntilExpiry > 0) {
+                        console.log('[Auth] Token expires soon, proactively refreshing...');
+                        await this.refreshAccessToken();
+                        return;
+                    }
+                }
+
+                // Check if token is already expired
                 this.isAuthenticated(); // This will trigger handleTokenExpiry if expired
             }
         }, 60000); // 60 seconds
@@ -147,6 +163,69 @@ class AuthManager {
             return false;
         } catch (error) {
             console.error('[Auth] Token validation error:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Refresh the access token using the refresh token
+     * @returns {boolean} True if refresh successful, false otherwise
+     */
+    async refreshAccessToken() {
+        const refreshToken = sessionStorage.getItem('refresh_token');
+
+        if (!refreshToken) {
+            console.warn('[Auth] No refresh token available');
+            return false;
+        }
+
+        console.log('[Auth] Attempting to refresh access token...');
+
+        try {
+            const response = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    refresh_token: refreshToken
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('[Auth] Token refresh failed:', errorData);
+                return false;
+            }
+
+            const data = await response.json();
+
+            // Store new access token
+            this.token = data.access_token;
+            sessionStorage.setItem('access_token', this.token);
+
+            // Update refresh token if a new one is provided
+            if (data.refresh_token) {
+                sessionStorage.setItem('refresh_token', data.refresh_token);
+            }
+
+            // Update token expiry time
+            if (data.expires_in) {
+                const expiryTime = Date.now() + (data.expires_in * 1000);
+                sessionStorage.setItem('token_expires_at', expiryTime.toString());
+                console.log('[Auth] Token refreshed, expires at:', new Date(expiryTime).toISOString());
+            }
+
+            // Update user info if provided
+            if (data.user_info) {
+                this.userInfo = data.user_info;
+            }
+
+            console.log('[Auth] Access token refreshed successfully');
+            return true;
+
+        } catch (error) {
+            console.error('[Auth] Token refresh error:', error);
             return false;
         }
     }
@@ -204,12 +283,13 @@ class AuthManager {
         sessionStorage.setItem('oauth_code_verifier', codeVerifier);
 
         // Build authorization URL
+        // Note: offline_access scope is required to receive a refresh token
         const params = new URLSearchParams({
             client_id: this.keycloakConfig.client_id,
             response_type: 'code',
             redirect_uri: window.location.origin + '/',
             state: state,
-            scope: 'openid profile email',
+            scope: 'openid profile email offline_access',
             code_challenge: codeChallenge,
             code_challenge_method: 'S256'
         });
@@ -282,9 +362,22 @@ class AuthManager {
 
             const data = await response.json();
 
-            // Store token
+            // Store tokens
             this.token = data.access_token;
             sessionStorage.setItem('access_token', this.token);
+
+            // Store refresh token if provided
+            if (data.refresh_token) {
+                sessionStorage.setItem('refresh_token', data.refresh_token);
+                console.log('[Auth] Refresh token stored');
+            }
+
+            // Store token expiry time for proactive refresh
+            if (data.expires_in) {
+                const expiryTime = Date.now() + (data.expires_in * 1000);
+                sessionStorage.setItem('token_expires_at', expiryTime.toString());
+                console.log('[Auth] Token expires at:', new Date(expiryTime).toISOString());
+            }
 
             // Store user info
             this.userInfo = data.user_info;
@@ -320,6 +413,8 @@ class AuthManager {
         this.token = null;
         this.userInfo = null;
         sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('token_expires_at');
 
         if (this.mode === 'keycloak' && this.keycloakConfig) {
             // Redirect to Keycloak logout
@@ -464,14 +559,28 @@ class AuthManager {
     /**
      * Handle token expiration
      */
-    handleTokenExpiry() {
-        console.log('[Auth] Token expired, switching to read-only mode');
+    async handleTokenExpiry() {
+        console.log('[Auth] Token expired, attempting to refresh...');
+
+        // Try to refresh the token first
+        const refreshSuccess = await this.refreshAccessToken();
+
+        if (refreshSuccess) {
+            console.log('[Auth] Token refreshed successfully, continuing session');
+            this.renderAuthUI();
+            return;
+        }
+
+        // If refresh failed, switch to read-only mode
+        console.log('[Auth] Token refresh failed, switching to read-only mode');
 
         // Show expiry warning in UI
         this.showExpiryWarning();
 
-        // Clear token but keep userInfo for display
+        // Clear tokens but keep userInfo for display
         sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('token_expires_at');
         this.token = null;
 
         // Update UI to show login button
@@ -595,6 +704,28 @@ class AuthManager {
             clearStorageLink.appendChild(document.createTextNode('Clear Storage'));
             clearStorageItem.appendChild(clearStorageLink);
             menu.appendChild(clearStorageItem);
+
+            // Manage Tasks button (available only to admin users)
+            if (this.userInfo.roles && this.userInfo.roles.includes('admin')) {
+                const tasksItem = document.createElement('li');
+                const tasksLink = document.createElement('a');
+                tasksLink.className = 'dropdown-item';
+                tasksLink.href = '#';
+                tasksLink.onclick = (e) => {
+                    e.preventDefault();
+                    // Show tasks modal (will be defined in tasksModal.js)
+                    if (window.tasksModalController) {
+                        window.tasksModalController.show();
+                    }
+                };
+
+                const tasksIcon = document.createElement('i');
+                tasksIcon.className = 'bi bi-list-task me-2';
+                tasksLink.appendChild(tasksIcon);
+                tasksLink.appendChild(document.createTextNode('Manage Tasks'));
+                tasksItem.appendChild(tasksLink);
+                menu.appendChild(tasksItem);
+            }
 
             // Divider before logout
             const logoutDivider = document.createElement('li');

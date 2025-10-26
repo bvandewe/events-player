@@ -68,6 +68,7 @@ class EventGeneratorTask(BaseModel):
     status: str
     progress: int = 0
     client_id: typing.Optional[str] = None
+    cancelled: bool = False  # Flag to signal task cancellation
 
     def __setitem__(self, key: str, value: typing.Any) -> None:
         setattr(self, key, value)

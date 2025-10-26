@@ -1,0 +1,47 @@
+<!-- Admin Tasks Management Modal -->
+<div class="modal fade" id="tasksModal" tabindex="-1" aria-labelledby="tasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tasksModalLabel">
+                    <i class="bi bi-list-task me-2"></i>Active Generator Tasks
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Admin Only:</strong> View and cancel active generator tasks. 
+                        Use this if a long-running task needs to be stopped.
+                    </div>
+                </div>
+
+                <!-- Task count badge -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <span class="badge bg-primary" id="activeTaskCount">0</span>
+                        <span class="ms-2">Active Task(s)</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="refreshTasksBtn">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- Task list -->
+                <div id="tasksList" class="list-group">
+                    <div class="text-center text-muted py-4" id="noTasksMessage">
+                        <i class="bi bi-check-circle fs-1"></i>
+                        <p class="mt-2">No active tasks</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="cancelAllTasksBtn" disabled>
+                    <i class="bi bi-stop-circle"></i> Cancel All Tasks
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,10 +3,11 @@
  * Handles Server-Sent Events connection and event counter updates
  */
 
+import { appState } from '../state/appState';
+
 class SSEConnectionManager {
     constructor() {
         this.eventSource = null;
-        this.eventsCount = 0;
         this.eventCountSpan = null;
         this.eventListeners = [];
         this.sseEventPath = '/stream/events';
@@ -25,9 +26,14 @@ class SSEConnectionManager {
 
         // Set initial count if provided
         if (typeof options.initialCount === 'number') {
-            this.eventsCount = options.initialCount;
+            appState.setEventCount(options.initialCount);
             this.updateCounter();
         }
+
+        // Subscribe to event count changes from state
+        appState.subscribe('eventCount', (count) => {
+            this.updateCounter();
+        });
 
         // Setup SSE connection
         try {
@@ -35,6 +41,7 @@ class SSEConnectionManager {
 
             this.eventSource.addEventListener('open', () => {
                 console.log('[SSE] Connection opened');
+                appState.setConnectionStatus('connected');
                 if (options.onOpen) {
                     options.onOpen();
                 }
@@ -43,9 +50,11 @@ class SSEConnectionManager {
             this.eventSource.addEventListener('message', (event) => {
                 console.log('[SSE] Received event');
 
-                // Increment counter
-                this.eventsCount++;
-                this.updateCounter();
+                // Don't increment counter here - let the view handle it after filtering
+                // The counter should represent visible events, not all received events
+
+                // Temporarily set status to receiving
+                appState.setConnectionStatus('receiving');
 
                 // Notify listeners
                 if (options.onMessage) {
@@ -55,6 +64,7 @@ class SSEConnectionManager {
 
             this.eventSource.addEventListener('error', (error) => {
                 console.error('[SSE] Connection error:', error);
+                appState.setConnectionStatus('error');
                 if (options.onError) {
                     options.onError(error);
                 }
@@ -69,12 +79,14 @@ class SSEConnectionManager {
      * Update the event counter in the UI
      */
     updateCounter() {
+        const count = appState.get('eventCount');
+
         if (this.eventCountSpan) {
-            this.eventCountSpan.textContent = this.eventsCount;
+            this.eventCountSpan.textContent = count;
 
             // Update page title with counter
             const baseTitle = document.title.split('(')[0].trim();
-            document.title = `${baseTitle} (${this.eventsCount})`;
+            document.title = `${baseTitle} (${count})`;
         }
     }
 
@@ -82,31 +94,28 @@ class SSEConnectionManager {
      * Set the event count (useful when loading from storage)
      */
     setCount(count) {
-        this.eventsCount = count;
-        this.updateCounter();
+        appState.setEventCount(count);
     }
 
     /**
      * Get current event count
      */
     getCount() {
-        return this.eventsCount;
+        return appState.get('eventCount');
     }
 
     /**
      * Increment the counter
      */
     incrementCount() {
-        this.eventsCount++;
-        this.updateCounter();
+        appState.incrementEventCount();
     }
 
     /**
      * Reset the counter
      */
     resetCount() {
-        this.eventsCount = 0;
-        this.updateCounter();
+        appState.resetEventCount();
     }
 
     /**

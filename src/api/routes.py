@@ -31,6 +31,7 @@ from .auth import (
     require_admin,
     require_operator,
     exchange_oauth_code,
+    refresh_access_token,
 )
 
 
@@ -135,6 +136,12 @@ class OAuthCallbackRequest(BaseModel):
     code_verifier: str  # PKCE code verifier
 
 
+class TokenRefreshRequest(BaseModel):
+    """Token refresh request model"""
+
+    refresh_token: str
+
+
 @router.get(
     path="/api/auth/info",
     tags=["System"],
@@ -229,6 +236,63 @@ async def oauth_callback(callback_request: OAuthCallbackRequest):
         raise HTTPException(status_code=500, detail=f"OAuth callback failed: {str(e)}")
 
 
+@router.post(
+    path="/api/auth/refresh",
+    tags=["System"],
+    operation_id="refresh_token",
+    summary="Refresh access token",
+)
+async def refresh_token(refresh_request: TokenRefreshRequest):
+    """
+    Refresh the access token using a refresh token.
+
+    This endpoint allows clients to obtain a new access token without
+    requiring the user to log in again.
+    """
+    try:
+        # Refresh the access token
+        token_data = await refresh_access_token(refresh_request.refresh_token)
+
+        # Optionally validate the new access token to get updated user info
+        from .auth import jwt_validator
+
+        try:
+            token_payload = await jwt_validator.validate_token(token_data["access_token"])
+            user_info = jwt_validator.extract_user_info(token_payload)
+        except Exception as e:
+            log.warning(f"Failed to validate refreshed token: {e}")
+            user_info = None
+
+        response = {
+            "access_token": token_data["access_token"],
+            "expires_in": token_data.get("expires_in", 300),
+            "token_type": token_data.get("token_type", "Bearer"),
+        }
+
+        # Include new refresh token if provided
+        if "refresh_token" in token_data:
+            response["refresh_token"] = token_data["refresh_token"]
+
+        # Include user info if available
+        if user_info:
+            response["user_info"] = {
+                "user_id": user_info.get("user_id"),
+                "email": user_info.get("email"),
+                "username": user_info.get("username"),
+                "full_name": user_info.get("full_name"),
+                "roles": user_info.get("roles", []),
+                "groups": user_info.get("groups", []),
+            }
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error(f"Token refresh error: {e}")
+        raise HTTPException(status_code=500, detail=f"Token refresh failed: {str(e)}")
+
+
 # Publisher Route
 @router.post(path="/api/generate", tags=["CloudEvents Publisher"], operation_id="generate_events")
 async def generate_events(
@@ -270,32 +334,66 @@ async def generate_events(
 
 
 # All Tasks Route
-@router.get(path="/api/tasks", tags=["Background Tasks"], operation_id="get_active_tasks")
-async def get_active_tasks():
+@router.get(
+    path="/api/tasks",
+    tags=["Background Tasks"],
+    operation_id="get_active_tasks",
+    summary="Get all active generator tasks",
+)
+async def get_active_tasks(current_user: dict = Depends(require_admin)):
+    """
+    Get list of all active generator tasks.
+    Only accessible by admin users.
+    """
     return JSONResponse({"active_tasks": jsonable_encoder(active_tasks)})
 
 
-@router.delete(path="/api/tasks", tags=["Background Tasks"], operation_id="cancel_all_tasks")
-async def cancel_all_tasks(background_tasks: BackgroundTasks):
+@router.post(
+    path="/api/tasks/cancel-all",
+    tags=["Background Tasks"],
+    operation_id="cancel_all_tasks",
+    summary="Cancel all active generator tasks",
+)
+async def cancel_all_tasks(current_user: dict = Depends(require_admin)):
     """
-    Remove all tasks from active_tasks dictionary.
-    Note: FastAPI BackgroundTasks don't support cancellation, so tasks will continue running.
+    Cancel all active generator tasks by setting their cancelled flag.
+    Tasks will check this flag and stop gracefully.
+    Only accessible by admin users.
     """
     count = len(active_tasks)
-    active_tasks.clear()
-    return {"message": f"Removed {count} tasks from active_tasks."}
+
+    # Set cancelled flag on all tasks
+    for task in active_tasks.values():
+        task.cancelled = True
+        task.status = "Cancelling"
+
+    log.info(f"Admin user {current_user.get('username')} cancelled {count} active tasks")
+
+    return {"message": f"Cancelling {count} active task(s)", "tasks_cancelled": count}
 
 
-@router.delete(path="/api/task/{task_id}", tags=["Background Tasks"], operation_id="delete_task")
-async def cancel_task(task_id: str, background_tasks: BackgroundTasks):
+@router.post(
+    path="/api/task/{task_id}/cancel",
+    tags=["Background Tasks"],
+    operation_id="cancel_task",
+    summary="Cancel a specific generator task",
+)
+async def cancel_task(task_id: str, current_user: dict = Depends(require_admin)):
     """
-    Remove a task from active_tasks dictionary.
-    Note: FastAPI BackgroundTasks don't support cancellation, so the task will continue running.
+    Cancel a specific generator task by setting its cancelled flag.
+    The task will check this flag and stop gracefully.
+    Only accessible by admin users.
     """
     if task_id in active_tasks:
-        active_tasks.pop(task_id)
-        return {"message": "Task removed from active_tasks (but still running in background)."}
-    return {"message": "Task not found."}
+        task = active_tasks[task_id]
+        task.cancelled = True
+        task.status = "Cancelling"
+
+        log.info(f"Admin user {current_user.get('username')} cancelled task {task_id}")
+
+        return {"message": f"Task {task_id} is being cancelled", "task_id": task_id}
+
+    return JSONResponse(status_code=404, content={"message": "Task not found", "task_id": task_id})
 
 
 # Health Check

@@ -1,6 +1,7 @@
 import { toastController } from "./toast";
 import { taskController } from "../sse/task";
 import { authManager, authorizationManager } from "../app";
+import { apiPost } from "../utils/apiClient.js";
 
 export const generatorForm = (() => {
 
@@ -49,20 +50,8 @@ export const generatorForm = (() => {
             }
         }
 
-        // Add authorization header if token is available
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-
-        if (authManager.token) {
-            headers['Authorization'] = `Bearer ${authManager.token}`;
-        }
-
-        fetch('/api/generate', {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(data)
-        })
+        // Use apiPost which handles automatic token refresh on 401
+        apiPost('/api/generate', data)
             .then(response => {
                 if (response.status === 403) {
                     return response.json().then(error => {
