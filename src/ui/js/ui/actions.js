@@ -9,6 +9,11 @@ export const actionsController = (() => {
         var toggleLink = document.getElementById('expandCollapseLink');
         var toggleIcon = document.getElementById('expandCollapseIcon');
 
+        // Defensive check - if elements don't exist, do nothing
+        if (!toggleLink || !toggleIcon) {
+            return;
+        }
+
         if (toggleIcon.classList.contains('bi-caret-down-fill')) {
             toggleIcon.classList.remove('bi-caret-down-fill');
             toggleIcon.classList.add('bi-caret-up-fill');
@@ -78,10 +83,14 @@ export const actionsController = (() => {
         bootstrap = bs;
 
         var expandCollapse = document.getElementById('expandCollapseLink');
-        expandCollapse.addEventListener('click', toggleEventDetails);
+        if (expandCollapse) {
+            expandCollapse.addEventListener('click', toggleEventDetails);
+        }
 
         var deleteAllEventsBtn = document.getElementById('deleteAllEventsBtn');
-        deleteAllEventsBtn.addEventListener('click', deleteAllEvents);
+        if (deleteAllEventsBtn) {
+            deleteAllEventsBtn.addEventListener('click', deleteAllEvents);
+        }
 
         var toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
         if (toggleFiltersBtn) {

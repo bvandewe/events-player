@@ -89,22 +89,25 @@ export const generatorForm = (() => {
     };
 
     const initSliders = () => {
-
         var eventIterations = document.getElementById("eventIterations");
         var eventIterationsValue = document.getElementById("eventIterationsValue");
-        eventIterations.addEventListener("input", function () {
-            var selectedValue = eventIterations.value;
-            eventIterationsValue.innerHTML = selectedValue;
-            saveFormState(); // Save on change
-        });
+        if (eventIterations && eventIterationsValue) {
+            eventIterations.addEventListener("input", function () {
+                var selectedValue = eventIterations.value;
+                eventIterationsValue.innerHTML = selectedValue;
+                saveFormState(); // Save on change
+            });
+        }
 
         var eventDelay = document.getElementById("eventDelay");
         var eventDelayValue = document.getElementById("eventDelayValue");
-        eventDelay.addEventListener("input", function () {
-            var selectedValue = eventDelay.value;
-            eventDelayValue.innerHTML = selectedValue;
-            saveFormState(); // Save on change
-        });
+        if (eventDelay && eventDelayValue) {
+            eventDelay.addEventListener("input", function () {
+                var selectedValue = eventDelay.value;
+                eventDelayValue.innerHTML = selectedValue;
+                saveFormState(); // Save on change
+            });
+        }
     };
 
     const handleSubmit = (event) => {
@@ -177,9 +180,11 @@ export const generatorForm = (() => {
 
         // Setup form submit handler
         const form = document.getElementById('generatorForm');
-        form.addEventListener('submit', (event) => {
-            handleSubmit(event);
-        });
+        if (form) {
+            form.addEventListener('submit', (event) => {
+                handleSubmit(event);
+            });
+        }
 
         // Add input listeners to save state on change
         const inputs = [
