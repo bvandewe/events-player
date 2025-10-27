@@ -77,6 +77,13 @@ export const clientsModalController = (() => {
     const setupBadgeSSEConnection = () => {
         console.log('[ClientsModal] Setting up badge SSE connection...');
 
+        // Close existing connection if any
+        if (badgeEventSource) {
+            console.log('[ClientsModal] Closing existing badge SSE connection');
+            badgeEventSource.close();
+            badgeEventSource = null;
+        }
+
         badgeEventSource = new EventSource('/stream/clients');
 
         badgeEventSource.addEventListener('open', () => {
@@ -330,10 +337,26 @@ export const clientsModalController = (() => {
         }
     };
 
+    /**
+     * Cleanup resources (close SSE connections)
+     */
+    const cleanup = () => {
+        console.log('[ClientsModal] Cleaning up resources...');
+        if (badgeEventSource) {
+            badgeEventSource.close();
+            badgeEventSource = null;
+        }
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+    };
+
     return {
         init,
         show,
         hide,
-        updateBadgeCount
+        updateBadgeCount,
+        cleanup
     };
 })();
