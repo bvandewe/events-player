@@ -34,7 +34,7 @@ class ApiSettings(BaseSettings):
     )
 
     # App version
-    tag: str = "0.3.2"
+    tag: str = "0.3.3"
     repository_url: str = "https://github.com/bvandewe/events-player"
 
     # Logging configs
@@ -55,6 +55,12 @@ class ApiSettings(BaseSettings):
     auth_audience: str = ""  # Expected JWT audience
     auth_required: bool = False  # Require auth for all endpoints
     auth_algorithm: str = "RS256"  # JWT signature algorithm
+
+    # Role mapping configuration
+    # Maps JWT token roles to application roles (admin, operator, user)
+    auth_role_admin: str = "admin"  # Role name in JWT that grants admin privileges
+    auth_role_operator: str = "operator"  # Role name in JWT that grants operator privileges
+    auth_role_user: str = "user"  # Role name in JWT that grants user privileges
 
     # Keycloak OAuth settings (for local development)
     keycloak_url: str = ""  # Keycloak base URL (for backend API calls)

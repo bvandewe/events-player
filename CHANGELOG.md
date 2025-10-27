@@ -1,5 +1,27 @@
 # CHANGE LOG
 
+## 0.3.3 - 2025-10-27
+
+### Bug Fixes
+
+#### Toast Notification Race Condition
+
+- Fixed critical race condition causing toast notifications to fail during view navigation
+- Added pending toast queue to handle toasts triggered before Bootstrap initialization
+- Implemented defensive checks to prevent "Cannot read properties of undefined (reading 'Toast')" errors
+- Toasts triggered during page reload are now queued and displayed once system is ready
+- Added DOM element existence validation before creating toast instances
+- Resolved intermittent "stuck loading" behavior when switching between views
+
+#### Role Mapping Configuration
+
+- Added environment variables for configurable role mapping: `API_AUTH_ROLE_ADMIN`, `API_AUTH_ROLE_OPERATOR`, `API_AUTH_ROLE_USER`
+- Updated authentication dependency functions to use configurable role names
+- Updated all route handlers to use settings-based role checks instead of hardcoded strings
+- Generator endpoint admin validation now uses configurable role settings
+- Allows deployment with custom identity provider role naming conventions without code changes
+- Default values maintain backward compatibility with existing deployments
+
 ## 0.3.2 - 2025-10-27
 
 ### Features
