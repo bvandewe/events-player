@@ -449,7 +449,7 @@ async def require_admin(
             # Only admins can delete
             ...
     """
-    return await require_role(["admin"], request, credentials)
+    return await require_role([settings.auth_role_admin], request, credentials)
 
 
 async def require_operator(
@@ -469,7 +469,9 @@ async def require_operator(
             # Operators and admins can update
             ...
     """
-    return await require_role(["operator", "admin"], request, credentials)
+    return await require_role(
+        [settings.auth_role_operator, settings.auth_role_admin], request, credentials
+    )
 
 
 # OAuth Token Exchange
