@@ -1,6 +1,6 @@
 # CHANGE LOG
 
-## Unreleased
+## 0.3.4 - 2025-10-27
 
 ### Configuration
 
@@ -22,15 +22,32 @@
 
 ### Bug Fixes
 
+#### SSE Connection Leaks
+
+- Fixed SSE connection leaks during view navigation between events list, timeline, and dashboard
+- Added cleanup on `beforeunload` event to properly close SSE connections when navigating away
+- SSE connection manager now closes existing connections before creating new ones
+- Fixed clients modal SSE connection (`/stream/clients`) leaks with proper cleanup
+- Prevents `ERR_CONNECTION_RESET` and `ERR_SOCKET_NOT_CONNECTED` errors
+- Fixes slow page loading when switching between views
+- Browser connection limits no longer exceeded
+
 #### JavaScript Module Initialization
 
 - Fixed "Cannot read properties of null" errors on dashboard and timeline pages
+- Fixed `events.js` null reference errors when DOM elements don't exist on all pages
 - Added defensive checks in `actions.js` for elements that don't exist on all pages
 - Added defensive checks in `search.js` for page-specific elements
 - Added defensive checks in `generatorForm.js` for generator panel elements
 - Fixed `bodyElement` undefined error in `app.js`
 - Fixed incorrect variable reference (`storageConfig` → `storageOptions`) in `app.js`
 - All JavaScript modules now gracefully handle missing DOM elements
+
+#### Authentication UI
+
+- Fixed login button not appearing on timeline and dashboard pages when user is logged out
+- Auth container now consistently shows when Keycloak is configured
+- Added diagnostic logging to help troubleshoot auth UI rendering issues
 
 ## 0.3.3 - 2025-10-27
 
