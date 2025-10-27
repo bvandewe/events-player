@@ -52,12 +52,19 @@ import { globalFilterController } from './ui/globalFilters';
 // Import appState for filter subscriptions
 import { appState } from './state/appState';
 
-const storageManager = EventStorageManager.getInstance({
-    maxRecentEvents: 5000,
-    maxRecentAge: 1800000,
-    maxMetadataEvents: 100000,
-    maxMetadataAge: 86400000
-});
+// Get body element for data attributes
+const bodyElement = document.body;
+
+// Initialize storage configuration from data attributes
+const storageOptions = {
+    maxRecentEvents: parseInt(bodyElement.getAttribute("data-storage-max-recent-events") || "5000"),
+    maxMetadataEvents: parseInt(bodyElement.getAttribute("data-storage-max-metadata-events") || "100000")
+};
+
+console.log('[Dashboard] Storage configuration:', storageOptions);
+
+// Get or create singleton storage manager instance (shared across all views)
+const storageManager = EventStorageManager.getInstance(storageOptions);
 
 // Dashboard Controller
 const dashboardController = (() => {
