@@ -1,67 +1,9 @@
 <main class="container-fluid p-4">
     <!-- Page Header -->
     <div class="row mb-4">
-        <div class="col">
+        <div class="col text-center">
             <h2 class="mb-3">Event Stream</h2>
-            <p class="text-secondary">Real-time view of incoming CloudEvents with full details and search capabilities</p>
-        </div>
-    </div>
-
-    <!-- Filter Controls -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row g-3 align-items-end">
-                        <!-- Time Range Filter -->
-                        <div class="col-md-3">
-                            <label for="eventTimeRange" class="form-label">Time Range</label>
-                            <select class="form-select" id="eventTimeRange">
-                                <option value="5">Last 5 minutes</option>
-                                <option value="15">Last 15 minutes</option>
-                                <option value="30">Last 30 minutes</option>
-                                <option value="60">Last 1 hour</option>
-                                <option value="180">Last 3 hours</option>
-                                <option value="360">Last 6 hours</option>
-                                <option value="720">Last 12 hours</option>
-                                <option value="1440">Last 24 hours</option>
-                                <option value="all" selected>All time</option>
-                            </select>
-                        </div>
-
-                        <!-- Type Filter -->
-                        <div class="col-md-2">
-                            <label for="eventTypeFilter" class="form-label">Event Type</label>
-                            <select class="form-select" id="eventTypeFilter">
-                                <option value="">All Types</option>
-                            </select>
-                        </div>
-
-                        <!-- Source Filter -->
-                        <div class="col-md-2">
-                            <label for="eventSourceFilter" class="form-label">Source</label>
-                            <select class="form-select" id="eventSourceFilter">
-                                <option value="">All Sources</option>
-                            </select>
-                        </div>
-
-                        <!-- Subject Filter -->
-                        <div class="col-md-2">
-                            <label for="eventSubjectFilter" class="form-label">Subject</label>
-                            <select class="form-select" id="eventSubjectFilter">
-                                <option value="">All Subjects</option>
-                            </select>
-                        </div>
-
-                        <!-- Clear Filters Button -->
-                        <div class="col-md-3">
-                            <button class="btn btn-outline-secondary" id="clearFiltersBtn">
-                                <i class="bi bi-x-circle"></i> Clear Filters
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <p class="text-secondary mb-0">Real-time view of incoming CloudEvents with full details and search capabilities</p>
         </div>
     </div>
 

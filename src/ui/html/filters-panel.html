@@ -1,0 +1,61 @@
+<!-- Global Filters OffCanvas Panel -->
+<div class="offcanvas offcanvas-top p-4 shadow-lg" data-bs-scroll="true" data-bs-backdrop="true" data-bs-keyboard="true" tabindex="-1"
+    id="filtersPanel" aria-labelledby="filtersPanelLabel">
+    <div class="offcanvas-header justify-content-center">
+        <h4 class="offcanvas-title text-primary title" id="filtersPanelLabel">
+            <i class="bi bi-funnel-fill me-2"></i>Global Filters
+        </h4>
+        <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="container">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <label for="globalEventTypeFilter" class="form-label">Event Type</label>
+                    <select class="form-select" id="globalEventTypeFilter" aria-label="Filter by event type">
+                        <option value="">All Types</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="globalEventSourceFilter" class="form-label">Event Source</label>
+                    <select class="form-select" id="globalEventSourceFilter" aria-label="Filter by event source">
+                        <option value="">All Sources</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="globalEventSubjectFilter" class="form-label">Event Subject</label>
+                    <select class="form-select" id="globalEventSubjectFilter" aria-label="Filter by event subject">
+                        <option value="">All Subjects</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="globalEventTimeRange" class="form-label">Time Range</label>
+                    <select class="form-select" id="globalEventTimeRange" aria-label="Filter by time range">
+                        <option value="all">All Time</option>
+                        <option value="1h">Last Hour</option>
+                        <option value="6h">Last 6 Hours</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-outline-secondary w-100" id="globalClearFiltersBtn" title="Clear all filters">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <div>
+                            <strong>Global Filters:</strong> These filters apply to all views (Events, Timeline, Metrics) and persist across page reloads. 
+                            All SSE events are still stored regardless of active filters.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

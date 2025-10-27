@@ -54,6 +54,26 @@ export const actionsController = (() => {
         }
     };
 
+    const toggleFiltersPanel = () => {
+        const filtersPanel = document.getElementById('filtersPanel');
+        const toggleIcon = document.getElementById('toggleFiltersIcon');
+        const toggleText = document.getElementById('toggleFiltersText');
+
+        if (filtersPanel.style.display === 'none') {
+            // Show filters
+            filtersPanel.style.display = '';
+            toggleIcon.classList.remove('bi-funnel-fill');
+            toggleIcon.classList.add('bi-funnel');
+            toggleText.textContent = 'Hide Filters';
+        } else {
+            // Hide filters
+            filtersPanel.style.display = 'none';
+            toggleIcon.classList.remove('bi-funnel');
+            toggleIcon.classList.add('bi-funnel-fill');
+            toggleText.textContent = 'Show Filters';
+        }
+    };
+
     const init = (bs) => {
         bootstrap = bs;
 
@@ -63,6 +83,10 @@ export const actionsController = (() => {
         var deleteAllEventsBtn = document.getElementById('deleteAllEventsBtn');
         deleteAllEventsBtn.addEventListener('click', deleteAllEvents);
 
+        var toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+        if (toggleFiltersBtn) {
+            toggleFiltersBtn.addEventListener('click', toggleFiltersPanel);
+        }
     };
 
     return {

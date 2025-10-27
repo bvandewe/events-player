@@ -95,6 +95,26 @@ The master realm is automatically configured to allow HTTP access (development o
 
 ⚠️ **Security Note**: The HTTP configuration is for development only and should NEVER be used in production!
 
+### API Documentation & Authentication
+
+The API documentation is available via Swagger UI at `/api/docs`. When Keycloak is configured, Swagger UI includes an "Authorize" button that allows you to authenticate and test protected endpoints.
+
+**To authenticate in Swagger UI:**
+
+1. Navigate to <http://localhost:8080/api/docs> (or your deployment URL + `/api/docs`)
+2. Click the **"Authorize"** button in the top-right corner
+3. Select the scopes you want (typically `openid`, `profile`, `email`)
+4. Click **"Authorize"** to start the OAuth2 Authorization Code flow
+5. Log in with your Keycloak credentials
+6. You'll be redirected back to Swagger UI with an active session
+
+Once authenticated, you can test protected endpoints directly from Swagger UI. The authentication token will be automatically included in all API requests.
+
+**Available Security Schemes:**
+
+- **OAuth2AuthorizationCode**: Full OAuth2 authorization code flow with PKCE (recommended for browser use)
+- **BearerAuth**: Direct JWT bearer token (for API clients that already have a token)
+
 ### VS Code Debugging
 
 `Hint`:

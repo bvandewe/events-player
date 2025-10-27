@@ -19,17 +19,17 @@ services:
       - ./static:/app/static # Mount static for UI updates from ui-builder
     environment:
       PYTHONPATH: /app/src
-      api_log_level: DEBUG
-      api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://localhost:8080/events/pub", "http://event-player:8080/events/pub"]}'
-      api_tag: "0.2.0"
+      api_log_level: INFO
+      api_default_generator_gateways: '{"urls": ["http://localhost:8080/events/pub", "http://event-player:8080/events/pub"]}'
+      api_tag: "v0.3.1"
       # Authentication configuration
-      api_auth_mode: auto
+      api_auth_mode: disabled # auto, required, disabled
       api_auth_jwks_url: http://keycloak:8080/realms/events-player/protocol/openid-connect/certs
-      api_auth_issuer: http://localhost:8090/realms/events-player
+      api_auth_issuer: http://localhost:8885/realms/events-player
       api_auth_audience: events-player-web
       api_auth_required: "false"
       api_keycloak_url: http://keycloak:8080
-      api_keycloak_url_external: http://localhost:8090
+      api_keycloak_url_external: http://localhost:8885
       api_keycloak_realm: events-player
       api_keycloak_client_id: events-player-web
       api_keycloak_client_secret: ""
@@ -58,7 +58,7 @@ services:
       "
 
   # 🔐 Keycloak (Authentication & Authorization)
-  # http://localhost:8090 (admin/admin)
+  # http://localhost:8885 (admin/admin)
   keycloak:
     image: quay.io/keycloak/keycloak:22.0.5
     entrypoint: ["/opt/keycloak/entrypoint-wrapper.sh"]
@@ -68,7 +68,7 @@ services:
       - "--spi-theme-welcome-theme=keycloak"
       - "--spi-theme-admin-theme=keycloak"
     ports:
-      - 8090:8080
+      - 8885:8080
     environment:
       # Admin credentials
       KEYCLOAK_ADMIN: admin
@@ -81,8 +81,8 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
       # Disable HTTPS requirement for admin console (development only!)
-      KC_HOSTNAME_URL: http://localhost:8090
-      KC_HOSTNAME_ADMIN_URL: http://localhost:8090
+      KC_HOSTNAME_URL: http://localhost:8885
+      KC_HOSTNAME_ADMIN_URL: http://localhost:8885
       KC_PROXY: "none"
     volumes:
       # Persist H2 database to maintain Keycloak configuration across container restarts

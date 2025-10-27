@@ -156,3 +156,113 @@ def get_task(request: Request, task_id: str):
         client_id = f"{request.client.host}:{request.client.port}"
     log.info("New SSE client for /stream/task/%s: %s", task_id, client_id)
     return EventSourceResponse(task_status_generator(task_id))
+
+
+async def client_stats_generator(request: Request):
+    """
+    Stream SSE client statistics in real-time.
+
+    This generator monitors the sse_clients dictionary and emits updates
+    whenever the client list changes (clients connect/disconnect) or
+    when queue sizes change significantly.
+    """
+    try:
+        previous_client_count = len(sse_clients)
+        previous_client_ids = set(sse_clients.keys())
+        previous_queue_sizes: dict[str, int] = {}
+
+        log.info("Client stats stream started")
+
+        while True:
+            # Check if the requesting client disconnected
+            if await request.is_disconnected():
+                log.debug("Client stats stream: client disconnected")
+                break
+
+            # Check current state
+            current_client_count = len(sse_clients)
+            current_client_ids = set(sse_clients.keys())
+
+            # Calculate current queue sizes
+            current_queue_sizes = {
+                client_id: queue.qsize() for client_id, queue in sse_clients.items()
+            }
+
+            # Detect changes in client list or queue sizes
+            queue_sizes_changed = current_queue_sizes != previous_queue_sizes
+            clients_changed = current_client_count != previous_client_count
+            client_ids_changed = current_client_ids != previous_client_ids
+            client_list_changed = clients_changed or client_ids_changed
+
+            if client_list_changed or queue_sizes_changed:
+                # Calculate statistics
+                stats = []
+                total_queued = 0
+
+                for client_id, queue in sse_clients.items():
+                    queue_size = queue.qsize()
+                    total_queued += queue_size
+                    stats.append(
+                        {
+                            "client_id": client_id,
+                            "queue_size": queue_size,
+                            "queue_full": queue.full(),
+                            "utilization_pct": round((queue_size / MAX_QUEUE_SIZE) * 100, 1),
+                            "is_slow": queue_size > SLOW_CLIENT_THRESHOLD,
+                        }
+                    )
+
+                payload = {
+                    "total_clients": len(sse_clients),
+                    "total_queued_events": total_queued,
+                    "max_queue_size": MAX_QUEUE_SIZE,
+                    "slow_client_threshold": SLOW_CLIENT_THRESHOLD,
+                    "avg_utilization_pct": round(
+                        (
+                            (total_queued / (len(sse_clients) * MAX_QUEUE_SIZE) * 100)
+                            if sse_clients
+                            else 0
+                        ),
+                        1,
+                    ),
+                    "clients": sorted(stats, key=lambda x: x["queue_size"], reverse=True),
+                }
+
+                yield {"data": json.dumps(payload)}
+
+                # Update tracking variables
+                previous_client_count = current_client_count
+                previous_client_ids = current_client_ids
+                previous_queue_sizes = current_queue_sizes
+
+                log.debug(
+                    f"Client stats update: {current_client_count} clients, {total_queued} queued"
+                )
+
+            # Sleep briefly before checking again
+            await asyncio.sleep(0.5)
+
+    except (asyncio.CancelledError, GeneratorExit):
+        log.debug("Client stats generator cancelled")
+    except Exception as e:
+        log.error("Error in client_stats_generator: %s", e)
+
+
+# Stream client statistics
+@router.get(
+    path="/stream/clients",
+    tags=["Server Sent Event (SSE) Stream"],
+    operation_id="stream_client_stats",
+)
+async def stream_client_stats(request: Request):
+    """
+    SSE endpoint that streams real-time SSE client statistics.
+
+    Emits updates whenever clients connect or disconnect.
+    Useful for monitoring system health and client behavior.
+    """
+    client_id = "unknown"
+    if request.client:
+        client_id = f"{request.client.host}:{request.client.port}"
+    log.info("New SSE client for /stream/clients: %s", client_id)
+    return EventSourceResponse(client_stats_generator(request))

@@ -1,9 +1,9 @@
 <!-- OffCanvas -->
-<div class="offcanvas offcanvas-bottom p-4 shadow-lg" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+<div class="offcanvas offcanvas-bottom p-4 shadow-lg" data-bs-scroll="true" data-bs-backdrop="true" data-bs-keyboard="true" tabindex="-1"
     id="generatorPanel" aria-labelledby="staticBackdropLabel">
-    <div class="offcanvas-header">
-        <h4 class="offcanvas-title mx-auto text-primary title" id="generatorPanelLabel">Generate CloudEvents</h4>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    <div class="offcanvas-header justify-content-center">
+        <h4 class="offcanvas-title text-primary title" id="generatorPanelLabel">Generate CloudEvents</h4>
+        <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">        
         <div>            
@@ -42,11 +42,11 @@
                 <div class="row mb-3">
                     <div class="col-6 row d-flex align-items-center">
                         <label for="eventIterations" class="col-3 col-form-label text-end">Iterations: <span id="eventIterationsValue">1</span></label>
-                        <input type="range" min="1" max="100" value="1" class="col-8 form-range" id="eventIterations" name="iterations">
+                        <input type="range" min="1" max="500" value="1" class="col-8 form-range" id="eventIterations" name="iterations">
                     </div>
                     <div class="col-6 row d-flex align-items-center">
                         <label for="eventDelay" class="col-3 col-form-label text-end">Delay: <span id="eventDelayValue">100</span> ms</label>
-                        <input type="range" min="1" max="2000" value="100" class="col-8 form-range" id="eventDelay" name="delay">
+                        <input type="range" min="50" max="2000" value="100" class="col-8 form-range" id="eventDelay" name="delay">
                     </div>
                 </div>
 

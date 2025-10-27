@@ -167,7 +167,14 @@ class EventStorageManager {
             return false;
         }
 
+        // Increment totalReceived BEFORE assigning to event (so first event is #1, not #0)
         this.stats.totalReceived++;
+        const sequenceNumber = this.stats.totalReceived;
+
+        // Persist totalReceived every 10 events to reduce localStorage writes
+        if (this.stats.totalReceived % 10 === 0) {
+            this.persistStats();
+        }
 
         try {
             // Check for duplicates
@@ -179,14 +186,16 @@ class EventStorageManager {
             // Extract lightweight metadata
             const metadata = this.extractMetadata(fullEvent);
 
-            // Add insertion order and storage timestamp for preserving sequence
-            const timestamp = new Date(fullEvent.time).getTime();
+            // Add insertion order, storage timestamp, and sequence number for preserving sequence
+            // Use metadata.timestamp which has timezone correction applied
+            const timestamp = metadata.timestamp;
             const now = Date.now();
             const eventWithOrder = {
                 ...fullEvent,
-                timestamp: timestamp,              // Original event time
+                timestamp: timestamp,              // Original event time (with timezone correction)
                 storedAt: now,                     // When we stored it (for cleanup)
-                insertionOrder: now + Math.random() // Ensure uniqueness
+                insertionOrder: now + Math.random(), // Ensure uniqueness
+                sequenceNumber: sequenceNumber     // Persistent sequence number across sessions
             };
 
             // Tier 1: Add full event to IndexedDB (persisted)
@@ -391,6 +400,7 @@ class EventStorageManager {
                         console.log(`[EventStorage] Cleaned up ${deletedCount} old metadata entries`);
                     }
                     this.stats.lastCleanup = new Date();
+                    this.persistStats(); // Persist cleanup timestamp
                     resolve(deletedCount);
                 }
             };
@@ -630,6 +640,22 @@ class EventStorageManager {
      */
     async loadStats() {
         return new Promise((resolve, reject) => {
+            // Load persisted stats from localStorage
+            try {
+                const persistedStats = localStorage.getItem('eventStorageStats');
+                if (persistedStats) {
+                    const parsed = JSON.parse(persistedStats);
+                    this.stats.totalReceived = parsed.totalReceived || 0;
+                    this.stats.lastCleanup = parsed.lastCleanup ? new Date(parsed.lastCleanup) : null;
+                    console.log('[EventStorage] Loaded persisted stats from localStorage:', {
+                        totalReceived: this.stats.totalReceived,
+                        lastCleanup: this.stats.lastCleanup
+                    });
+                }
+            } catch (err) {
+                console.warn('[EventStorage] Failed to load persisted stats from localStorage:', err);
+            }
+
             // Create a single transaction that accesses both stores
             const transaction = this.db.transaction(['metadata', 'recentEvents'], 'readonly');
             const metadataStore = transaction.objectStore('metadata');
@@ -726,6 +752,21 @@ class EventStorageManager {
     }
 
     /**
+     * Persist important stats to localStorage
+     */
+    persistStats() {
+        try {
+            const toPersist = {
+                totalReceived: this.stats.totalReceived,
+                lastCleanup: this.stats.lastCleanup ? this.stats.lastCleanup.toISOString() : null
+            };
+            localStorage.setItem('eventStorageStats', JSON.stringify(toPersist));
+        } catch (err) {
+            console.warn('[EventStorage] Failed to persist stats to localStorage:', err);
+        }
+    }
+
+    /**
      * Get current statistics
      */
     getStats() {
@@ -763,6 +804,8 @@ class EventStorageManager {
                         newestMetadata: null,
                         lastCleanup: null
                     };
+                    // Clear persisted stats from localStorage
+                    this.persistStats();
                     console.log('[EventStorage] All data cleared (recentEvents and metadata)');
                     resolve();
                 }

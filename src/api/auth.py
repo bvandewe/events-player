@@ -337,7 +337,10 @@ async def auth_middleware(request: Request, call_next):
 # Dependency Injection Functions
 
 
-async def get_current_user_optional(request: Request) -> Optional[Dict[str, Any]]:
+async def get_current_user_optional(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> Optional[Dict[str, Any]]:
     """
     Dependency that returns the current user if authenticated, None otherwise.
 
@@ -354,11 +357,25 @@ async def get_current_user_optional(request: Request) -> Optional[Dict[str, Any]
                 # Return only public events
                 ...
     """
-    return getattr(request.state, "user", None)
+    # First check if user was set by middleware
+    user = getattr(request.state, "user", None)
+
+    # If no user from middleware but credentials provided, try to validate
+    if user is None and credentials:
+        try:
+            token = credentials.credentials
+            token_payload = await jwt_validator.validate_token(token)
+            user = jwt_validator.extract_user_info(token_payload)
+        except Exception as e:
+            logger.debug(f"Failed to validate token from Authorization header: {e}")
+            user = None
+
+    return user
 
 
 async def get_current_user_required(
-    user: Optional[Dict[str, Any]] = Depends(get_current_user_optional),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> Dict[str, Any]:
     """
     Dependency that requires authentication.
@@ -374,6 +391,7 @@ async def get_current_user_required(
             # Only authenticated users can create events
             ...
     """
+    user = await get_current_user_optional(request, credentials)
     if user is None:
         raise HTTPException(
             status_code=401,
@@ -384,7 +402,9 @@ async def get_current_user_required(
 
 
 async def require_role(
-    required_roles: List[str], user: Dict[str, Any] = Depends(get_current_user_required)
+    required_roles: List[str],
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> Dict[str, Any]:
     """
     Dependency that requires specific roles.
@@ -393,11 +413,13 @@ async def require_role(
 
     Args:
         required_roles: List of acceptable roles
-        user: Current authenticated user
+        request: FastAPI request
+        credentials: Authorization credentials
 
     Returns:
         User info dict
     """
+    user = await get_current_user_required(request, credentials)
     user_roles = user.get("roles", [])
 
     # Check if user has any of the required roles
@@ -415,7 +437,8 @@ async def require_role(
 
 
 async def require_admin(
-    user: Dict[str, Any] = Depends(get_current_user_required),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> Dict[str, Any]:
     """
     Dependency that requires 'admin' role.
@@ -426,11 +449,12 @@ async def require_admin(
             # Only admins can delete
             ...
     """
-    return await require_role(["admin"], user)
+    return await require_role(["admin"], request, credentials)
 
 
 async def require_operator(
-    user: Dict[str, Any] = Depends(get_current_user_required),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> Dict[str, Any]:
     """
     Dependency that requires 'operator' or 'admin' role.
@@ -445,7 +469,7 @@ async def require_operator(
             # Operators and admins can update
             ...
     """
-    return await require_role(["operator", "admin"], user)
+    return await require_role(["operator", "admin"], request, credentials)
 
 
 # OAuth Token Exchange

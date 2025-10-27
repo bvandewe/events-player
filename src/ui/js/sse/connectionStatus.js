@@ -11,6 +11,7 @@ class ConnectionStatusManager {
     constructor() {
         this.statusElement = null;
         this.timer = null;
+        this.heartbeatTimer = null;
     }
 
     /**
@@ -26,6 +27,36 @@ class ConnectionStatusManager {
     }
 
     /**
+     * Start the heartbeat timer (15s) to refresh "open" status
+     */
+    startHeartbeat() {
+        // Clear any existing heartbeat
+        this.stopHeartbeat();
+
+        // Refresh the open status every 15 seconds
+        this.heartbeatTimer = setInterval(() => {
+            // Only update if we're in the base "open" state (green, no glow, no blink)
+            if (this.statusElement &&
+                this.statusElement.style.backgroundColor === 'green' &&
+                !this.statusElement.classList.contains('glow') &&
+                !this.statusElement.classList.contains('blink')) {
+                console.log('[ConnectionStatus] Heartbeat refresh');
+                this.updateStatus('open');
+            }
+        }, 15000); // 15 seconds
+    }
+
+    /**
+     * Stop the heartbeat timer
+     */
+    stopHeartbeat() {
+        if (this.heartbeatTimer) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = null;
+        }
+    }
+
+    /**
      * Update connection status indicator
      * @param {string} status - Status: 'open', 'connect', 'error', 'newtimer', 'cleartimer'
      */
@@ -38,7 +69,12 @@ class ConnectionStatusManager {
             case "open":
                 console.log("Connection opened");
                 this.statusElement.style.backgroundColor = "green";
+                this.statusElement.style.color = "";
+                this.statusElement.classList.remove('glow');
+                this.statusElement.classList.remove('blink');
                 this.statusElement.setAttribute("title", "Connected - its quiet here though!");
+                // Start heartbeat to refresh every 15s
+                this.startHeartbeat();
                 break;
 
             case "connect":
@@ -56,11 +92,15 @@ class ConnectionStatusManager {
                 this.statusElement.classList.remove('glow');
                 this.statusElement.classList.add('blink');
                 this.statusElement.setAttribute("title", "Disconnected... Trying to reconnect every 2s...");
+                // Stop heartbeat when connection is lost
+                this.stopHeartbeat();
                 break;
 
             case "newtimer":
                 this.timer = setTimeout(() => {
                     this.statusElement.style.backgroundColor = "green";
+                    this.statusElement.style.color = "";
+                    this.statusElement.classList.remove('glow');
                     this.statusElement.setAttribute("title", "Connected - its quiet here though!");
                 }, 10000);
                 break;
@@ -82,6 +122,7 @@ class ConnectionStatusManager {
             clearTimeout(this.timer);
             this.timer = null;
         }
+        this.stopHeartbeat();
     }
 }
 

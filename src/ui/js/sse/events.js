@@ -1,16 +1,15 @@
 import { toastController } from "../ui/toast";
 import { v4 as uuidv4 } from 'uuid';
 import { sseConnection } from './connection';
-import { filterController } from '../ui/filters';
 import { connectionStatus } from './connectionStatus';
 import { appState } from '../state/appState';
+import { globalFilterController } from '../ui/globalFilters';
 
 export const sseEventsController = (() => {
 
     var eventsStack = document.getElementById('events-stack');
     var maxQueueSize = 0;
     var eventStorageManager = null; // Will be initialized in init()
-    var timeRangeSelect = null; // Will be initialized in init()
 
     const createAccordionItem = ({ eventCount, timestamp, hasError, eventSource, eventSubject, eventType, eventData, eventId }) => {
         console.log(`Rx event: ${eventType} from ${eventSource} at ${timestamp}`);
@@ -85,12 +84,13 @@ export const sseEventsController = (() => {
         // create the div element with class "accordion-body" and set its text content
         const accordionBody = document.createElement('div');
         accordionBody.classList.add('accordion-body', 'eventData');
-        accordionBody.textContent = JSON.stringify(eventData, null, 2);
+
+        // Filter out internal storage attributes before displaying (but keep them in eventData object)
+        const { timestamp: _ts, storedAt: _sa, insertionOrder: _io, sequenceNumber: _sn, ...displayEvent } = eventData;
+        accordionBody.textContent = JSON.stringify(displayEvent, null, 2);
 
         // append the accordionBody element to the accordionCollapse element
-        accordionCollapse.appendChild(accordionBody);
-
-        // append the accordionHeader and accordionCollapse elements to the accordionItem element
+        accordionCollapse.appendChild(accordionBody);        // append the accordionHeader and accordionCollapse elements to the accordionItem element
         accordionItem.appendChild(accordionHeader);
         accordionItem.appendChild(accordionCollapse);
 
@@ -116,7 +116,7 @@ export const sseEventsController = (() => {
         if (!banner) {
             banner = document.createElement('div');
             banner.id = 'filter-banner';
-            banner.className = 'alert alert-info alert-dismissible fade show mb-3';
+            banner.className = 'alert alert-info alert-dismissible fade show mb-3 text-center';
             banner.setAttribute('role', 'alert');
 
             // Insert before events stack
@@ -150,7 +150,7 @@ export const sseEventsController = (() => {
         `;
     };
 
-    const handleNewEvent = (event) => {
+    const handleNewEvent = async (event) => {
         if ("data" in event) {
             var hasError = "none";
             try {
@@ -200,8 +200,20 @@ export const sseEventsController = (() => {
                 cloudEventData.data = eventDataStr.substring(9);
             }
             const uuid = uuidv4();
+
+            // Store event in storage manager (both tiers) first to get sequence number
+            let sequenceNumber = 0;
+            if (eventStorageManager) {
+                await eventStorageManager.addEvent(cloudEventData).catch(err => {
+                    console.error('[Events] Failed to store event:', err);
+                });
+                // Get the sequence number from stats (addEvent increments totalReceived)
+                const stats = eventStorageManager.getStats();
+                sequenceNumber = stats.totalReceived;
+            }
+
             var accordionData = {
-                eventCount: sseConnection.getCount(),
+                eventCount: sequenceNumber, // Use sequence number from storage
                 timestamp: cloudEventData.time,
                 hasError: hasError,
                 eventSource: cloudEventData.source,
@@ -211,18 +223,13 @@ export const sseEventsController = (() => {
                 eventId: uuid
             };
 
-            // Add event values to filter dropdowns
-            filterController.addEventValues(cloudEventData);
-
-            // Store event in storage manager (both tiers)
-            if (eventStorageManager) {
-                eventStorageManager.addEvent(cloudEventData).catch(err => {
-                    console.error('[Events] Failed to store event:', err);
-                });
+            // Add event values to global filter dropdowns
+            if (globalFilterController.initialized) {
+                globalFilterController.addEventValues(cloudEventData);
             }
 
-            // Check if event matches active filters
-            if (!filterController.matchesFilters(cloudEventData)) {
+            // Check if event matches active filters from global state
+            if (!globalFilterController.matchesFilters(cloudEventData)) {
                 console.log('[Events] Event filtered out:', cloudEventData.type);
                 return; // Don't display this event
             }
@@ -235,12 +242,12 @@ export const sseEventsController = (() => {
         }
     };
 
-    const handleSseEvent = (event) => {
+    const handleSseEvent = async (event) => {
         console.log(event);
         // Don't increment here - increment in handleNewEvent after filtering
         connectionStatus.updateStatus("cleartimer");
         connectionStatus.updateStatus("connect");
-        handleNewEvent(event);
+        await handleNewEvent(event);
         connectionStatus.updateStatus("newtimer");
 
         // Keep the stack to its max-size ??? > eventsCount
@@ -270,7 +277,7 @@ export const sseEventsController = (() => {
 
             console.log('[Events] Storage stats:', eventStorageManager.getStats());
 
-            // Get URL parameters for filtering
+            // Get URL parameters for filtering (URL params take precedence)
             const urlParams = new URLSearchParams(window.location.search);
             const startTime = urlParams.get('startTime') ? parseInt(urlParams.get('startTime')) : null;
             const endTime = urlParams.get('endTime') ? parseInt(urlParams.get('endTime')) : null;
@@ -278,20 +285,40 @@ export const sseEventsController = (() => {
             const sourceFilter = urlParams.get('source') || null;
             const subjectFilter = urlParams.has('subject') ? urlParams.get('subject') : null;
 
-            // Get time range from selector if not from URL
+            // Get time range from global filters if not from URL
             let timeRangeStart = startTime;
             let timeRangeEnd = endTime;
 
-            if (!startTime && !endTime && timeRangeSelect && timeRangeSelect.value !== 'all') {
-                const minutes = parseInt(timeRangeSelect.value);
-                const now = Date.now();
-                timeRangeEnd = now;
-                timeRangeStart = now - (minutes * 60 * 1000);
-                console.log('[Events] Applying time range from selector:', {
-                    minutes,
-                    start: new Date(timeRangeStart).toISOString(),
-                    end: new Date(timeRangeEnd).toISOString()
-                });
+            if (!startTime && !endTime) {
+                const globalFilters = appState.get('filters');
+                const timeRange = globalFilters.timeRange;
+
+                if (timeRange && timeRange !== 'all') {
+                    const now = Date.now();
+                    timeRangeEnd = now;
+
+                    // Convert global time range format to milliseconds
+                    switch (timeRange) {
+                        case '1h':
+                            timeRangeStart = now - (60 * 60 * 1000);
+                            break;
+                        case '6h':
+                            timeRangeStart = now - (6 * 60 * 60 * 1000);
+                            break;
+                        case '24h':
+                            timeRangeStart = now - (24 * 60 * 60 * 1000);
+                            break;
+                        case '7d':
+                            timeRangeStart = now - (7 * 24 * 60 * 60 * 1000);
+                            break;
+                    }
+
+                    console.log('[Events] Applying time range from global filters:', {
+                        timeRange,
+                        start: new Date(timeRangeStart).toISOString(),
+                        end: new Date(timeRangeEnd).toISOString()
+                    });
+                }
             }
 
             let events = await eventStorageManager.getRecentEvents({ limit: maxQueueSize });
@@ -379,7 +406,7 @@ export const sseEventsController = (() => {
                 events.reverse().forEach(cloudEventData => {
                     const uuid = uuidv4();
                     const accordionData = {
-                        eventCount: sseConnection.getCount(),
+                        eventCount: cloudEventData.sequenceNumber || 0, // Use stored sequence number
                         timestamp: cloudEventData.time,
                         hasError: 'none',
                         eventSource: cloudEventData.source,
@@ -412,16 +439,6 @@ export const sseEventsController = (() => {
         maxQueueSize = parseInt(queueSize);
         eventStorageManager = storageManager; // Store reference to storage manager
 
-        // Initialize time range selector
-        timeRangeSelect = document.getElementById('eventTimeRange');
-        if (timeRangeSelect) {
-            timeRangeSelect.addEventListener('change', () => {
-                console.log('[Events] Time range changed:', timeRangeSelect.value);
-                appState.set('filters.timeRange', timeRangeSelect.value);
-                loadEventsFromStorage();
-            });
-        }
-
         // Subscribe to filter changes from state
         appState.subscribe('filters', (filters) => {
             console.log('[Events] Filters changed via state:', filters);
@@ -439,20 +456,15 @@ export const sseEventsController = (() => {
                 // Load existing events from storage (this will set the counter correctly)
                 await loadEventsFromStorage();
 
-                // Initialize filter controller
-                await filterController.init({
-                    storageManager: eventStorageManager,
-                    selectors: {
-                        type: 'eventTypeFilter',
-                        source: 'eventSourceFilter',
-                        subject: 'eventSubjectFilter',
-                        clear: 'clearFiltersBtn'
-                    },
-                    onFilterChange: (filters) => {
-                        console.log('[Events] Filters changed:', filters);
-                        // State is already updated by filterController
-                        // This callback triggers loadEventsFromStorage via state subscription
-                    }
+                // Initialize global filters (already initialized in app.js, just ensure it has storage manager)
+                if (!globalFilterController.initialized) {
+                    await globalFilterController.init(eventStorageManager);
+                }
+
+                // Subscribe to filter changes to reload events
+                appState.subscribe('filters', (filters) => {
+                    console.log('[Events] Global filters changed:', filters);
+                    loadEventsFromStorage();
                 });
 
                 // Now initialize SSE connection with the current counter value

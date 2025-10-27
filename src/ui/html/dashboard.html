@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <title>Dashboard - CloudEvents Player</title>
+    <link rel="stylesheet" href="../scss/app.scss">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa&family=Roboto">
+    <link rel="stylesheet" href="../../../node_modules/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.ico">
+</head>
+<body data-bs-theme="dark" 
+      data-browser_queue_size="{{ browser_queue_size }}"
+      data-auth_mode="{{ auth_mode }}"
+      data-auth_issuer="{{ keycloak_url }}/realms/{{ keycloak_realm }}"
+      data-auth_client_id="{{ keycloak_client_id }}"
+      data-auth_redirect_uri="{{ request.url.scheme }}://{{ request.url.netloc }}/dashboard">
+
+    {% include "html/nav.html" %}
+
+    <!-- Main Content -->
+    <main class="container-fluid p-4">
+        <div class="row mb-4">
+            <div class="col text-center">
+                <h2 class="mb-3">Metrics Dashboard</h2>
+                <p class="text-secondary">
+                    Monitor event patterns, distributions, and activity metrics
+                </p>
+            </div>
+        </div>
+
+        <!-- Statistics Cards Row -->
+        <div class="row mb-4">
+            <!-- Total Events -->
+            <div class="col-md-3">
+                <div class="card bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-white-50">Total Events</h6>
+                                <h2 class="card-title mb-0" id="statTotalEvents">0</h2>
+                            </div>
+                            <i class="bi bi-collection fs-1 text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average Rate -->
+            <div class="col-md-3">
+                <div class="card bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-white-50">Avg Rate</h6>
+                                <h2 class="card-title mb-0" id="statAvgRate">0</h2>
+                                <small class="text-white-50">events/min</small>
+                            </div>
+                            <i class="bi bi-speedometer2 fs-1 text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unique Types -->
+            <div class="col-md-3">
+                <div class="card bg-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-white-50">Event Types</h6>
+                                <h2 class="card-title mb-0" id="statUniqueTypes">0</h2>
+                            </div>
+                            <i class="bi bi-diagram-3 fs-1 text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unique Sources -->
+            <div class="col-md-3">
+                <div class="card bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-white-50">Event Sources</h6>
+                                <h2 class="card-title mb-0" id="statUniqueSources">0</h2>
+                            </div>
+                            <i class="bi bi-hdd-stack fs-1 text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Indicators Row -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="mb-3">
+                            <i class="bi bi-database-fill"></i> Storage Utilization
+                            <i class="bi bi-info-circle text-muted" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               data-bs-html="true"
+                               title="<strong>Tiered Storage System:</strong><br/>
+                                      • <strong>Recent Events</strong>: Full event data (5K max) for viewing details<br/>
+                                      • <strong>Metadata</strong>: Lightweight index (100K max) for visualizations<br/>
+                                      Click for more details in Help modal"
+                               style="cursor: pointer;"
+                               onclick="const helpModal = new bootstrap.Modal(document.getElementById('helpModal')); helpModal.show(); setTimeout(() => document.getElementById('helpModalStorageSection').scrollIntoView({behavior: 'smooth', block: 'start'}), 500);">
+                            </i>
+                        </h6>
+                        
+                        <div class="row">
+                            <!-- Recent Events Storage -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted">
+                                        Recent Events (Full Data)
+                                        <i class="bi bi-info-circle-fill text-primary" 
+                                           style="font-size: 0.75rem; cursor: help;"
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top"
+                                           title="Full CloudEvent objects stored for viewing details. Limited to 5,000 most recent events."></i>
+                                    </small>
+                                    <small class="text-muted">
+                                        <span id="recentCount">0</span> / <span id="recentMax">5,000</span>
+                                    </small>
+                                </div>
+                                <div class="progress" style="height: 20px;">
+                                    <div id="recentProgress" class="progress-bar" role="progressbar" 
+                                         style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        <span id="recentPercent">0%</span>
+                                    </div>
+                                </div>
+                                <!-- Trimmed Info below Recent Events -->
+                                <div class="mt-2 text-center" id="trimmedInfo">
+                                    <small class="text-muted">
+                                        <i class="bi bi-scissors"></i> 
+                                        <span class="badge bg-warning" id="trimmedCount">0</span> trimmed
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Metadata Storage -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted">
+                                        Total Metadata (Index)
+                                        <i class="bi bi-info-circle-fill text-info" 
+                                           style="font-size: 0.75rem; cursor: help;"
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top"
+                                           title="Lightweight metadata for charts and statistics. Stores up to 100,000 event summaries even after full events are trimmed."></i>
+                                    </small>
+                                    <small class="text-muted">
+                                        <span id="metadataCount">0</span> / <span id="metadataMax">100,000</span>
+                                    </small>
+                                </div>
+                                <div class="progress" style="height: 20px;">
+                                    <div id="metadataProgress" class="progress-bar bg-info" role="progressbar" 
+                                         style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        <span id="metadataPercent">0%</span>
+                                    </div>
+                                </div>
+                                <!-- Last Cleanup Info below Metadata -->
+                                <div class="mt-2 text-center" id="lastCleanupInfo">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock-history"></i> 
+                                        Last cleanup: <span id="lastCleanupTime">Never</span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="row mb-4">
+            <!-- Events Per Minute Chart -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up text-primary"></i> Events Per Minute
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                data-chart-enlarge="eventsPerMinuteChart"
+                                data-chart-title="Events Per Minute"
+                                title="Enlarge chart">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" style="height: 300px; position: relative;">
+                        <canvas id="eventsPerMinuteChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Event Types Chart -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-diagram-3 text-info"></i> Top Event Types
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                data-chart-enlarge="topTypesChart"
+                                data-chart-title="Top Event Types"
+                                title="Enlarge chart">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" style="height: 300px; position: relative;">
+                        <canvas id="topTypesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="row mb-4">
+            <!-- Activity Distribution Chart -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history text-success"></i> Activity Distribution by Hour
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                data-chart-enlarge="hourlyDistributionChart"
+                                data-chart-title="Activity Distribution by Hour"
+                                title="Enlarge chart">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" style="height: 300px; position: relative;">
+                        <canvas id="hourlyDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Sources Chart -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-hdd-stack text-warning"></i> Top Sources
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                data-chart-enlarge="topSourcesChart"
+                                data-chart-title="Top Sources"
+                                title="Enlarge chart">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" style="height: 300px; position: relative;">
+                        <canvas id="topSourcesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Chart Enlarge Modal -->
+    <div class="modal fade" id="chartEnlargeModal" tabindex="-1" aria-labelledby="chartEnlargeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chartEnlargeModalLabel">Chart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="height: 70vh; position: relative;">
+                    <canvas id="enlargedChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include "html/toast.html" %}
+    {% include "html/filters-panel.html" %}
+    {% include "html/offcanvas.html" %}
+    {% include "html/help.html" %}
+    {% include "html/confirm.html" %}
+    {% include "html/clearStorageModal.html" %}
+    {% include "html/tasksModal.html" %}
+    {% include "html/clientsModal.html" %}
+    {% include "html/footer.html" %}
+
+    <script type="module" src="../js/dashboard.js"></script>
+</body>
+</html>

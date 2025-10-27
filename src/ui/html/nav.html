@@ -9,19 +9,38 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbar">
-        <ul class="navbar-nav me-auto mb-2 mb-sm-0">
+        <ul class="navbar-nav mx-auto mb-2 mb-sm-0">
           
           <li class="nav-item">
-            <a class="nav-link actionLink" data-nav="events">Events</a>
+            <a class="nav-link actionLink" data-nav="events">
+              <i class="bi bi-list-ul"></i> Events
+            </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link actionLink" data-nav="timeline">Timeline</a>
+            <a class="nav-link actionLink" data-nav="timeline">
+              <i class="bi bi-activity"></i> Timeline
+            </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#generatorPanel" aria-controls="generatorPanel" href="#">Generator</a>
+            <a class="nav-link actionLink" data-nav="dashboard">
+              <i class="bi bi-speedometer2"></i> Metrics
+            </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="modal" data-bs-target="#helpModal" href="#">Help</a>
+            <a class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#filtersPanel" aria-controls="filtersPanel" href="#" id="filtersNavLink">
+              <i class="bi bi-funnel-fill"></i> Filters
+              <span class="badge bg-primary ms-1 d-none" id="activeFiltersCount">0</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#generatorPanel" aria-controls="generatorPanel" href="#">
+              <i class="bi bi-lightning-fill"></i> Generator
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="modal" data-bs-target="#helpModal" href="#">
+              <i class="bi bi-question-circle"></i> Help
+            </a>
           </li>
         </ul>
         <span class="badge me-3 p-2" id="connectionStatusIndicator" data-bs-toggle="tooltip" data-bs-title="Connection Status" data-bs-placement="bottom"><i class="bi bi-plug-fill text-white"></i></span>
@@ -42,12 +61,28 @@
 <script>
   // Navigation handler
   document.addEventListener('DOMContentLoaded', () => {
+    // Set active nav item based on current page
+    const path = window.location.pathname;
+    let currentPage = 'events'; // default
+    
+    if (path.includes('/timeline')) {
+      currentPage = 'timeline';
+    } else if (path.includes('/dashboard')) {
+      currentPage = 'dashboard';
+    }
+    
+    // Add active class to current page nav link
     document.querySelectorAll('[data-nav]').forEach(link => {
+      if (link.getAttribute('data-nav') === currentPage) {
+        link.classList.add('active');
+      }
+      
+      // Handle navigation clicks
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        const page = e.target.getAttribute('data-nav');
-        const path = page === 'events' ? '/' : `/${page}`;
-        window.location.href = path;
+        const page = link.getAttribute('data-nav');
+        const targetPath = page === 'events' ? '/' : `/${page}`;
+        window.location.href = targetPath;
       });
     });
   });

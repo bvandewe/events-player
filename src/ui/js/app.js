@@ -18,6 +18,15 @@ const storageManager = EventStorageManager.getInstance({
 // Initialize storage manager
 storageManager.init().then(() => {
     console.log('[App] Storage manager initialized');
+
+    // Initialize global filters after storage is ready
+    import('./ui/globalFilters').then(({ globalFilterController }) => {
+        globalFilterController.init(storageManager).then(() => {
+            console.log('[App] Global filters initialized');
+        }).catch(error => {
+            console.error('[App] Failed to initialize global filters:', error);
+        });
+    });
 }).catch(error => {
     console.error('[App] Failed to initialize storage manager:', error);
 });
@@ -55,6 +64,11 @@ import { tasksModalController } from "./ui/tasksModal";
 tasksModalController.init();
 // Make it globally available for auth dropdown
 window.tasksModalController = tasksModalController;
+
+import { clientsModalController } from "./ui/clientsModal";
+clientsModalController.init();
+// Make it globally available for auth dropdown
+window.clientsModalController = clientsModalController;
 
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
