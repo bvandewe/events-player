@@ -1,11 +1,26 @@
 export const toastController = (() => {
     var bootstrap;
+    let pendingToasts = [];
 
     const showToast = (result) => {
+        // Guard against Bootstrap not being loaded yet
+        if (!bootstrap) {
+            console.warn('[Toast] Bootstrap not initialized yet, queuing toast');
+            pendingToasts.push(result);
+            return;
+        }
+
         console.log("result");
         console.log(result);
-        const toastEl = document.getElementById('liveToast');        
-        const toast = bootstrap.Toast.getOrCreateInstance(toastEl);        
+        const toastEl = document.getElementById('liveToast');
+
+        // Extra safety check - ensure element exists
+        if (!toastEl) {
+            console.error('[Toast] Toast element not found in DOM');
+            return;
+        }
+
+        const toast = bootstrap.Toast.getOrCreateInstance(toastEl);
 
         if ("detail" in result) {
             toastEl.classList.add("text-bg-warning");
@@ -22,7 +37,14 @@ export const toastController = (() => {
     const init = (bs) => {
         bootstrap = bs;
         const toastElList = document.querySelectorAll('.toast');
-        const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl));        
+        const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl));
+
+        // Show any queued toasts that arrived before initialization
+        if (pendingToasts.length > 0) {
+            console.log(`[Toast] Processing ${pendingToasts.length} queued toast(s)`);
+            pendingToasts.forEach(result => showToast(result));
+            pendingToasts = [];
+        }
     };
 
     return {
