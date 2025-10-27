@@ -22,6 +22,12 @@ class SSEConnectionManager {
      * @param {number} options.initialCount - Initial event count from storage
      */
     init(options = {}) {
+        // Close existing connection if any to prevent leaks
+        if (this.eventSource) {
+            console.log('[SSE] Closing existing connection before creating new one');
+            this.close();
+        }
+
         this.eventCountSpan = document.getElementById('event-count');
 
         // Set initial count if provided
