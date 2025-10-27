@@ -25,7 +25,6 @@ class ApiSettings(BaseSettings):
     """Application settings loaded from environment variables"""
 
     model_config = SettingsConfigDict(
-        env_prefix="api_",
         env_file=(".env", ".env.prod"),
         env_file_encoding="utf-8",
         case_sensitive=False,
@@ -40,6 +39,7 @@ class ApiSettings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+    # Default Generator Settings
     default_generator_gateways: DefaultGateways = DefaultGateways()
     default_generator_event: DefaultEvent = DefaultEvent()
 

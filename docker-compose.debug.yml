@@ -19,30 +19,47 @@ services:
       - ./static:/app/static # Mount static for UI updates from ui-builder
     environment:
       PYTHONPATH: /app/src
-      api_log_level: INFO
-      api_default_generator_gateways: '{"urls": ["http://localhost:8080/events/pub", "http://event-player:8080/events/pub"]}'
-      api_tag: "v0.3.1"
-      api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-      api_browser_queue_size: 1000
 
-      # Storage configuration
-      
+      # Application Settings
+      tag: "v0.3.4"
+      repository_url: "https://github.com/bvandewe/events-player"
 
-      # Authentication configuration
-      api_auth_required: "false" # Set to "true" to require authentication
-      api_auth_jwks_url: http://keycloak:8080/realms/events-player/protocol/openid-connect/certs
-      api_auth_issuer: http://localhost:8885/realms/events-player
-      api_auth_audience: events-player-web
-      api_keycloak_url: http://keycloak:8080
-      api_keycloak_url_external: http://localhost:8885
-      api_keycloak_realm: events-player
-      api_keycloak_client_id: events-player-web
-      api_keycloak_client_secret: ""
+      # Logging Configuration
+      log_level: DEBUG
+      log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-      # Maps JWT token roles to application roles (admin, operator, user)
-      auth_role_admin: str = "admin" # Role name in JWT that grants admin privileges
-      auth_role_operator: str = "operator" # Role name in JWT that grants operator privileges
-      auth_role_user: str = "user" # Role name in JWT that grants user privileges
+      # Default Generator Settings
+      default_generator_gateways: '{"urls": ["http://localhost:8080/events/pub", "http://event-player:8080/events/pub"]}'
+      default_generator_event: '{"event_source": "https://dummy.source.com/sys-admin", "event_type": "com.source.dummy.test.requested.v1", "event_subject": "some.interesting.concept.key_abcde12345", "event_data": {"foo": "bar"}}'
+
+      # Frontend Display Configuration
+      browser_queue_size: 1000
+
+      # Frontend Storage Configuration (IndexedDB)
+      storage_max_recent_events: 5000 # Tier 1: Max full events (capacity-based FIFO)
+      storage_max_metadata_events: 100000 # Tier 2: Max metadata entries (capacity-based FIFO)
+
+      # HTTP Client Configuration
+      http_client_timeout: 30.0
+
+      # Authentication & Authorization
+      auth_required: "true" # Set to "true" to require authentication
+      auth_jwks_url: http://keycloak:8080/realms/events-player/protocol/openid-connect/certs
+      auth_issuer: http://localhost:8885/realms/events-player
+      auth_audience: events-player-web
+      auth_algorithm: RS256
+
+      # Role Mapping Configuration
+      auth_role_admin: "admin" # Role name in JWT that grants admin privileges
+      auth_role_operator: "operator" # Role name in JWT that grants operator privileges
+      auth_role_user: "user" # Role name in JWT that grants user privileges
+
+      # Keycloak OAuth Configuration
+      keycloak_url: http://keycloak:8080
+      keycloak_url_external: http://localhost:8885
+      keycloak_realm: events-player
+      keycloak_client_id: events-player-web
+      keycloak_client_secret: ""
     depends_on:
       - ui-builder
       - keycloak
