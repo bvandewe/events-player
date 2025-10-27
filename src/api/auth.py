@@ -4,13 +4,13 @@ Authentication and Authorization Module
 This module provides OAuth/OIDC authentication for the CloudEvents Player.
 It supports two deployment modes:
 1. Kubernetes with Istio: JWT pre-injected by Istio
-2. Local Development: OAuth flow with Keycloak
+2. Local Development: OAuth flow with any OIDC-compliant identity provider
 
 Features:
 - JWT validation (RS256 signature verification)
 - Optional authentication (doesn't block public endpoints)
 - Role-based access control (admin, operator, user)
-- OAuth code exchange for Keycloak mode
+- OAuth code exchange for OAuth mode
 - Auto-detection of authentication mode
 """
 
@@ -199,7 +199,7 @@ class JWTValidator:
         """
         Extract standardized user information from JWT payload.
 
-        Supports both Keycloak and Istio token formats.
+        Supports both OAuth/OIDC and Istio token formats.
 
         Args:
             token_payload: Decoded JWT payload
@@ -220,7 +220,7 @@ class JWTValidator:
         # Extract roles from various possible claim locations
         roles = []
 
-        # Keycloak format: realm_roles or realm_access.roles
+        # OAuth/OIDC format: realm_roles or realm_access.roles
         if "realm_roles" in token_payload:
             roles = token_payload["realm_roles"]
         elif "realm_access" in token_payload and "roles" in token_payload["realm_access"]:
@@ -481,7 +481,7 @@ async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) 
     """
     Exchange OAuth authorization code for access token.
 
-    This is used in Keycloak mode to complete the OAuth flow.
+    This is used in OAuth mode to complete the OAuth flow.
 
     Args:
         code: Authorization code from OAuth callback
@@ -500,11 +500,11 @@ async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) 
     Raises:
         HTTPException: If token exchange fails
     """
-    if not settings.keycloak_url or not settings.keycloak_realm:
-        raise HTTPException(status_code=500, detail="Keycloak not configured for OAuth flow")
+    if not settings.oauth_server_url or not settings.oauth_realm:
+        raise HTTPException(status_code=500, detail="OAuth server not configured for OAuth flow")
 
     token_endpoint = (
-        f"{settings.keycloak_url}/realms/{settings.keycloak_realm}"
+        f"{settings.oauth_server_url}/realms/{settings.oauth_realm}"
         f"/protocol/openid-connect/token"
     )
 
@@ -513,13 +513,13 @@ async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) 
         "grant_type": "authorization_code",
         "code": code,
         "redirect_uri": redirect_uri,
-        "client_id": settings.keycloak_client_id,
+        "client_id": settings.oauth_client_id,
         "code_verifier": code_verifier,  # PKCE code verifier
     }
 
     # Add client secret if configured
-    if settings.keycloak_client_secret:
-        data["client_secret"] = settings.keycloak_client_secret
+    if settings.oauth_client_secret:
+        data["client_secret"] = settings.oauth_client_secret
 
     try:
         async with httpx.AsyncClient() as client:
@@ -567,11 +567,11 @@ async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
     Raises:
         HTTPException: If token refresh fails
     """
-    if not settings.keycloak_url or not settings.keycloak_realm:
-        raise HTTPException(status_code=500, detail="Keycloak not configured for token refresh")
+    if not settings.oauth_server_url or not settings.oauth_realm:
+        raise HTTPException(status_code=500, detail="OAuth server not configured for token refresh")
 
     token_endpoint = (
-        f"{settings.keycloak_url}/realms/{settings.keycloak_realm}"
+        f"{settings.oauth_server_url}/realms/{settings.oauth_realm}"
         f"/protocol/openid-connect/token"
     )
 
@@ -579,12 +579,12 @@ async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
     data = {
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
-        "client_id": settings.keycloak_client_id,
+        "client_id": settings.oauth_client_id,
     }
 
     # Add client secret if configured
-    if settings.keycloak_client_secret:
-        data["client_secret"] = settings.keycloak_client_secret
+    if settings.oauth_client_secret:
+        data["client_secret"] = settings.oauth_client_secret
 
     try:
         async with httpx.AsyncClient() as client:

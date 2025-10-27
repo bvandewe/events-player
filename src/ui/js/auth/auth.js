@@ -3,7 +3,7 @@
  * 
  * Supports two authentication modes:
  * 1. Istio Mode: JWT pre-injected by Istio (auto-detected)
- * 2. Keycloak Mode: OAuth 2.0 + OIDC flow with Keycloak
+ * 2. OAuth Mode: OAuth 2.0 + OIDC flow with any OIDC-compliant IDP
  * 
  * Features:
  * - Auto-detection of authentication mode
@@ -21,8 +21,8 @@ class AuthManager {
     constructor() {
         this.token = null;
         this.userInfo = null;
-        this.keycloakConfig = null;
-        this.mode = null; // 'istio' | 'keycloak' | 'none'
+        this.oauthConfig = null;
+        this.mode = null; // 'istio' | 'oauth' | 'none'
         this.tokenCheckInterval = null; // For periodic token validation
     }
 
@@ -32,7 +32,7 @@ class AuthManager {
      * This method:
      * 1. Checks for existing token in sessionStorage
      * 2. Checks if server already has JWT (Istio mode)
-     * 3. Checks if Keycloak is configured
+     * 3. Checks if OAuth is configured
      * 4. Handles OAuth callback if present
      */
     async init() {
@@ -71,11 +71,11 @@ class AuthManager {
                     return;
                 }
 
-                // Store Keycloak config if available
-                if (data.keycloak_config && data.keycloak_config.url) {
-                    this.keycloakConfig = data.keycloak_config;
-                    this.mode = 'keycloak';
-                    console.log('[Auth] Keycloak mode configured');
+                // Store OAuth config if available
+                if (data.oauth_config && data.oauth_config.url) {
+                    this.oauthConfig = data.oauth_config;
+                    this.mode = 'oauth';
+                    console.log('[Auth] OAuth mode configured');
                 } else {
                     this.mode = 'none';
                     console.log('[Auth] No authentication configured');
@@ -87,7 +87,7 @@ class AuthManager {
         }
 
         // 3. Check for OAuth callback
-        if (this.mode === 'keycloak') {
+        if (this.mode === 'oauth') {
             await this.handleOAuthCallback();
         }
 
@@ -267,7 +267,7 @@ class AuthManager {
      * Initiate OAuth login flow
      */
     async login() {
-        if (this.mode !== 'keycloak') {
+        if (this.mode !== 'oauth') {
             console.warn('[Auth] Login not available in current mode:', this.mode);
             return;
         }
@@ -285,7 +285,7 @@ class AuthManager {
         // Build authorization URL
         // Note: Regular refresh tokens are returned automatically
         const params = new URLSearchParams({
-            client_id: this.keycloakConfig.client_id,
+            client_id: this.oauthConfig.client_id,
             response_type: 'code',
             redirect_uri: window.location.origin + '/',
             state: state,
@@ -294,14 +294,14 @@ class AuthManager {
             code_challenge_method: 'S256'
         });
 
-        const authUrl = `${this.keycloakConfig.url}/realms/${this.keycloakConfig.realm}/protocol/openid-connect/auth?${params}`;
+        const authUrl = `${this.oauthConfig.url}/realms/${this.oauthConfig.realm}/protocol/openid-connect/auth?${params}`;
 
-        console.log('[Auth] Redirecting to Keycloak login...');
+        console.log('[Auth] Redirecting to OAuth login...');
         window.location.href = authUrl;
     }
 
     /**
-     * Handle OAuth callback after redirect from Keycloak
+     * Handle OAuth callback after redirect from OAuth
      */
     async handleOAuthCallback() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -416,9 +416,9 @@ class AuthManager {
         sessionStorage.removeItem('refresh_token');
         sessionStorage.removeItem('token_expires_at');
 
-        if (this.mode === 'keycloak' && this.keycloakConfig) {
-            // Redirect to Keycloak logout
-            const logoutUrl = `${this.keycloakConfig.url}/realms/${this.keycloakConfig.realm}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(window.location.origin)}`;
+        if (this.mode === 'oauth' && this.oauthConfig) {
+            // Redirect to OAuth logout
+            const logoutUrl = `${this.oauthConfig.url}/realms/${this.oauthConfig.realm}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(window.location.origin)}`;
             window.location.href = logoutUrl;
         } else {
             // Just reload the page
@@ -628,8 +628,8 @@ class AuthManager {
         authContainer.innerHTML = '';
 
         // Always show UI if keycloak is configured OR if user is authenticated
-        const shouldShowUI = this.isAuthenticated() || this.mode === 'keycloak';
-        
+        const shouldShowUI = this.isAuthenticated() || this.mode === 'oauth';
+
         if (!shouldShowUI) {
             console.log('[Auth] Not showing auth UI - mode:', this.mode, 'authenticated:', this.isAuthenticated());
             return;
@@ -788,7 +788,7 @@ class AuthManager {
             dropdown.appendChild(menu);
             userDiv.appendChild(dropdown);
             authContainer.appendChild(userDiv);
-        } else if (this.mode === 'keycloak') {
+        } else if (this.mode === 'oauth') {
             // Show user icon dropdown with Clear Storage option
             const userDiv = document.createElement('div');
             userDiv.className = 'auth-user-info';

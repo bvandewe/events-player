@@ -41,11 +41,11 @@ app = FastAPI(
     ],
     swagger_ui_init_oauth=(
         {
-            "clientId": settings.keycloak_client_id,
+            "clientId": settings.oauth_client_id,
             "appName": "CloudEvents Player",
             "usePkceWithAuthorizationCodeGrant": True,
         }
-        if settings.keycloak_client_id
+        if settings.oauth_client_id
         else None
     ),
 )
@@ -97,10 +97,10 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    # Add security schemes if Keycloak is configured
-    if settings.keycloak_url_external and settings.keycloak_client_id:
-        auth_url = f"{settings.keycloak_url_external}/realms/{settings.keycloak_realm}/protocol/openid-connect/auth"
-        token_url = f"{settings.keycloak_url_external}/realms/{settings.keycloak_realm}/protocol/openid-connect/token"
+    # Add security schemes if OAuth is configured
+    if settings.oauth_server_url_external and settings.oauth_client_id:
+        auth_url = f"{settings.oauth_server_url_external}/realms/{settings.oauth_realm}/protocol/openid-connect/auth"
+        token_url = f"{settings.oauth_server_url_external}/realms/{settings.oauth_realm}/protocol/openid-connect/token"
 
         # Ensure components exists
         if "components" not in openapi_schema:

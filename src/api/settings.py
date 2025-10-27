@@ -86,7 +86,7 @@ class ApiSettings(BaseSettings):
     # When auth_required=True, all endpoints require valid authentication
     # The authentication method is auto-detected:
     #   - Istio/Service Mesh: JWT already validated, user info extracted from headers
-    #   - Keycloak: OAuth 2.0 + OIDC flow when keycloak_url is configured
+    #   - OAuth/OIDC: OAuth 2.0 + OIDC flow when oauth_server_url is configured
     #   - None: When auth_required=False, authentication is optional
     auth_required: bool = False  # Require authentication for all endpoints
     auth_jwks_url: str = ""  # JWKS endpoint for JWT validation (Istio mode)
@@ -100,12 +100,12 @@ class ApiSettings(BaseSettings):
     auth_role_operator: str = "operator"  # Role name in JWT that grants operator privileges
     auth_role_user: str = "user"  # Role name in JWT that grants user privileges
 
-    # Keycloak OAuth settings (for local development)
-    keycloak_url: str = ""  # Keycloak base URL (for backend API calls)
-    keycloak_url_external: str = ""  # Keycloak URL for browser (frontend)
-    keycloak_realm: str = "events-player"  # Keycloak realm name
-    keycloak_client_id: str = ""  # OAuth client ID
-    keycloak_client_secret: str = ""  # OAuth client secret
+    # OAuth/OIDC settings (for OAuth-based authentication with any IDP)
+    oauth_server_url: str = ""  # OAuth server base URL (for backend API calls)
+    oauth_server_url_external: str = ""  # OAuth server URL for browser (frontend)
+    oauth_realm: str = "events-player"  # OAuth realm/tenant name
+    oauth_client_id: str = ""  # OAuth client ID
+    oauth_client_secret: str = ""  # OAuth client secret
 
 
 settings = ApiSettings()
