@@ -12,46 +12,46 @@ CloudEvent Player supports multiple configuration methods, in order of precedenc
 
 ## Environment Variables
 
-All environment variables use the `API_` prefix (case-insensitive).
+Environment variables are case-insensitive.
 
 ### Application Settings
 
-#### `API_TAG`
+#### `TAG`
 
 - **Description**: Application version/tag
 - **Type**: String
 - **Default**: `"0.1.0"`
-- **Example**: `API_TAG=v0.2.0`
+- **Example**: `TAG=v0.2.0`
 
 Used for version identification in logs and API responses.
 
-#### `API_REPOSITORY_URL`
+#### `REPOSITORY_URL`
 
 - **Description**: Repository URL for the application
 - **Type**: String (URL)
 - **Default**: `"https://github.com/bvandewe/events-player"`
-- **Example**: `API_REPOSITORY_URL=https://github.com/myorg/events-player`
+- **Example**: `REPOSITORY_URL=https://github.com/myorg/events-player`
 
 Displayed in the UI and API documentation.
 
 ### Logging Configuration
 
-#### `API_LOG_LEVEL`
+#### `LOG_LEVEL`
 
 - **Description**: Logging level for the application
 - **Type**: String
 - **Default**: `"INFO"`
 - **Valid Values**: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
-- **Example**: `API_LOG_LEVEL=DEBUG`
+- **Example**: `LOG_LEVEL=DEBUG`
 
 Controls the verbosity of application logs. Use `DEBUG` for development and troubleshooting, `INFO` for production.
 
-#### `API_LOG_FORMAT`
+#### `LOG_FORMAT`
 
 - **Description**: Python logging format string
 - **Type**: String
 - **Default**: `"%(asctime)s - %(name)s - %(levelname)s - %(message)s"`
-- **Example**: `API_LOG_FORMAT="%(levelname)s - %(message)s"`
+- **Example**: `LOG_FORMAT="%(levelname)s - %(message)s"`
 
 Customize log output format. See [Python logging documentation](https://docs.python.org/3/library/logging.html#logrecord-attributes) for available attributes.
 
@@ -59,39 +59,39 @@ Customize log output format. See [Python logging documentation](https://docs.pyt
 
 These settings define the default values used in the event generator form.
 
-#### `API_DEFAULT_GENERATOR_EVENT__EVENT_SOURCE`
+#### `DEFAULT_GENERATOR_EVENT__EVENT_SOURCE`
 
 - **Description**: Default CloudEvent source attribute
 - **Type**: String (URI)
 - **Default**: `"https://dummy.source.com/sys-admin"`
-- **Example**: `API_DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://myapp.com/orders`
+- **Example**: `DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://myapp.com/orders`
 
 The source context in which the event occurred.
 
-#### `API_DEFAULT_GENERATOR_EVENT__EVENT_TYPE`
+#### `DEFAULT_GENERATOR_EVENT__EVENT_TYPE`
 
 - **Description**: Default CloudEvent type attribute
 - **Type**: String
 - **Default**: `"com.source.dummy.test.requested.v1"`
-- **Example**: `API_DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.order.created.v1`
+- **Example**: `DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.order.created.v1`
 
 The type of event. Use reverse-DNS naming convention.
 
-#### `API_DEFAULT_GENERATOR_EVENT__EVENT_SUBJECT`
+#### `DEFAULT_GENERATOR_EVENT__EVENT_SUBJECT`
 
 - **Description**: Default CloudEvent subject attribute
 - **Type**: String
 - **Default**: `"some.interesting.concept.key_abcde12345"`
-- **Example**: `API_DEFAULT_GENERATOR_EVENT__EVENT_SUBJECT=order.12345`
+- **Example**: `DEFAULT_GENERATOR_EVENT__EVENT_SUBJECT=order.12345`
 
 The subject of the event in the context of the event producer.
 
-#### `API_DEFAULT_GENERATOR_EVENT__EVENT_DATA`
+#### `DEFAULT_GENERATOR_EVENT__EVENT_DATA`
 
 - **Description**: Default CloudEvent data payload
 - **Type**: JSON String
 - **Default**: `{"foo": "bar"}`
-- **Example**: `API_DEFAULT_GENERATOR_EVENT__EVENT_DATA={"orderId": "12345", "amount": 99.99}`
+- **Example**: `DEFAULT_GENERATOR_EVENT__EVENT_DATA={"orderId": "12345", "amount": 99.99}`
 
 The event payload data. Must be valid JSON.
 
@@ -99,12 +99,12 @@ The event payload data. Must be valid JSON.
 
 For detailed authentication setup, see the [Authentication & Authorization](authentication.md) guide.
 
-#### `API_AUTH_REQUIRED`
+#### `AUTH_REQUIRED`
 
 - **Description**: Whether authentication is required for all endpoints
 - **Type**: Boolean (string)
 - **Default**: `"false"`
-- **Example**: `API_AUTH_REQUIRED=true`
+- **Example**: `AUTH_REQUIRED=true`
 
 When `true`, all endpoints require valid authentication. When `false`, authentication is optional. The authentication method is auto-detected:
 
@@ -112,73 +112,73 @@ When `true`, all endpoints require valid authentication. When `false`, authentic
 - **Keycloak**: OAuth 2.0 + OIDC flow when Keycloak is configured
 - **None**: When no auth is configured, the application runs in open mode
 
-#### `API_AUTH_JWKS_URL`
+#### `AUTH_JWKS_URL`
 
 - **Description**: JWKS endpoint URL for JWT validation
 - **Type**: String (URL)
 - **Required**: When using Istio/Service Mesh authentication
-- **Example**: `API_AUTH_JWKS_URL=http://keycloak:8080/realms/events-player/protocol/openid-connect/certs`
+- **Example**: `AUTH_JWKS_URL=http://keycloak:8080/realms/events-player/protocol/openid-connect/certs`
 
 Provides public keys for JWT signature verification.
 
-#### `API_AUTH_ISSUER`
+#### `AUTH_ISSUER`
 
 - **Description**: Expected JWT issuer (iss claim)
 - **Type**: String
 - **Required**: When using Istio/Service Mesh authentication
-- **Example**: `API_AUTH_ISSUER=http://localhost:8090/realms/events-player`
+- **Example**: `AUTH_ISSUER=http://localhost:8090/realms/events-player`
 
 Must match the issuer in JWT tokens.
 
-#### `API_AUTH_AUDIENCE`
+#### `AUTH_AUDIENCE`
 
 - **Description**: Expected JWT audience (aud claim)
 - **Type**: String
 - **Required**: When using Istio/Service Mesh authentication
-- **Example**: `API_AUTH_AUDIENCE=events-player-web`
+- **Example**: `AUTH_AUDIENCE=events-player-web`
 
 The intended audience for the JWT token.
 
-#### `API_KEYCLOAK_URL`
+#### `KEYCLOAK_URL`
 
 - **Description**: Internal Keycloak URL (for backend)
 - **Type**: String (URL)
 - **Required**: When using Keycloak authentication
-- **Example**: `API_KEYCLOAK_URL=http://keycloak:8080`
+- **Example**: `KEYCLOAK_URL=http://keycloak:8080`
 
 Used by backend for token exchange. Can be internal Docker hostname.
 
-#### `API_KEYCLOAK_URL_EXTERNAL`
+#### `KEYCLOAK_URL_EXTERNAL`
 
 - **Description**: External Keycloak URL (for frontend)
 - **Type**: String (URL)
 - **Required**: When using Keycloak authentication
-- **Example**: `API_KEYCLOAK_URL_EXTERNAL=http://localhost:8090`
+- **Example**: `KEYCLOAK_URL_EXTERNAL=http://localhost:8090`
 
 URL accessible from browsers for OAuth redirects.
 
-#### `API_KEYCLOAK_REALM`
+#### `KEYCLOAK_REALM`
 
 - **Description**: Keycloak realm name
 - **Type**: String
 - **Default**: `"events-player"`
-- **Example**: `API_KEYCLOAK_REALM=events-player`
+- **Example**: `KEYCLOAK_REALM=events-player`
 
-#### `API_KEYCLOAK_CLIENT_ID`
+#### `KEYCLOAK_CLIENT_ID`
 
 - **Description**: Keycloak client ID for the web application
 - **Type**: String
 - **Default**: `"events-player-web"`
-- **Example**: `API_KEYCLOAK_CLIENT_ID=events-player-web`
+- **Example**: `KEYCLOAK_CLIENT_ID=events-player-web`
 
 Must be a public client configured with PKCE support.
 
-#### `API_KEYCLOAK_CLIENT_SECRET`
+#### `KEYCLOAK_CLIENT_SECRET`
 
 - **Description**: Client secret (leave empty for public clients)
 - **Type**: String
 - **Default**: `""`
-- **Example**: `API_KEYCLOAK_CLIENT_SECRET=`
+- **Example**: `KEYCLOAK_CLIENT_SECRET=`
 
 Public clients using PKCE don't require a client secret.
 
@@ -186,12 +186,12 @@ Public clients using PKCE don't require a client secret.
 
 CloudEvent Player supports configurable role mapping, allowing you to map JWT token roles to application roles without code changes. This is essential for integrating with identity providers that use different role naming conventions.
 
-#### `API_AUTH_ROLE_ADMIN`
+#### `AUTH_ROLE_ADMIN`
 
 - **Description**: Role name in JWT that grants administrator privileges
 - **Type**: String
 - **Default**: `"admin"`
-- **Example**: `API_AUTH_ROLE_ADMIN=administrator`
+- **Example**: `AUTH_ROLE_ADMIN=administrator`
 
 **Effect on Authorization:**
 
@@ -207,12 +207,12 @@ Users with this role in their JWT token receive full administrative access:
 - Integration with Active Directory using "Administrators" group
 - Multi-tenant deployments with role prefixes like "tenant1_admin"
 
-#### `API_AUTH_ROLE_OPERATOR`
+#### `AUTH_ROLE_OPERATOR`
 
 - **Description**: Role name in JWT that grants operator privileges
 - **Type**: String
 - **Default**: `"operator"`
-- **Example**: `API_AUTH_ROLE_OPERATOR=power_user`
+- **Example**: `AUTH_ROLE_OPERATOR=power_user`
 
 **Effect on Authorization:**
 
@@ -228,12 +228,12 @@ Users with this role receive operational access:
 - DevOps teams with custom role naming conventions
 - Service mesh deployments with specific role requirements
 
-#### `API_AUTH_ROLE_USER`
+#### `AUTH_ROLE_USER`
 
 - **Description**: Role name in JWT that grants basic user privileges
 - **Type**: String
 - **Default**: `"user"`
-- **Example**: `API_AUTH_ROLE_USER=viewer`
+- **Example**: `AUTH_ROLE_USER=viewer`
 
 **Effect on Authorization:**
 
@@ -255,36 +255,36 @@ Users with this role receive read-only access:
 
 ```ini
 # Map AD groups to application roles
-API_AUTH_ROLE_ADMIN=Domain Admins
-API_AUTH_ROLE_OPERATOR=DevOps Team
-API_AUTH_ROLE_USER=All Employees
+AUTH_ROLE_ADMIN=Domain Admins
+AUTH_ROLE_OPERATOR=DevOps Team
+AUTH_ROLE_USER=All Employees
 ```
 
 **Example 2: Multi-Tenant Environment**
 
 ```ini
 # Tenant-specific role prefixes
-API_AUTH_ROLE_ADMIN=tenant_admin
-API_AUTH_ROLE_OPERATOR=tenant_operator
-API_AUTH_ROLE_USER=tenant_user
+AUTH_ROLE_ADMIN=tenant_admin
+AUTH_ROLE_OPERATOR=tenant_operator
+AUTH_ROLE_USER=tenant_user
 ```
 
 **Example 3: Service Mesh (Istio)**
 
 ```ini
 # Istio RequestAuthentication with custom claims
-API_AUTH_ROLE_ADMIN=mesh-admin
-API_AUTH_ROLE_OPERATOR=mesh-operator
-API_AUTH_ROLE_USER=mesh-viewer
+AUTH_ROLE_ADMIN=mesh-admin
+AUTH_ROLE_OPERATOR=mesh-operator
+AUTH_ROLE_USER=mesh-viewer
 ```
 
 **Example 4: Corporate Standards**
 
 ```ini
 # Organization-wide role naming
-API_AUTH_ROLE_ADMIN=ADMIN
-API_AUTH_ROLE_OPERATOR=POWER_USER
-API_AUTH_ROLE_USER=READ_ONLY
+AUTH_ROLE_ADMIN=ADMIN
+AUTH_ROLE_OPERATOR=POWER_USER
+AUTH_ROLE_USER=READ_ONLY
 ```
 
 #### Role Hierarchy
@@ -303,7 +303,7 @@ admin > operator > user
 
 ### Default Gateway URLs
 
-#### `API_DEFAULT_GENERATOR_GATEWAYS__URLS`
+#### `DEFAULT_GENERATOR_GATEWAYS__URLS`
 
 - **Description**: List of default gateway URLs for event publishing
 - **Type**: JSON Array of URLs
@@ -317,18 +317,18 @@ admin > operator > user
   ]
   ```
 
-- **Example**: `API_DEFAULT_GENERATOR_GATEWAYS__URLS='["https://events.myapp.com/publish"]'`
+- **Example**: `DEFAULT_GENERATOR_GATEWAYS__URLS='["https://events.myapp.com/publish"]'`
 
 URLs that appear in the gateway dropdown in the UI. The first URL is selected by default.
 
 ### Performance Settings
 
-#### `API_BROWSER_QUEUE_SIZE`
+#### `BROWSER_QUEUE_SIZE`
 
 - **Description**: Maximum number of event accordion items rendered in the DOM
 - **Type**: Integer
 - **Default**: `1000`
-- **Example**: `API_BROWSER_QUEUE_SIZE=3000`
+- **Example**: `BROWSER_QUEUE_SIZE=3000`
 
 Controls the visual list size in the main event view. This is a UI display limit that affects DOM rendering performance.
 
@@ -340,12 +340,12 @@ Controls the visual list size in the main event view. This is a UI display limit
 
 **Important**: This only controls what's displayed in the UI. Events beyond this limit are still stored in IndexedDB (controlled by storage settings below) and can be searched/filtered.
 
-#### `API_HTTP_CLIENT_TIMEOUT`
+#### `HTTP_CLIENT_TIMEOUT`
 
 - **Description**: HTTP client timeout in seconds
 - **Type**: Float
 - **Default**: `30.0`
-- **Example**: `API_HTTP_CLIENT_TIMEOUT=60.0`
+- **Example**: `HTTP_CLIENT_TIMEOUT=60.0`
 
 Timeout for HTTP requests when publishing events to gateway URLs.
 
@@ -362,12 +362,12 @@ The application implements a two-tier storage strategy with **capacity-based cle
 
 Both tiers operate as FIFO (First-In-First-Out) queues. When capacity is exceeded, the oldest entries are automatically removed to make room for new ones. This provides predictable storage behavior regardless of event timing.
 
-#### `API_STORAGE_MAX_RECENT_EVENTS`
+#### `STORAGE_MAX_RECENT_EVENTS`
 
 - **Description**: Maximum number of complete event objects stored in IndexedDB Tier 1
 - **Type**: Integer
 - **Default**: `5000`
-- **Example**: `API_STORAGE_MAX_RECENT_EVENTS=10000`
+- **Example**: `STORAGE_MAX_RECENT_EVENTS=10000`
 - **Cleanup Method**: **CAPACITY-BASED** (FIFO queue)
 
 **How It Works:**
@@ -384,12 +384,12 @@ Controls how many events users can click to view full details without requiring 
 
 **Business Impact**: Determines how far back users can investigate event details. In high-volume environments, this is typically measured in time (e.g., "last 30 minutes") rather than event count.
 
-#### `API_STORAGE_MAX_METADATA_EVENTS`
+#### `STORAGE_MAX_METADATA_EVENTS`
 
 - **Description**: Maximum number of metadata entries stored in Tier 2
 - **Type**: Integer
 - **Default**: `100000`
-- **Example**: `API_STORAGE_MAX_METADATA_EVENTS=200000`
+- **Example**: `STORAGE_MAX_METADATA_EVENTS=200000`
 - **Cleanup Method**: **CAPACITY-BASED** (FIFO queue)
 
 **How It Works:**
@@ -437,16 +437,16 @@ Understanding the relationship between these settings:
 
 ```
 Display Layer (UI/DOM):
-├─ API_BROWSER_QUEUE_SIZE (1000)
+├─ BROWSER_QUEUE_SIZE (1000)
 │  └─ What users see in the event list (accordion items)
 
 Storage Layer (IndexedDB) - BOTH CAPACITY-BASED:
 ├─ Tier 1 - Full Event Objects (CAPACITY-BASED):
-│  ├─ API_STORAGE_MAX_RECENT_EVENTS (5000)
+│  ├─ STORAGE_MAX_RECENT_EVENTS (5000)
 │  └─ FIFO queue: Removes oldest when full
 │
 └─ Tier 2 - Metadata Only (CAPACITY-BASED):
-   ├─ API_STORAGE_MAX_METADATA_EVENTS (100K)
+   ├─ STORAGE_MAX_METADATA_EVENTS (100K)
    └─ FIFO queue: Removes oldest when full
 ```
 
@@ -455,9 +455,9 @@ Storage Layer (IndexedDB) - BOTH CAPACITY-BASED:
 #### Development/Low Volume
 
 ```ini
-API_BROWSER_QUEUE_SIZE=1000
-API_STORAGE_MAX_RECENT_EVENTS=5000      # 5K full events
-API_STORAGE_MAX_METADATA_EVENTS=50000   # 50K metadata entries
+BROWSER_QUEUE_SIZE=1000
+STORAGE_MAX_RECENT_EVENTS=5000      # 5K full events
+STORAGE_MAX_METADATA_EVENTS=50000   # 50K metadata entries
 ```
 
 **Use Case**: Local development, testing, or low-volume event streams.
@@ -465,9 +465,9 @@ API_STORAGE_MAX_METADATA_EVENTS=50000   # 50K metadata entries
 #### Production/Normal Volume
 
 ```ini
-API_BROWSER_QUEUE_SIZE=2000
-API_STORAGE_MAX_RECENT_EVENTS=10000     # 10K full events
-API_STORAGE_MAX_METADATA_EVENTS=100000  # 100K metadata entries
+BROWSER_QUEUE_SIZE=2000
+STORAGE_MAX_RECENT_EVENTS=10000     # 10K full events
+STORAGE_MAX_METADATA_EVENTS=100000  # 100K metadata entries
 ```
 
 **Use Case**: Production environments with moderate event throughput (100-1000 events/minute).
@@ -475,9 +475,9 @@ API_STORAGE_MAX_METADATA_EVENTS=100000  # 100K metadata entries
 #### Production/High Volume
 
 ```ini
-API_BROWSER_QUEUE_SIZE=3000
-API_STORAGE_MAX_RECENT_EVENTS=20000     # 20K full events
-API_STORAGE_MAX_METADATA_EVENTS=200000  # 200K metadata entries
+BROWSER_QUEUE_SIZE=3000
+STORAGE_MAX_RECENT_EVENTS=20000     # 20K full events
+STORAGE_MAX_METADATA_EVENTS=200000  # 200K metadata entries
 ```
 
 **Use Case**: High-throughput production systems requiring extended retention for analysis (1000+ events/minute).
@@ -485,9 +485,9 @@ API_STORAGE_MAX_METADATA_EVENTS=200000  # 200K metadata entries
 #### Analytics/Forensics
 
 ```ini
-API_BROWSER_QUEUE_SIZE=2000
-API_STORAGE_MAX_RECENT_EVENTS=15000     # 15K full events
-API_STORAGE_MAX_METADATA_EVENTS=300000  # 300K metadata entries
+BROWSER_QUEUE_SIZE=2000
+STORAGE_MAX_RECENT_EVENTS=15000     # 15K full events
+STORAGE_MAX_METADATA_EVENTS=300000  # 300K metadata entries
 ```
 
 **Use Case**: Environments where users need maximum event history for detailed analysis and trend identification.
@@ -538,11 +538,11 @@ Create a `.env` file in the project root:
 
 ```ini
 # .env
-API_TAG=dev
-API_LOG_LEVEL=DEBUG
-API_DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://dev.myapp.com/events
-API_DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.test.v1
-API_BROWSER_QUEUE_SIZE=100
+TAG=dev
+LOG_LEVEL=DEBUG
+DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://dev.myapp.com/events
+DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.test.v1
+BROWSER_QUEUE_SIZE=100
 ```
 
 ### Production Environment
@@ -551,13 +551,13 @@ Create a `.env.prod` file:
 
 ```ini
 # .env.prod
-API_TAG=v1.0.0
-API_LOG_LEVEL=INFO
-API_DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://prod.myapp.com/events
-API_DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.production.v1
-API_DEFAULT_GENERATOR_GATEWAYS__URLS='["https://events.prod.myapp.com/publish"]'
-API_BROWSER_QUEUE_SIZE=5000
-API_HTTP_CLIENT_TIMEOUT=60.0
+TAG=v1.0.0
+LOG_LEVEL=INFO
+DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://prod.myapp.com/events
+DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.production.v1
+DEFAULT_GENERATOR_GATEWAYS__URLS='["https://events.prod.myapp.com/publish"]'
+BROWSER_QUEUE_SIZE=5000
+HTTP_CLIENT_TIMEOUT=60.0
 ```
 
 ### Docker Compose Configuration
@@ -569,11 +569,11 @@ services:
     ports:
       - "8884:8080"
     environment:
-      - API_TAG=v1.0.0
-      - API_LOG_LEVEL=INFO
-      - API_DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://myapp.com/events
-      - API_DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.event.v1
-      - API_BROWSER_QUEUE_SIZE=2000
+      - TAG=v1.0.0
+      - LOG_LEVEL=INFO
+      - DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://myapp.com/events
+      - DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.event.v1
+      - BROWSER_QUEUE_SIZE=2000
     restart: unless-stopped
 ```
 
@@ -585,12 +585,12 @@ kind: ConfigMap
 metadata:
   name: event-player-config
 data:
-  API_TAG: "v1.0.0"
-  API_LOG_LEVEL: "INFO"
-  API_DEFAULT_GENERATOR_EVENT__EVENT_SOURCE: "https://myapp.com/events"
-  API_DEFAULT_GENERATOR_EVENT__EVENT_TYPE: "com.myapp.event.v1"
-  API_BROWSER_QUEUE_SIZE: "2000"
-  API_HTTP_CLIENT_TIMEOUT: "60.0"
+  TAG: "v1.0.0"
+  LOG_LEVEL: "INFO"
+  DEFAULT_GENERATOR_EVENT__EVENT_SOURCE: "https://myapp.com/events"
+  DEFAULT_GENERATOR_EVENT__EVENT_TYPE: "com.myapp.event.v1"
+  BROWSER_QUEUE_SIZE: "2000"
+  HTTP_CLIENT_TIMEOUT: "60.0"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -617,8 +617,8 @@ spec:
 
 ### Performance
 
-1. **Tune queue size**: Adjust `API_BROWSER_QUEUE_SIZE` based on expected event volume
-2. **Set appropriate timeouts**: Configure `API_HTTP_CLIENT_TIMEOUT` for your network conditions
+1. **Tune queue size**: Adjust `BROWSER_QUEUE_SIZE` based on expected event volume
+2. **Set appropriate timeouts**: Configure `HTTP_CLIENT_TIMEOUT` for your network conditions
 3. **Use appropriate log levels**: `INFO` or `WARNING` for production, `DEBUG` only for troubleshooting
 
 ### Maintainability
@@ -632,7 +632,7 @@ spec:
 The configuration uses Pydantic's nested settings feature. Double underscores (`__`) represent nesting:
 
 ```
-API_DEFAULT_GENERATOR_EVENT__EVENT_SOURCE
+DEFAULT_GENERATOR_EVENT__EVENT_SOURCE
 │   │                     │   │
 │   │                     │   └─ Field name (event_source)
 │   │                     └───── Nested object separator
@@ -648,7 +648,7 @@ CloudEvent Player uses Pydantic for configuration validation. Invalid values wil
 
 ```bash
 # Invalid log level
-API_LOG_LEVEL=INVALID
+LOG_LEVEL=INVALID
 
 # Error:
 # ValidationError: 1 validation error for ApiSettings
