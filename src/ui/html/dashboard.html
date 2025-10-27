@@ -11,7 +11,8 @@
 </head>
 <body data-bs-theme="dark" 
       data-browser_queue_size="{{ browser_queue_size }}"
-      data-auth_mode="{{ auth_mode }}"
+      data-storage-max-recent-events="{{ storage_max_recent_events }}"
+      data-storage-max-metadata-events="{{ storage_max_metadata_events }}"
       data-auth_issuer="{{ keycloak_url }}/realms/{{ keycloak_realm }}"
       data-auth_client_id="{{ keycloak_client_id }}"
       data-auth_redirect_uri="{{ request.url.scheme }}://{{ request.url.netloc }}/dashboard">

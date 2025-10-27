@@ -7,13 +7,19 @@ import { authorizationManager } from './auth/authorization';
 // Initialize event storage manager
 import EventStorageManager from './storage/eventStorage';
 
+// Get body element for data attributes
+const bodyElement = document.body;
+
+// Initialize storage configuration from data attributes
+const storageOptions = {
+    maxRecentEvents: parseInt(bodyElement.getAttribute("data-storage-max-recent-events") || "5000"),
+    maxMetadataEvents: parseInt(bodyElement.getAttribute("data-storage-max-metadata-events") || "100000")
+};
+
+console.log('[App] Storage configuration:', storageOptions);
+
 // Get or create singleton storage manager instance
-const storageManager = EventStorageManager.getInstance({
-    maxRecentEvents: 5000,      // Keep 5K full events in IndexedDB
-    maxRecentAge: 1800000,      // 30 minutes
-    maxMetadataEvents: 100000,  // Keep 100K metadata entries
-    maxMetadataAge: 86400000    // 24 hours
-});
+const storageManager = EventStorageManager.getInstance(storageOptions);
 
 // Initialize storage manager
 storageManager.init().then(() => {
@@ -40,7 +46,7 @@ authManager.init().then(() => {
     console.error('[App] Failed to initialize authentication:', error);
 });
 
-var browser_queue_size = document.querySelector("body").getAttribute("data-browser_queue_size");
+var browser_queue_size = bodyElement.getAttribute("data-browser_queue_size");
 
 import { searchController } from "./ui/search";
 searchController.init();
