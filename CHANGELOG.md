@@ -1,5 +1,37 @@
 # CHANGE LOG
 
+## Unreleased
+
+### Configuration
+
+#### Storage Settings Cleanup
+
+- Removed unused age-based storage settings (`storage_max_recent_age`, `storage_max_metadata_age`)
+- Simplified to capacity-based FIFO queue cleanup only
+- Updated documentation to reflect unified storage approach
+- Both Tier 1 (full events) and Tier 2 (metadata) now use consistent capacity-based cleanup
+- Removed misleading configuration options that had no effect
+
+#### Authentication Configuration Simplification
+
+- Removed redundant `auth_mode` setting
+- Simplified to single `auth_required` boolean flag
+- Authentication method now auto-detected (Istio/Service Mesh vs Keycloak OAuth)
+- Updated all templates to remove unused `auth_mode` data attributes
+- Cleaned up docker-compose configuration files
+
+### Bug Fixes
+
+#### JavaScript Module Initialization
+
+- Fixed "Cannot read properties of null" errors on dashboard and timeline pages
+- Added defensive checks in `actions.js` for elements that don't exist on all pages
+- Added defensive checks in `search.js` for page-specific elements
+- Added defensive checks in `generatorForm.js` for generator panel elements
+- Fixed `bodyElement` undefined error in `app.js`
+- Fixed incorrect variable reference (`storageConfig` → `storageOptions`) in `app.js`
+- All JavaScript modules now gracefully handle missing DOM elements
+
 ## 0.3.3 - 2025-10-27
 
 ### Bug Fixes
