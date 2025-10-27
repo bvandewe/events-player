@@ -38,9 +38,33 @@ It can very easily be deployed locally (included in a `docker-compose` file) or 
 - 📡 **Real-Time Monitoring**: Watch events via Server-Sent Events (SSE) streaming
 - 🔍 **Event Inspection**: Examine CloudEvent structure with syntax-highlighted JSON
 - 🔄 **Pub/Sub Support**: Acts as both publisher and subscriber
-- 🔐 **Authentication & Authorization**: OAuth 2.0 with Keycloak and role-based access control (admin, operator, user roles)
+- 🔐 **Authentication & Authorization**: OAuth 2.0/OIDC with role-based access control (admin, operator, user roles) - **optional, disabled by default**
 - 🆔 **Request Tracing**: Built-in Request ID tracing for debugging
 - 🏥 **Health Monitoring**: Health check endpoint for monitoring systems
+
+## Authentication
+
+**Authentication is disabled by default.** The application works out of the box without any authentication configuration.
+
+To enable authentication and authorization, set the `auth_required` environment variable to `"true"`:
+
+```sh
+docker run -p 8080:80 -e auth_required="true" ghcr.io/bvandewe/events-player:latest
+```
+
+When `auth_required=false` (default):
+
+- All features are accessible without login
+- No authentication tokens required
+- Admin features (Clear Storage, Current Clients, Manage Tasks) are available via gear icon in navigation
+
+When `auth_required=true`:
+
+- OAuth 2.0/OIDC authentication is enforced
+- Role-based access control (admin, operator, user)
+- Login required for event generation and admin features
+
+See the [full authentication documentation](https://bvandewe.github.io/events-player/authentication/) for OAuth/OIDC configuration details.
 
 ## Limitations
 
