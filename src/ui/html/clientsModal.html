@@ -1,0 +1,122 @@
+<!-- SSE Clients Modal -->
+<div class="modal fade" id="clientsModal" tabindex="-1" aria-labelledby="clientsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clientsModalLabel">
+                    <i class="bi bi-people-fill me-2"></i>Current SSE Clients
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Summary Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-subtitle mb-2 text-white-50">Total Clients</h6>
+                                        <h2 class="card-title mb-0" id="clientsTotalCount">-</h2>
+                                    </div>
+                                    <i class="bi bi-people fs-1 text-white-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-subtitle mb-2 text-white-50">Queued Events</h6>
+                                        <h2 class="card-title mb-0" id="clientsTotalQueued">-</h2>
+                                    </div>
+                                    <i class="bi bi-stack fs-1 text-white-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-subtitle mb-2 text-white-50">Avg Utilization</h6>
+                                        <h2 class="card-title mb-0" id="clientsAvgUtilization">-</h2>
+                                    </div>
+                                    <i class="bi bi-speedometer fs-1 text-white-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-subtitle mb-2 text-white-50">Slow Clients</h6>
+                                        <h2 class="card-title mb-0" id="clientsSlowCount">-</h2>
+                                    </div>
+                                    <i class="bi bi-hourglass-split fs-1 text-white-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client List Table -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-table me-2"></i>Client Details
+                        </h6>
+                        <small class="text-muted">
+                            <i class="bi bi-broadcast me-1"></i>Real-time SSE updates
+                        </small>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col" style="width: 40%">Client ID</th>
+                                        <th scope="col" class="text-end">Queue Size</th>
+                                        <th scope="col" class="text-end">Utilization</th>
+                                        <th scope="col" class="text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clientsTableBody">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            Loading client data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <i class="bi bi-info-circle me-1"></i>
+                            Queue capacity: <span id="clientsMaxQueueSize">-</span> events per client |
+                            Slow threshold: <span id="clientsSlowThreshold">-</span> events
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Alert for No Clients -->
+                <div id="clientsNoDataAlert" class="alert alert-info mt-3 d-none" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    No SSE clients are currently connected. Clients will appear here when browsers connect to the event stream.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -5,6 +5,8 @@ COPY package*.json ./
 RUN npm install
 # Copy UI source files maintaining the directory structure
 COPY src/ui/ ./src/ui/
+# Clean any existing build artifacts and caches before building
+RUN rm -rf static .parcel-cache dist
 RUN npm run build
 
 # Package

@@ -7,10 +7,13 @@
 
 class AppState {
     constructor() {
+        // Load persisted filters from localStorage
+        const savedFilters = this.loadFiltersFromStorage();
+
         // Application state
         this.state = {
-            // Filter state (shared across all views)
-            filters: {
+            // Filter state (shared across all views, persisted in localStorage)
+            filters: savedFilters || {
                 type: '',
                 source: '',
                 subject: null,
@@ -38,6 +41,39 @@ class AppState {
 
         // Enable state debugging
         this.debug = false;
+    }
+
+    /**
+     * Load filters from localStorage
+     * @private
+     */
+    loadFiltersFromStorage() {
+        try {
+            const saved = localStorage.getItem('cloudevents-player-filters');
+            if (saved) {
+                const filters = JSON.parse(saved);
+                console.log('[AppState] Loaded filters from localStorage:', filters);
+                return filters;
+            }
+        } catch (error) {
+            console.error('[AppState] Failed to load filters from localStorage:', error);
+        }
+        return null;
+    }
+
+    /**
+     * Save filters to localStorage
+     * @private
+     */
+    saveFiltersToStorage() {
+        try {
+            localStorage.setItem('cloudevents-player-filters', JSON.stringify(this.state.filters));
+            if (this.debug) {
+                console.log('[AppState] Saved filters to localStorage:', this.state.filters);
+            }
+        } catch (error) {
+            console.error('[AppState] Failed to save filters to localStorage:', error);
+        }
     }
 
     /**
@@ -128,6 +164,9 @@ class AppState {
         const oldFilters = { ...this.state.filters };
         this.state.filters = { ...this.state.filters, ...updates };
 
+        // Persist to localStorage
+        this.saveFiltersToStorage();
+
         if (this.debug) {
             console.log('[AppState] Update filters:', this.state.filters);
         }
@@ -146,6 +185,9 @@ class AppState {
             subject: null,
             timeRange: 'all'
         };
+
+        // Persist to localStorage
+        this.saveFiltersToStorage();
 
         if (this.debug) {
             console.log('[AppState] Clear filters');

@@ -7,28 +7,77 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
+            <div class="alert alert-primary text-center" role="alert">
+                <i class="bi bi-book-fill"></i> <strong>Full Documentation:</strong> 
+                <a href="https://bvandewe.github.io/events-player/" target="_blank" class="alert-link text-center">
+                    Visit the complete documentation site <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                <hr>
+            </div>
+
             <h3 class="mb-3">Overview</h3>
-            <h4 class="mb-3">Event Subscriber (handle events)</h4>
             <p class="lh-lg">
-                This micro-app serves as a test subscriber for <a href="https://cloudevents.io/">CloudEvents</a>: 
-                it displays CloudEvents on the UI as they are received on its <span class="code">POST /events/pub</span> endpoint.
-                Upon reception of a valid CloudEvent, the app distributes it to all browsers that are connected at that time, if any.
-                It can also generate test events and send them to the selected CloudEvent Gateway.
-                (Gateways can be added by Administrators with an Environment variable).
+                The CloudEvents Player is a powerful tool for testing, monitoring, and analyzing 
+                <a href="https://cloudevents.io/" target="_blank">CloudEvents</a> in real-time. <br>
+                It provides multiple views for visualizing event streams and comprehensive filtering capabilities.
             </p>
-            <p class="lh-lg mb-5">
-                As a quick test: open the <a href="" data-bs-toggle="offcanvas" data-bs-target="#generatorPanel" aria-controls="generatorPanel">generator</a>, 
-                select the localhost Gateway, and send an event. It will appear in the UI.                
-            </p>
-            
-            <h4 class="mb-3">Event Publisher (emit events)</h4>
-            <p class="lh-lg">
-                The generator sends customized events to the selected Gateway. 
-                When clicking the "Send" button, the backend app starts a background task that generates the event 
-                with the selected parameters, including Source, Type, Subject and Data.
-                The Iteration parameter defines how many events are sent sequentially and
-                the Delay parameter defines how long the backend waits before running the next iteration.
-            </p>
+
+            <h4 class="mb-3">Main Features</h4>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-list-ul text-primary"></i> Events View</h5>
+                            <p class="card-text">Real-time list of incoming CloudEvents with full details, search capabilities, and expandable event data.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-activity text-success"></i> Timeline View</h5>
+                            <p class="card-text">Visualize event activity over time with customizable granularity and comprehensive statistics including peak rates and quiet periods.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-speedometer2 text-info"></i> Metrics Dashboard</h5>
+                            <p class="card-text">Monitor event patterns with charts showing top event types, sources, activity trends, and distribution metrics.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-funnel-fill text-warning"></i> Global Filters</h5>
+                            <p class="card-text">Filter events across all views by time range, type, source, subject, and custom attributes. Filters sync automatically.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-5">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-lightning-fill text-danger"></i> Event Generator</h5>
+                            <p class="card-text">Generate and send test CloudEvents to configured gateways with customizable parameters, iterations, and delays.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-shield-lock text-secondary"></i> Authentication & Authorization</h5>
+                            <p class="card-text">Role-based access control with Keycloak integration. Different permissions for admin, operator, and user roles.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <p class="lh-lg mb-5">
                 
             </p>
@@ -42,20 +91,104 @@
             <!-- <p>&nbsp;</p> -->
             
             <h3 class="mb-3">Keyboard Shortcuts</h3>
-            <ul class="list-group">
-                <li class="list-group-item"><span class="badge">CTRL</span> or <span class="badge">META</span>+<span class="badge">UpArrow</span><span>Open the Generator</span></li>            
-                <li class="list-group-item"><span class="badge">Escape</span> or <span class="badge">META</span>+<span class="badge">UpDown</span><span>Close the Generator</span></li>            
-                <li class="list-group-item"><span class="badge">META</span>+<span class="badge">f</span><span>Focus/Unfocus on the Search/Filter box</span></li>
+            <ul class="list-group mb-5">
+                <li class="list-group-item">
+                    <span class="badge bg-primary me-2">CTRL</span> or <span class="badge bg-primary me-2">META</span>+<span class="badge bg-primary me-2">↑</span>
+                    <span>Toggle the Generator panel</span>
+                </li>
+                <li class="list-group-item">
+                    <span class="badge bg-primary me-2">ALT</span> or <span class="badge bg-primary me-2">OPTION</span>
+                    <span>Toggle the Filters panel</span>
+                </li>
+                <li class="list-group-item">
+                    <span class="badge bg-primary me-2">ESC</span>
+                    <span>Close the Generator or Filters panel</span>
+                </li>
+                <li class="list-group-item">
+                    <span class="badge bg-primary me-2">META</span>+<span class="badge bg-primary me-2">F</span>
+                    <span>Focus/Unfocus the Search box</span>
+                </li>
+                <li class="list-group-item">
+                    <span class="badge bg-primary me-2">META</span>+<span class="badge bg-primary me-2">/</span>
+                    <span>Open this Help modal</span>
+                </li>
             </ul>
-            <p>&nbsp;</p>
-            <h3 class="mb-3">Settings</h3>
-            <ul class="list-group">
-                <li class="list-group-item"><span>TODO</span></li>                
-                <li class="list-group-item"><span>Enable local storage</span></li>                
-            </ul>
+            
+            <h3 class="mb-3" id="helpModalStorageSection">Storage System</h3>
+            <p class="lh-lg">
+                The application uses a <strong>tiered storage architecture</strong> to balance performance and capacity:
+            </p>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-file-earmark-text text-primary"></i> Tier 1: Recent Events (Full Data)
+                            </h5>
+                            <ul class="mb-0">
+                                <li><strong>Capacity:</strong> 5,000 most recent events</li>
+                                <li><strong>Contains:</strong> Complete CloudEvent objects with all fields and data payloads</li>
+                                <li><strong>Purpose:</strong> Enables viewing full event details in the Events view</li>
+                                <li><strong>Behavior:</strong> Automatically trims oldest events when capacity is reached</li>
+                                <li><strong>Storage:</strong> Browser IndexedDB (persisted across sessions)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-list-ul text-info"></i> Tier 2: Metadata (Index)
+                            </h5>
+                            <ul class="mb-0">
+                                <li><strong>Capacity:</strong> 100,000 event metadata records</li>
+                                <li><strong>Contains:</strong> Lightweight summary (ID, timestamp, type, source, subject, data size)</li>
+                                <li><strong>Purpose:</strong> Powers charts, statistics, and visualizations efficiently</li>
+                                <li><strong>Behavior:</strong> Retains metadata even after full events are trimmed</li>
+                                <li><strong>Storage:</strong> Browser IndexedDB (persisted across sessions)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <p class="mb-0">
+                                <i class="bi bi-lightbulb-fill text-warning"></i> <strong>Why Two Tiers?</strong><br/>
+                                This design allows the dashboard and timeline to display historical trends across 100,000+ events 
+                                while maintaining detailed access to the most recent 5,000. Without this approach, storing 100,000 
+                                full events would consume excessive browser storage and slow down visualizations.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <p class="mb-2">
+                                <i class="bi bi-exclamation-triangle-fill text-danger"></i> <strong>Important Notes:</strong>
+                            </p>
+                            <ul class="mb-0">
+                                <li>Storage is <strong>browser-specific</strong> and not synchronized across devices or browsers</li>
+                                <li>Clearing browser data will reset all stored events</li>
+                                <li>The "Total Received" counter may reset between sessions but stored events remain</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
         </div>
         <div class="modal-footer">
-        <a href="/api/docs" class="btn btn-primary" target="_blank">API Documentation</a>        
+        <a href="https://bvandewe.github.io/events-player/" class="btn btn-primary" target="_blank">
+            <i class="bi bi-book"></i> Full Documentation
+        </a>
+        <a href="/api/docs" class="btn btn-outline-primary" target="_blank">
+            <i class="bi bi-code-slash"></i> API Documentation
+        </a>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>        
         </div>
     </div>

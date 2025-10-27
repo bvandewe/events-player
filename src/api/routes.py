@@ -125,6 +125,49 @@ async def get_timeline(
     )
 
 
+# Dashboard View Route
+@router.get(
+    path="/dashboard", tags=["Frontend"], operation_id="get_dashboard", response_class=HTMLResponse
+)
+async def get_dashboard(
+    request: Request, current_user: Optional[dict] = Depends(get_current_user_optional)
+):
+    """Metrics dashboard view"""
+    year = datetime.datetime.now().year
+    default_events_settings = settings.default_generator_event.model_dump()
+    # Convert event_data dict to JSON string to avoid Python True/False in template
+    default_events_settings["event_data"] = json.dumps(default_events_settings["event_data"])
+    default_events_gateways = settings.default_generator_gateways.model_dump()
+    log.debug("Received request on dashboard: %s", request)
+
+    # Extract user roles for authorization
+    user_roles = current_user.get("roles", []) if current_user else []
+    is_admin = "admin" in user_roles
+    is_operator = "operator" in user_roles or is_admin
+
+    return templates.TemplateResponse(
+        "html/dashboard.html",
+        {
+            "request": request,
+            "tag": settings.tag,
+            "repo_url": settings.repository_url,
+            "year": year,
+            "default_events_settings": default_events_settings,
+            "default_events_gateways": default_events_gateways,
+            "browser_queue_size": settings.browser_queue_size,
+            # Auth configuration for frontend
+            "keycloak_url": settings.keycloak_url_external or settings.keycloak_url,
+            "keycloak_realm": settings.keycloak_realm,
+            "keycloak_client_id": settings.keycloak_client_id,
+            "auth_mode": settings.auth_mode,
+            # User authorization info
+            "user_authenticated": current_user is not None,
+            "user_is_admin": is_admin,
+            "user_is_operator": is_operator,
+        },
+    )
+
+
 # Authentication Endpoints
 
 

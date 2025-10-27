@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cloudevent-player"
-version = "0.2.0"
+version = "0.3.2"
 description = "CloudEvent Player API and UI"
 authors = ["Bruno van de Werve <bvandewe@cisco.com>"]
 readme = "README.md"

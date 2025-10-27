@@ -283,13 +283,13 @@ class AuthManager {
         sessionStorage.setItem('oauth_code_verifier', codeVerifier);
 
         // Build authorization URL
-        // Note: offline_access scope is required to receive a refresh token
+        // Note: Regular refresh tokens are returned automatically
         const params = new URLSearchParams({
             client_id: this.keycloakConfig.client_id,
             response_type: 'code',
             redirect_uri: window.location.origin + '/',
             state: state,
-            scope: 'openid profile email offline_access',
+            scope: 'openid profile email',
             code_challenge: codeChallenge,
             code_challenge_method: 'S256'
         });
@@ -704,6 +704,32 @@ class AuthManager {
             clearStorageLink.appendChild(document.createTextNode('Clear Storage'));
             clearStorageItem.appendChild(clearStorageLink);
             menu.appendChild(clearStorageItem);
+
+            // Current Clients button (available to admin and operator users)
+            if (this.userInfo.roles && (this.userInfo.roles.includes('admin') || this.userInfo.roles.includes('operator'))) {
+                const clientsItem = document.createElement('li');
+                const clientsLink = document.createElement('a');
+                clientsLink.className = 'dropdown-item';
+                clientsLink.href = '#';
+                clientsLink.setAttribute('data-clients-menu', 'true');
+                clientsLink.onclick = (e) => {
+                    e.preventDefault();
+                    // Show clients modal
+                    if (window.clientsModalController) {
+                        window.clientsModalController.show();
+                    }
+                };
+
+                const clientsIcon = document.createElement('i');
+                clientsIcon.className = 'bi bi-people-fill me-2';
+                clientsLink.appendChild(clientsIcon);
+                clientsLink.appendChild(document.createTextNode('Current Clients'));
+
+                // Badge will be added dynamically by clientsModalController
+
+                clientsItem.appendChild(clientsLink);
+                menu.appendChild(clientsItem);
+            }
 
             // Manage Tasks button (available only to admin users)
             if (this.userInfo.roles && this.userInfo.roles.includes('admin')) {

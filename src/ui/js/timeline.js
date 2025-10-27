@@ -33,13 +33,6 @@ Chart.register(
 import { authManager } from './auth/auth';
 import { authorizationManager } from './auth/authorization';
 
-authManager.init().then(() => {
-    console.log('[Timeline] Authentication initialized');
-    authorizationManager.init(authManager);
-}).catch(error => {
-    console.error('[Timeline] Failed to initialize authentication:', error);
-});
-
 // Initialize storage manager (use singleton - shared with main app)
 import EventStorageManager from './storage/eventStorage';
 
@@ -49,8 +42,11 @@ import { sseConnection } from './sse/connection';
 // Import shared connection status manager
 import { connectionStatus } from './sse/connectionStatus';
 
-// Import shared filter controller
-import { filterController } from './ui/filters';
+// Import global filter controller
+import { globalFilterController } from './ui/globalFilters';
+
+// Import appState for filter subscriptions
+import { appState } from './state/appState';
 
 const storageManager = EventStorageManager.getInstance({
     maxRecentEvents: 5000,
@@ -62,17 +58,9 @@ const storageManager = EventStorageManager.getInstance({
 // Timeline Controller
 const timelineController = (() => {
     let chart = null;
-    let autoRefreshInterval = null;
-    let isAutoRefresh = false;
 
     // DOM elements (will be initialized in init())
-    let timeRangeSelect;
     let bucketSizeSelect;
-    let typeFilterSelect;
-    let sourceFilterSelect;
-    let subjectFilterSelect;
-    let refreshBtn;
-    let autoRefreshBtn;
 
     // Stats elements
     let statTotalEvents;
@@ -86,14 +74,17 @@ const timelineController = (() => {
     async function init() {
         console.log('[Timeline] Initializing...');
 
+        // Initialize authentication
+        try {
+            await authManager.init();
+            console.log('[Timeline] Authentication initialized');
+            authorizationManager.init(authManager);
+        } catch (error) {
+            console.error('[Timeline] Failed to initialize authentication:', error);
+        }
+
         // Initialize DOM element references
-        timeRangeSelect = document.getElementById('timeRange');
         bucketSizeSelect = document.getElementById('bucketSize');
-        typeFilterSelect = document.getElementById('typeFilter');
-        sourceFilterSelect = document.getElementById('sourceFilter');
-        subjectFilterSelect = document.getElementById('subjectFilter');
-        refreshBtn = document.getElementById('refreshChart');
-        autoRefreshBtn = document.getElementById('autoRefreshToggle');
         statTotalEvents = document.getElementById('statTotalEvents');
         statPeakRate = document.getElementById('statPeakRate');
         statAvgRate = document.getElementById('statAvgRate');
@@ -112,7 +103,7 @@ const timelineController = (() => {
         // Initialize SSE connection with shared manager
         sseConnection.init({
             initialCount: initialCount,
-            onMessage: (event) => {
+            onMessage: async (event) => {
                 // Event received - parse and update filter dropdowns
                 console.log('[Timeline] New event received via SSE');
                 connectionStatus.updateStatus("cleartimer");
@@ -122,7 +113,23 @@ const timelineController = (() => {
                     const eventData = JSON.parse(event.data.replace(/'/g, '"'));
                     const cloudEventData = eventData.cloudevent;
                     if (cloudEventData) {
-                        filterController.addEventValues(cloudEventData);
+                        // Store event in storage manager (both tiers)
+                        storageManager.addEvent(cloudEventData).catch(err => {
+                            console.error('[Timeline] Failed to store event:', err);
+                        });
+
+                        // Increment the event counter in the title
+                        sseConnection.incrementCount();
+
+                        // Add event values to global filter dropdowns
+                        if (globalFilterController.initialized) {
+                            globalFilterController.addEventValues(cloudEventData);
+                        }
+
+                        // Wait a bit for storage to complete, then refresh chart
+                        setTimeout(() => {
+                            refreshChart().catch(err => console.error('[Timeline] Refresh failed:', err));
+                        }, 500);
                     }
                 } catch (error) {
                     console.error('[Timeline] Failed to parse event for filters:', error);
@@ -138,22 +145,16 @@ const timelineController = (() => {
             }
         });
 
-        // Initialize filter controller
-        await filterController.init({
-            storageManager: storageManager,
-            selectors: {
-                type: 'typeFilter',
-                source: 'sourceFilter',
-                subject: 'subjectFilter'
-            },
-            onFilterChange: (filters) => {
-                console.log('[Timeline] Filters changed:', filters);
-                refreshChart();
-            }
-        });
+        // Initialize global filters (already initialized in app.js, just ensure it has storage manager)
+        if (!globalFilterController.initialized) {
+            await globalFilterController.init(storageManager);
+        }
 
-        // Load filter options (redundant now, but keep for backwards compatibility)
-        await loadFilterOptions();
+        // Subscribe to filter changes to refresh chart
+        appState.subscribe('filters', (filters) => {
+            console.log('[Timeline] Global filters changed:', filters);
+            refreshChart();
+        });
 
         // Initialize chart
         initChart();
@@ -161,7 +162,7 @@ const timelineController = (() => {
         // Load initial data
         await refreshChart();
 
-        // Setup event listeners
+        // Setup event listeners (only for chart-specific controls)
         setupEventListeners();
 
         console.log('[Timeline] Ready');
@@ -245,44 +246,6 @@ const timelineController = (() => {
     /**
      * Load filter options from storage
      */
-    async function loadFilterOptions() {
-        try {
-            const types = await storageManager.getUniqueValues('type');
-            const sources = await storageManager.getUniqueValues('source');
-            const subjects = await storageManager.getUniqueValues('subject');
-
-            // Populate type filter
-            typeFilterSelect.innerHTML = '<option value="">All Types</option>';
-            types.forEach(type => {
-                const option = document.createElement('option');
-                option.value = type;
-                option.textContent = type;
-                typeFilterSelect.appendChild(option);
-            });
-
-            // Populate source filter
-            sourceFilterSelect.innerHTML = '<option value="">All Sources</option>';
-            sources.forEach(source => {
-                const option = document.createElement('option');
-                option.value = source;
-                option.textContent = source;
-                sourceFilterSelect.appendChild(option);
-            });
-
-            // Populate subject filter
-            subjectFilterSelect.innerHTML = '<option value="">All Subjects</option>';
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject;
-                // Display (empty) for empty subjects
-                option.textContent = subject || '(empty)';
-                subjectFilterSelect.appendChild(option);
-            });
-
-        } catch (error) {
-            console.error('[Timeline] Error loading filter options:', error);
-        }
-    }
 
     /**
      * Refresh the chart with current filters
@@ -291,21 +254,36 @@ const timelineController = (() => {
         try {
             console.log('[Timeline] Refreshing chart...');
 
-            // Get filter values
+            // Get filter values from global state
+            const filters = appState.get('filters');
             const bucketSize = parseInt(bucketSizeSelect.value);
-            const timeRangeMinutes = timeRangeSelect.value;
-            const typeFilter = typeFilterSelect.value;
-            const sourceFilter = sourceFilterSelect.value;
-            const subjectFilter = subjectFilterSelect.value;
+            const typeFilter = filters.type || '';
+            const sourceFilter = filters.source || '';
+            const subjectFilter = filters.subject !== null ? filters.subject : '';
+            const timeRange = filters.timeRange || 'all';
 
-            console.log('[Timeline] Filters:', { bucketSize, timeRangeMinutes, typeFilter, sourceFilter, subjectFilter });
+            console.log('[Timeline] Filters:', { bucketSize, timeRange, typeFilter, sourceFilter, subjectFilter });
 
             // Calculate time range
             let startTime = null;
             let endTime = Date.now();
 
-            if (timeRangeMinutes !== 'all') {
-                startTime = endTime - (parseInt(timeRangeMinutes) * 60000);
+            if (timeRange !== 'all') {
+                // Convert time range from global filter format to milliseconds
+                switch (timeRange) {
+                    case '1h':
+                        startTime = endTime - (60 * 60000);
+                        break;
+                    case '6h':
+                        startTime = endTime - (6 * 60 * 60000);
+                        break;
+                    case '24h':
+                        startTime = endTime - (24 * 60 * 60000);
+                        break;
+                    case '7d':
+                        startTime = endTime - (7 * 24 * 60 * 60000);
+                        break;
+                }
             }
 
             console.log('[Timeline] Time range:', {
@@ -313,7 +291,7 @@ const timelineController = (() => {
                 endTime,
                 startTimeDate: startTime ? new Date(startTime).toISOString() : null,
                 endTimeDate: new Date(endTime).toISOString(),
-                rangeMinutes: timeRangeMinutes
+                timeRange: timeRange
             });
 
             // Query aggregated data
@@ -342,7 +320,7 @@ const timelineController = (() => {
                         timestamp: bucket.timestamp,
                         count: count
                     };
-                }).filter(bucket => bucket.count > 0);
+                });
             } else {
                 filteredData = aggregatedData.map(bucket => ({
                     timestamp: bucket.timestamp,
@@ -352,11 +330,14 @@ const timelineController = (() => {
 
             console.log('[Timeline] Filtered data:', filteredData ? filteredData.length : 'null', 'buckets');
 
-            // Update chart
-            updateChart(filteredData);
-
-            // Calculate and update statistics
+            // Calculate and update statistics (using all data including zeros)
             updateStatistics(filteredData, bucketSize);
+
+            // Filter out zero buckets for display only
+            const displayData = filteredData.filter(bucket => bucket.count > 0);
+
+            // Update chart (display only non-zero buckets)
+            updateChart(displayData);
 
             console.log('[Timeline] Chart refresh complete');
 
@@ -446,11 +427,12 @@ const timelineController = (() => {
     function handleChartClick(timestamp) {
         console.log('[Timeline] Clicked on timestamp:', new Date(timestamp));
 
-        // Get current filter values
+        // Get current filter values from global state
         const bucketSize = parseInt(bucketSizeSelect.value);
-        const typeFilter = typeFilterSelect.value;
-        const sourceFilter = sourceFilterSelect.value;
-        const subjectFilter = subjectFilterSelect.value;
+        const filters = appState.get('filters');
+        const typeFilter = filters.type || '';
+        const sourceFilter = filters.source || '';
+        const subjectFilter = filters.subject !== null ? filters.subject : '';
 
         // Calculate time range for the clicked bucket
         const startTime = timestamp;
@@ -477,55 +459,98 @@ const timelineController = (() => {
     }
 
     /**
-     * Toggle auto-refresh
-     */
-    function toggleAutoRefresh() {
-        isAutoRefresh = !isAutoRefresh;
-
-        if (isAutoRefresh) {
-            autoRefreshBtn.innerHTML = '<i class="bi bi-pause-fill"></i> Auto-refresh (On)';
-            autoRefreshBtn.classList.remove('btn-outline-secondary');
-            autoRefreshBtn.classList.add('btn-success');
-
-            // Refresh every 10 seconds
-            autoRefreshInterval = setInterval(refreshChart, 10000);
-        } else {
-            autoRefreshBtn.innerHTML = '<i class="bi bi-play-fill"></i> Auto-refresh (Off)';
-            autoRefreshBtn.classList.remove('btn-success');
-            autoRefreshBtn.classList.add('btn-outline-secondary');
-
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-            }
-        }
-    }
-
-    /**
      * Setup event listeners
      */
     function setupEventListeners() {
-        // Refresh button
-        refreshBtn.addEventListener('click', refreshChart);
-
-        // Auto-refresh toggle
-        autoRefreshBtn.addEventListener('click', toggleAutoRefresh);
-
-        // Filter changes
-        timeRangeSelect.addEventListener('change', refreshChart);
+        // Bucket size changes
         bucketSizeSelect.addEventListener('change', refreshChart);
-        typeFilterSelect.addEventListener('change', refreshChart);
-        sourceFilterSelect.addEventListener('change', refreshChart);
-        subjectFilterSelect.addEventListener('change', refreshChart);
+
+        // Setup chart enlarge functionality
+        setupChartEnlarge();
+    }
+
+    /**
+     * Setup chart enlarge functionality
+     */
+    function setupChartEnlarge() {
+        const enlargeButton = document.querySelector('[data-chart-enlarge="timelineChart"]');
+        const modal = document.getElementById('chartEnlargeModal');
+        const modalTitle = document.getElementById('chartEnlargeModalLabel');
+        const enlargedCanvas = document.getElementById('enlargedChart');
+
+        let enlargedChart = null;
+        let bsModal = null;
+
+        if (!enlargeButton) {
+            console.warn('[Timeline] Enlarge button not found');
+            return;
+        }
+
+        enlargeButton.addEventListener('click', () => {
+            const chartTitle = enlargeButton.getAttribute('data-chart-title');
+
+            if (!chart) {
+                console.error('[Timeline] Source chart not found');
+                return;
+            }
+
+            // Set modal title
+            modalTitle.textContent = chartTitle;
+
+            // Clone the chart configuration
+            const config = {
+                type: chart.config.type,
+                data: JSON.parse(JSON.stringify(chart.data)), // Deep clone
+                options: JSON.parse(JSON.stringify(chart.options)) // Deep clone
+            };
+
+            // Adjust options for larger view
+            if (config.options.plugins && config.options.plugins.legend) {
+                config.options.plugins.legend.display = true;
+            }
+
+            // Re-add onClick handler (lost during JSON serialization)
+            config.options.onClick = (event, elements) => {
+                if (elements.length > 0) {
+                    const element = elements[0];
+                    const dataIndex = element.index;
+                    const timestamp = config.data.datasets[0].data[dataIndex].x;
+                    handleChartClick(timestamp);
+                }
+            };
+
+            // Show modal
+            if (!bsModal) {
+                bsModal = new bootstrap.Modal(modal);
+            }
+            bsModal.show();
+
+            // Wait for modal to be shown, then create chart
+            modal.addEventListener('shown.bs.modal', () => {
+                // Destroy previous enlarged chart if exists
+                if (enlargedChart) {
+                    enlargedChart.destroy();
+                }
+
+                // Create new enlarged chart
+                const ctx = enlargedCanvas.getContext('2d');
+                enlargedChart = new Chart(ctx, config);
+            }, { once: true });
+
+            // Cleanup on modal hide
+            modal.addEventListener('hidden.bs.modal', () => {
+                if (enlargedChart) {
+                    enlargedChart.destroy();
+                    enlargedChart = null;
+                }
+            }, { once: true });
+        });
     }
 
     /**
      * Cleanup
      */
     function destroy() {
-        if (autoRefreshInterval) {
-            clearInterval(autoRefreshInterval);
-        }
         // Close shared SSE connection
         sseConnection.close();
         if (chart) {
@@ -548,6 +573,22 @@ if (document.readyState === 'loading') {
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => timelineController.destroy());
+
+// Initialize keyboard shortcuts
+import { keyboardController } from './ux/keyb-nav';
+keyboardController.init(bootstrap);
+
+// Initialize tasks modal controller
+import { tasksModalController } from './ui/tasksModal';
+tasksModalController.init();
+// Make it globally available for auth dropdown
+window.tasksModalController = tasksModalController;
+
+// Initialize clients modal controller
+import { clientsModalController } from './ui/clientsModal';
+clientsModalController.init();
+// Make it globally available for auth dropdown
+window.clientsModalController = clientsModalController;
 
 // Initialize generator form for offcanvas panel
 import { generatorForm } from './ui/generatorForm';

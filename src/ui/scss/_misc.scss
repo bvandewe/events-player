@@ -96,4 +96,9 @@
     &:hover {
         overflow-x: auto;
     }
+    
+    // Hide the caret icon for disabled buttons (non-operator users)
+    &.no-expand::after {
+        display: none;
+    }
 }

@@ -9,9 +9,12 @@
     "resetPasswordAllowed": true,
     "editUsernameAllowed": false,
     "bruteForceProtected": true,
-    "accessTokenLifespan": 300,
+    "accessTokenLifespan": 1500,
     "ssoSessionIdleTimeout": 1800,
     "ssoSessionMaxLifespan": 36000,
+    "offlineSessionIdleTimeout": 2592000,
+    "offlineSessionMaxLifespanEnabled": false,
+    "offlineSessionMaxLifespan": 5184000,
     "internationalizationEnabled": true,
     "supportedLocales": [
         "en"
@@ -44,7 +47,7 @@
             "credentials": [
                 {
                     "type": "password",
-                    "value": "admin123",
+                    "value": "test",
                     "temporary": false
                 }
             ],
@@ -62,7 +65,7 @@
             "credentials": [
                 {
                     "type": "password",
-                    "value": "operator123",
+                    "value": "test",
                     "temporary": false
                 }
             ],
@@ -80,7 +83,7 @@
             "credentials": [
                 {
                     "type": "password",
-                    "value": "user123",
+                    "value": "test",
                     "temporary": false
                 }
             ],
@@ -108,9 +111,23 @@
             "publicClient": true,
             "protocol": "openid-connect",
             "attributes": {
-                "pkce.code.challenge.method": "S256"
+                "pkce.code.challenge.method": "S256",
+                "oauth2.device.authorization.grant.enabled": "false",
+                "oidc.ciba.grant.enabled": "false"
             },
-            "fullScopeAllowed": true
+            "fullScopeAllowed": true,
+            "defaultClientScopes": [
+                "web-origins",
+                "acr",
+                "profile",
+                "roles",
+                "email"
+            ],
+            "optionalClientScopes": [
+                "address",
+                "phone",
+                "microprofile-jwt"
+            ]
         },
         {
             "clientId": "events-player-api",

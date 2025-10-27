@@ -1,5 +1,74 @@
 # CHANGE LOG
 
+## 0.3.2 - 2025-10-27
+
+### Features
+
+#### Swagger UI OAuth2 Authentication
+
+- Added OAuth2 Authorization Code flow support in Swagger UI
+- "Authorize" button now available for testing protected endpoints
+- Integrated with Keycloak for seamless authentication
+- Support for both OAuth2 and Bearer token authentication methods
+- PKCE (Proof Key for Code Exchange) enabled for enhanced security
+- Protected endpoints now properly show security requirements in OpenAPI schema
+
+#### Real-time SSE Client Monitoring
+
+- SSE `/stream/clients` endpoint now emits updates when queue sizes change
+- Client statistics update in real-time as events flow through queues
+- Fixed issue where queue utilization and status were only updated on client connect/disconnect
+- Current Clients modal now shows live queue activity and utilization metrics
+
+### Improvements
+
+#### Authentication System
+
+- Flattened authentication dependency chain for better OpenAPI integration
+- Updated `get_current_user_optional`, `get_current_user_required`, `require_admin`, and `require_operator` to explicitly declare HTTPBearer security scheme
+- FastAPI now properly detects security requirements for protected endpoints
+- Authorization headers automatically included in Swagger UI requests after authentication
+
+#### Docker Image Tagging
+
+- Fixed Docker image tags to include `v` prefix (e.g., `v0.3.2` instead of `0.3.2`)
+- Added automatic `latest` tag to images pushed to main branch
+- Docker workflow now creates version tags with proper semantic versioning format
+- Tags now match GitHub release tags (with `v` prefix)
+
+#### UI Enhancements
+
+- Generator minimum delay increased from 1ms to 50ms (prevents system overload)
+- Generator maximum iterations increased from 100 to 500
+- Centered "Generate CloudEvents" title in generator offcanvas panel
+- Fixed Bootstrap card structure in Help modal storage system section
+- Improved card formatting consistency across Help modal
+
+#### Keyboard Navigation
+
+- Changed global filters keyboard shortcut from Shift to Alt/Option (reduces conflicts with browser shortcuts)
+- Updated Help modal documentation to reflect new keyboard shortcuts
+
+### Documentation
+
+- Added comprehensive Swagger UI authentication guide to README.md
+- Documented OAuth2 flow and Bearer token usage
+- Added step-by-step instructions for using the Authorize button
+- Clarified WebSocket warnings in console (informational only, SSE implementation working correctly)
+
+### Bug Fixes
+
+- Fixed Authorization header not appearing in Swagger UI for protected endpoints
+- Fixed queue size and utilization not updating in real-time in Current Clients modal
+- Fixed card styling issues in Help modal
+
+### Technical Improvements
+
+- Enhanced OpenAPI schema customization to preserve FastAPI auto-generated security schemes
+- Improved SSE client statistics generator to track queue size changes
+- Added type annotations for better code quality
+- Proper security scheme detection by FastAPI for Swagger UI integration
+
 ## 0.3.1 - 2025-10-26
 
 ### Documentation

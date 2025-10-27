@@ -139,9 +139,10 @@ class AuthorizationManager {
     disableEventExpansion() {
         console.log('[Authorization] Disabling event expansion for non-operator user');
 
-        // Prevent accordion buttons from toggling
+        // Prevent accordion buttons from toggling and hide caret icon
         const accordionButtons = document.querySelectorAll('.accordion-button');
         accordionButtons.forEach(button => {
+            button.classList.add('no-expand');
             button.style.cursor = 'not-allowed';
             button.removeAttribute('data-bs-toggle');
             button.removeAttribute('data-bs-target');
@@ -158,6 +159,7 @@ class AuthorizationManager {
                         if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('accordion-item')) {
                             const button = node.querySelector('.accordion-button');
                             if (button) {
+                                button.classList.add('no-expand');
                                 button.style.cursor = 'not-allowed';
                                 button.removeAttribute('data-bs-toggle');
                                 button.removeAttribute('data-bs-target');
