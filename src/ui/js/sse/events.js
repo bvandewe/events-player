@@ -111,6 +111,11 @@ export const sseEventsController = (() => {
     const showFilterBanner = (filters) => {
         const { startTime, endTime, typeFilter, sourceFilter, subjectFilter } = filters;
 
+        // Defensive check - banner only exists on main events list page
+        if (!eventsStack) {
+            return; // Skip banner display if not on events list page
+        }
+
         // Find or create filter banner container
         let banner = document.getElementById('filter-banner');
         if (!banner) {
@@ -237,6 +242,11 @@ export const sseEventsController = (() => {
             // Increment counter only when event is actually displayed
             incrementEventsCount();
 
+            // Defensive check - eventsStack only exists on main events list page
+            if (!eventsStack) {
+                return; // Don't try to manipulate DOM if not on events list page
+            }
+
             const item = createAccordionItem(accordionData);
             eventsStack.prepend(item);
         }
@@ -249,6 +259,11 @@ export const sseEventsController = (() => {
         connectionStatus.updateStatus("connect");
         await handleNewEvent(event);
         connectionStatus.updateStatus("newtimer");
+
+        // Defensive check - eventsStack only exists on main events list page
+        if (!eventsStack) {
+            return; // Don't try to manipulate DOM if not on events list page
+        }
 
         // Keep the stack to its max-size ??? > eventsCount
         if (eventsStack.childElementCount > maxQueueSize) {
@@ -397,6 +412,12 @@ export const sseEventsController = (() => {
 
             if (events && events.length > 0) {
                 console.log(`[Events] Loaded ${events.length} events from storage`);
+
+                // Defensive check - eventsStack only exists on main events list page
+                if (!eventsStack) {
+                    console.log('[Events] Skipping event display - not on events list page');
+                    return;
+                }
 
                 // Clear current display
                 eventsStack.innerHTML = '';
