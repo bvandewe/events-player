@@ -59,12 +59,22 @@ Acts as both publisher and subscriber, allowing you to test complete event workf
 
 ### 🔐 **Authentication & Authorization**
 
-OAuth 2.0 with Keycloak and role-based access control (RBAC) to secure event generation and monitoring. Features include:
+**Authentication is disabled by default** - the application works out of the box without any setup.
+
+Enable optional OAuth 2.0/OIDC authentication with role-based access control (RBAC) by setting `auth_required=true`:
 
 - **Admin, Operator, and User roles** with fine-grained permissions
 - **Automatic token refresh** with OIDC offline_access for uninterrupted sessions
 - **Authorization Manager** for custom operator permissions
 - **Istio integration** for header-based authentication
+
+When authentication is disabled (`auth_required=false`, default):
+
+- All features are immediately accessible
+- No login or configuration required
+- Admin features available via gear icon in navigation
+
+See the [Authentication Guide](authentication.md) for OAuth/OIDC setup details.
 
 ### 💾 **Client-Side Storage**
 

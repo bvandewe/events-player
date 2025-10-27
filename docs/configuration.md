@@ -99,18 +99,33 @@ The event payload data. Must be valid JSON.
 
 For detailed authentication setup, see the [Authentication & Authorization](authentication.md) guide.
 
-#### `AUTH_REQUIRED`
+#### `auth_required`
 
-- **Description**: Whether authentication is required for all endpoints
+- **Description**: Master switch to enable/disable authentication and authorization
 - **Type**: Boolean (string)
-- **Default**: `"false"`
-- **Example**: `AUTH_REQUIRED=true`
+- **Default**: `"false"` (authentication disabled)
+- **Example**: `auth_required=true`
 
-When `true`, all endpoints require valid authentication. When `false`, authentication is optional. The authentication method is auto-detected:
+**This is the primary setting that controls authentication behavior:**
+
+When `auth_required=false` (default):
+
+- Application works immediately without any authentication setup
+- All features are accessible without login
+- No OAuth/OIDC configuration required
+- Admin features (Clear Storage, Current Clients, Manage Tasks) available via gear icon
+
+When `auth_required=true`:
+
+- OAuth 2.0/OIDC authentication is enforced
+- Users must log in to access protected features
+- Role-based access control (admin, operator, user) is active
+- Event generation requires operator or admin role
+
+The authentication method is auto-detected when enabled:
 
 - **Istio/Service Mesh**: JWT already validated by the mesh, user info extracted from headers
-- **OAuth/OIDC**: OAuth 2.0 + OIDC flow when OAuth/OIDC is configured
-- **None**: When no auth is configured, the application runs in open mode
+- **OAuth/OIDC**: OAuth 2.0 + OIDC flow when OAuth server is configured
 
 #### `AUTH_JWKS_URL`
 

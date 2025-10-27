@@ -357,6 +357,21 @@ async def get_current_user_optional(
                 # Return only public events
                 ...
     """
+    # If auth is not required, return a mock admin user
+    if not settings.auth_required:
+        return {
+            "user_id": "anonymous",
+            "username": "anonymous",
+            "email": "anonymous@localhost",
+            "full_name": "Anonymous User",
+            "roles": [
+                settings.auth_role_admin,
+                settings.auth_role_operator,
+                settings.auth_role_user,
+            ],
+            "groups": [],
+        }
+
     # First check if user was set by middleware
     user = getattr(request.state, "user", None)
 

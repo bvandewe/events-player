@@ -67,7 +67,6 @@ class AuthManager {
 
                 // Store auth_required status from backend
                 this.authRequired = data.auth_required !== undefined ? data.auth_required : false;
-                console.log('[Auth] auth_required:', this.authRequired);
 
                 if (data.authenticated) {
                     console.log('[Auth] Istio mode detected, user pre-authenticated:', data.user.username);
@@ -566,6 +565,12 @@ class AuthManager {
      * Handle token expiration
      */
     async handleTokenExpiry() {
+        // If auth is not required, don't show expiry warnings
+        if (!this.authRequired) {
+            console.log('[Auth] Auth not required, skipping token expiry handling');
+            return;
+        }
+
         console.log('[Auth] Token expired, attempting to refresh...');
 
         // Try to refresh the token first
@@ -884,6 +889,7 @@ class AuthManager {
     renderAdminFeaturesOnly() {
         const authContainer = document.getElementById('authContainer');
         if (!authContainer) {
+            console.error('[Auth] authContainer not found in renderAdminFeaturesOnly');
             return;
         }
 
