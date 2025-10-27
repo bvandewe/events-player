@@ -81,9 +81,11 @@ const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstra
 
 // Cleanup SSE connection when navigating away to prevent connection leaks
 import { sseConnection } from "./sse/connection";
+
 window.addEventListener('beforeunload', () => {
-    console.log('[App] Page unloading, closing SSE connection');
+    console.log('[App] Page unloading, closing all SSE connections');
     sseConnection.close();
+    clientsModalController.cleanup();
 });
 
 // Export for use in other modules
