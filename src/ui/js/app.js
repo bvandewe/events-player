@@ -79,5 +79,12 @@ window.clientsModalController = clientsModalController;
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
+// Cleanup SSE connection when navigating away to prevent connection leaks
+import { sseConnection } from "./sse/connection";
+window.addEventListener('beforeunload', () => {
+    console.log('[App] Page unloading, closing SSE connection');
+    sseConnection.close();
+});
+
 // Export for use in other modules
 export { authManager, authorizationManager, storageManager };
