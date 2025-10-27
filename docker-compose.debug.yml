@@ -43,7 +43,7 @@ services:
       http_client_timeout: 30.0
 
       # Authentication & Authorization
-      auth_required: "true" # Set to "true" to require authentication
+      auth_required: "false" # Set to "true" to require authentication
       auth_jwks_url: http://keycloak:8080/realms/events-player/protocol/openid-connect/certs
       auth_issuer: http://localhost:8885/realms/events-player
       auth_audience: events-player-web
