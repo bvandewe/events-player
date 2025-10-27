@@ -633,9 +633,10 @@ class AuthManager {
         // Clear existing content
         authContainer.innerHTML = '';
 
-        // Hide auth UI if authentication is not required
+        // When auth is not required, show admin features without login/logout
         if (!this.authRequired) {
-            console.log('[Auth] Auth not required - hiding login/logout buttons');
+            console.log('[Auth] Auth not required - showing admin features without authentication UI');
+            this.renderAdminFeaturesOnly();
             return;
         }
 
@@ -873,6 +874,102 @@ class AuthManager {
         }
 
         // Show the container
+        authContainer.classList.remove('d-none');
+    }
+
+    /**
+     * Render admin features only (when auth is not required)
+     * Shows Clear Storage, Current Clients, and Manage Tasks without login/logout
+     */
+    renderAdminFeaturesOnly() {
+        const authContainer = document.getElementById('authContainer');
+        if (!authContainer) {
+            return;
+        }
+
+        // Create admin icon dropdown
+        const userDiv = document.createElement('div');
+        userDiv.className = 'auth-user-info';
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'dropdown';
+
+        const button = document.createElement('button');
+        button.className = 'btn btn-outline-secondary dropdown-toggle';
+        button.setAttribute('type', 'button');
+        button.setAttribute('data-bs-toggle', 'dropdown');
+        button.setAttribute('aria-expanded', 'false');
+
+        // Admin icon
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-gear-fill';
+        button.appendChild(icon);
+
+        dropdown.appendChild(button);
+
+        // Create dropdown menu
+        const menu = document.createElement('ul');
+        menu.className = 'dropdown-menu dropdown-menu-end';
+
+        // Clear Storage button
+        const clearStorageItem = document.createElement('li');
+        const clearStorageLink = document.createElement('a');
+        clearStorageLink.className = 'dropdown-item';
+        clearStorageLink.href = '#';
+        clearStorageLink.onclick = (e) => {
+            e.preventDefault();
+            this.clearStorage();
+        };
+
+        const clearIcon = document.createElement('i');
+        clearIcon.className = 'bi bi-trash3 me-2';
+        clearStorageLink.appendChild(clearIcon);
+        clearStorageLink.appendChild(document.createTextNode('Clear Storage'));
+        clearStorageItem.appendChild(clearStorageLink);
+        menu.appendChild(clearStorageItem);
+
+        // Current Clients button
+        const clientsItem = document.createElement('li');
+        const clientsLink = document.createElement('a');
+        clientsLink.className = 'dropdown-item';
+        clientsLink.href = '#';
+        clientsLink.setAttribute('data-clients-menu', 'true');
+        clientsLink.onclick = (e) => {
+            e.preventDefault();
+            if (window.clientsModalController) {
+                window.clientsModalController.show();
+            }
+        };
+
+        const clientsIcon = document.createElement('i');
+        clientsIcon.className = 'bi bi-people-fill me-2';
+        clientsLink.appendChild(clientsIcon);
+        clientsLink.appendChild(document.createTextNode('Current Clients'));
+        clientsItem.appendChild(clientsLink);
+        menu.appendChild(clientsItem);
+
+        // Manage Tasks button
+        const tasksItem = document.createElement('li');
+        const tasksLink = document.createElement('a');
+        tasksLink.className = 'dropdown-item';
+        tasksLink.href = '#';
+        tasksLink.onclick = (e) => {
+            e.preventDefault();
+            if (window.tasksModalController) {
+                window.tasksModalController.show();
+            }
+        };
+
+        const tasksIcon = document.createElement('i');
+        tasksIcon.className = 'bi bi-list-task me-2';
+        tasksLink.appendChild(tasksIcon);
+        tasksLink.appendChild(document.createTextNode('Manage Tasks'));
+        tasksItem.appendChild(tasksLink);
+        menu.appendChild(tasksItem);
+
+        dropdown.appendChild(menu);
+        userDiv.appendChild(dropdown);
+        authContainer.appendChild(userDiv);
         authContainer.classList.remove('d-none');
     }
 
