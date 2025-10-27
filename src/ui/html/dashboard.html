@@ -13,6 +13,7 @@
       data-browser_queue_size="{{ browser_queue_size }}"
       data-storage-max-recent-events="{{ storage_max_recent_events }}"
       data-storage-max-metadata-events="{{ storage_max_metadata_events }}"
+      data-auth-required="{{ auth_required }}"
       data-auth_issuer="{{ oauth_url }}/realms/{{ oauth_realm }}"
       data-auth_client_id="{{ oauth_client_id }}"
       data-auth_redirect_uri="{{ request.url.scheme }}://{{ request.url.netloc }}/dashboard">
