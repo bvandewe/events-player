@@ -78,6 +78,7 @@ async def get_ui(
             "storage_max_recent_events": settings.storage_max_recent_events,
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
+            "auth_required": settings.auth_required,
             "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
             "oauth_realm": settings.oauth_realm,
             "oauth_client_id": settings.oauth_client_id,
@@ -128,6 +129,7 @@ async def get_timeline(
             "storage_max_recent_events": settings.storage_max_recent_events,
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
+            "auth_required": settings.auth_required,
             "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
             "oauth_realm": settings.oauth_realm,
             "oauth_client_id": settings.oauth_client_id,
@@ -178,6 +180,7 @@ async def get_dashboard(
             "storage_max_recent_events": settings.storage_max_recent_events,
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
+            "auth_required": settings.auth_required,
             "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
             "oauth_realm": settings.oauth_realm,
             "oauth_client_id": settings.oauth_client_id,

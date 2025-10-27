@@ -9,12 +9,28 @@ class AuthorizationManager {
     constructor() {
         this.userRoles = [];
         this.isAuthenticated = false;
+        this.authRequired = false;
     }
 
     /**
      * Initialize authorization manager with user info from authManager
      */
     init(authManager) {
+        // Check if authentication is required from body data attribute
+        const bodyElement = document.body;
+        const authRequiredAttr = bodyElement.getAttribute('data-auth-required');
+        this.authRequired = authRequiredAttr === 'true' || authRequiredAttr === 'True';
+        
+        console.log('[Authorization] Auth required:', this.authRequired);
+        
+        // If auth is not required, grant full access and skip restrictions
+        if (!this.authRequired) {
+            console.log('[Authorization] Auth not required - granting full access');
+            this.isAuthenticated = true;
+            this.userRoles = ['admin', 'operator', 'user']; // Grant all roles
+            return; // Skip applying UI restrictions
+        }
+        
         if (authManager && authManager.userInfo) {
             this.isAuthenticated = true;
             this.userRoles = authManager.userInfo.roles || [];
@@ -25,7 +41,7 @@ class AuthorizationManager {
             console.log('[Authorization] No authenticated user');
         }
 
-        // Apply UI restrictions
+        // Apply UI restrictions only if auth is required
         this.applyUIRestrictions();
     }
 
