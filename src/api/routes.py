@@ -55,9 +55,14 @@ async def get_ui(
     log.debug("Received request on root: %s", request)
 
     # Extract user roles for authorization
-    user_roles = current_user.get("roles", []) if current_user else []
-    is_admin = settings.auth_role_admin in user_roles
-    is_operator = settings.auth_role_operator in user_roles or is_admin
+    # When auth is not required, grant admin privileges to enable all features
+    if not settings.auth_required:
+        is_admin = True
+        is_operator = True
+    else:
+        user_roles = current_user.get("roles", []) if current_user else []
+        is_admin = settings.auth_role_admin in user_roles
+        is_operator = settings.auth_role_operator in user_roles or is_admin
 
     return templates.TemplateResponse(
         "index.html",
@@ -100,9 +105,14 @@ async def get_timeline(
     log.debug("Received request on timeline: %s", request)
 
     # Extract user roles for authorization
-    user_roles = current_user.get("roles", []) if current_user else []
-    is_admin = settings.auth_role_admin in user_roles
-    is_operator = settings.auth_role_operator in user_roles or is_admin
+    # When auth is not required, grant admin privileges to enable all features
+    if not settings.auth_required:
+        is_admin = True
+        is_operator = True
+    else:
+        user_roles = current_user.get("roles", []) if current_user else []
+        is_admin = settings.auth_role_admin in user_roles
+        is_operator = settings.auth_role_operator in user_roles or is_admin
 
     return templates.TemplateResponse(
         "html/timeline.html",
@@ -145,9 +155,14 @@ async def get_dashboard(
     log.debug("Received request on dashboard: %s", request)
 
     # Extract user roles for authorization
-    user_roles = current_user.get("roles", []) if current_user else []
-    is_admin = settings.auth_role_admin in user_roles
-    is_operator = settings.auth_role_operator in user_roles or is_admin
+    # When auth is not required, grant admin privileges to enable all features
+    if not settings.auth_required:
+        is_admin = True
+        is_operator = True
+    else:
+        user_roles = current_user.get("roles", []) if current_user else []
+        is_admin = settings.auth_role_admin in user_roles
+        is_operator = settings.auth_role_operator in user_roles or is_admin
 
     return templates.TemplateResponse(
         "html/dashboard.html",
@@ -209,6 +224,7 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
     if user:
         return {
             "authenticated": True,
+            "auth_required": settings.auth_required,
             "user": {
                 "user_id": user.get("user_id"),
                 "email": user.get("email"),
@@ -224,6 +240,7 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
 
     return {
         "authenticated": False,
+        "auth_required": settings.auth_required,
         "user": None,
         "mode": "oauth" if settings.oauth_server_url else "none",
         "oauth_config": (

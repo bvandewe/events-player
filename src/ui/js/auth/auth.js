@@ -24,6 +24,7 @@ class AuthManager {
         this.oauthConfig = null;
         this.mode = null; // 'istio' | 'oauth' | 'none'
         this.tokenCheckInterval = null; // For periodic token validation
+        this.authRequired = false; // Track if auth is required from backend
     }
 
     /**
@@ -63,6 +64,11 @@ class AuthManager {
             const response = await fetch('/api/auth/info');
             if (response.ok) {
                 const data = await response.json();
+
+                // Store auth_required status from backend
+                this.authRequired = data.auth_required !== undefined ? data.auth_required : false;
+                console.log('[Auth] auth_required:', this.authRequired);
+
                 if (data.authenticated) {
                     console.log('[Auth] Istio mode detected, user pre-authenticated:', data.user.username);
                     this.userInfo = data.user;
@@ -627,7 +633,13 @@ class AuthManager {
         // Clear existing content
         authContainer.innerHTML = '';
 
-        // Always show UI if OAuth is configured OR if user is authenticated
+        // Hide auth UI if authentication is not required
+        if (!this.authRequired) {
+            console.log('[Auth] Auth not required - hiding login/logout buttons');
+            return;
+        }
+
+        // Show UI if OAuth is configured OR if user is authenticated
         const shouldShowUI = this.isAuthenticated() || this.mode === 'oauth';
 
         if (!shouldShowUI) {
