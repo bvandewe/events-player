@@ -627,6 +627,14 @@ class AuthManager {
         // Clear existing content
         authContainer.innerHTML = '';
 
+        // Always show UI if keycloak is configured OR if user is authenticated
+        const shouldShowUI = this.isAuthenticated() || this.mode === 'keycloak';
+        
+        if (!shouldShowUI) {
+            console.log('[Auth] Not showing auth UI - mode:', this.mode, 'authenticated:', this.isAuthenticated());
+            return;
+        }
+
         if (this.isAuthenticated()) {
             // Show user info
             const userDiv = document.createElement('div');
