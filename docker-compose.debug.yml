@@ -22,19 +22,27 @@ services:
       api_log_level: INFO
       api_default_generator_gateways: '{"urls": ["http://localhost:8080/events/pub", "http://event-player:8080/events/pub"]}'
       api_tag: "v0.3.1"
+      api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      api_browser_queue_size: 1000
+
+      # Storage configuration
+      
+
       # Authentication configuration
-      api_auth_mode: disabled # auto, required, disabled
+      api_auth_required: "false" # Set to "true" to require authentication
       api_auth_jwks_url: http://keycloak:8080/realms/events-player/protocol/openid-connect/certs
       api_auth_issuer: http://localhost:8885/realms/events-player
       api_auth_audience: events-player-web
-      api_auth_required: "false"
       api_keycloak_url: http://keycloak:8080
       api_keycloak_url_external: http://localhost:8885
       api_keycloak_realm: events-player
       api_keycloak_client_id: events-player-web
       api_keycloak_client_secret: ""
-      # api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-      # api_browser_queue_size: 1000
+
+      # Maps JWT token roles to application roles (admin, operator, user)
+      auth_role_admin: str = "admin" # Role name in JWT that grants admin privileges
+      auth_role_operator: str = "operator" # Role name in JWT that grants operator privileges
+      auth_role_user: str = "user" # Role name in JWT that grants user privileges
     depends_on:
       - ui-builder
       - keycloak

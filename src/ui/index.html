@@ -11,10 +11,11 @@
 </head>
 <body data-bs-theme="dark" 
       data-browser_queue_size="{{ browser_queue_size }}"
+      data-storage-max-recent-events="{{ storage_max_recent_events }}"
+      data-storage-max-metadata-events="{{ storage_max_metadata_events }}"
       data-keycloak-url="{{ keycloak_url }}"
       data-keycloak-realm="{{ keycloak_realm }}"
-      data-keycloak-client-id="{{ keycloak_client_id }}"
-      data-auth-mode="{{ auth_mode }}">
+>
     {% include "html/nav.html" %}
     {% include "html/main.html" %}
     {% include "html/footer.html" %}

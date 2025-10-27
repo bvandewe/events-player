@@ -99,21 +99,24 @@ The event payload data. Must be valid JSON.
 
 For detailed authentication setup, see the [Authentication & Authorization](authentication.md) guide.
 
-#### `API_AUTH_MODE`
+#### `API_AUTH_REQUIRED`
 
-- **Description**: Authentication mode
-- **Type**: String
-- **Default**: `"none"`
-- **Valid Values**: `none`, `keycloak`, `istio`, `auto`
-- **Example**: `API_AUTH_MODE=auto`
+- **Description**: Whether authentication is required for all endpoints
+- **Type**: Boolean (string)
+- **Default**: `"false"`
+- **Example**: `API_AUTH_REQUIRED=true`
 
-Controls the authentication mechanism. Use `auto` for hybrid deployments, `keycloak` for standalone OAuth, `istio` for service mesh integration, or `none` to disable authentication.
+When `true`, all endpoints require valid authentication. When `false`, authentication is optional. The authentication method is auto-detected:
+
+- **Istio/Service Mesh**: JWT already validated by the mesh, user info extracted from headers
+- **Keycloak**: OAuth 2.0 + OIDC flow when Keycloak is configured
+- **None**: When no auth is configured, the application runs in open mode
 
 #### `API_AUTH_JWKS_URL`
 
 - **Description**: JWKS endpoint URL for JWT validation
 - **Type**: String (URL)
-- **Required**: When `auth_mode` is `istio` or `auto`
+- **Required**: When using Istio/Service Mesh authentication
 - **Example**: `API_AUTH_JWKS_URL=http://keycloak:8080/realms/events-player/protocol/openid-connect/certs`
 
 Provides public keys for JWT signature verification.
@@ -122,7 +125,7 @@ Provides public keys for JWT signature verification.
 
 - **Description**: Expected JWT issuer (iss claim)
 - **Type**: String
-- **Required**: When `auth_mode` is `istio` or `auto`
+- **Required**: When using Istio/Service Mesh authentication
 - **Example**: `API_AUTH_ISSUER=http://localhost:8090/realms/events-player`
 
 Must match the issuer in JWT tokens.
@@ -131,25 +134,16 @@ Must match the issuer in JWT tokens.
 
 - **Description**: Expected JWT audience (aud claim)
 - **Type**: String
-- **Required**: When `auth_mode` is `istio` or `auto`
+- **Required**: When using Istio/Service Mesh authentication
 - **Example**: `API_AUTH_AUDIENCE=events-player-web`
 
 The intended audience for the JWT token.
-
-#### `API_AUTH_REQUIRED`
-
-- **Description**: Whether authentication is required for all endpoints
-- **Type**: Boolean (string)
-- **Default**: `"false"`
-- **Example**: `API_AUTH_REQUIRED=false`
-
-When false, authentication is optional. Protected endpoints still require authentication.
 
 #### `API_KEYCLOAK_URL`
 
 - **Description**: Internal Keycloak URL (for backend)
 - **Type**: String (URL)
-- **Required**: When `auth_mode` is `keycloak` or `auto`
+- **Required**: When using Keycloak authentication
 - **Example**: `API_KEYCLOAK_URL=http://keycloak:8080`
 
 Used by backend for token exchange. Can be internal Docker hostname.
@@ -158,7 +152,7 @@ Used by backend for token exchange. Can be internal Docker hostname.
 
 - **Description**: External Keycloak URL (for frontend)
 - **Type**: String (URL)
-- **Required**: When `auth_mode` is `keycloak` or `auto`
+- **Required**: When using Keycloak authentication
 - **Example**: `API_KEYCLOAK_URL_EXTERNAL=http://localhost:8090`
 
 URL accessible from browsers for OAuth redirects.
@@ -188,6 +182,125 @@ Must be a public client configured with PKCE support.
 
 Public clients using PKCE don't require a client secret.
 
+### Role Mapping Configuration
+
+CloudEvent Player supports configurable role mapping, allowing you to map JWT token roles to application roles without code changes. This is essential for integrating with identity providers that use different role naming conventions.
+
+#### `API_AUTH_ROLE_ADMIN`
+
+- **Description**: Role name in JWT that grants administrator privileges
+- **Type**: String
+- **Default**: `"admin"`
+- **Example**: `API_AUTH_ROLE_ADMIN=administrator`
+
+**Effect on Authorization:**
+
+Users with this role in their JWT token receive full administrative access:
+
+- Generate unlimited events (no iteration/delay limits)
+- Access all views and features
+- Manage system settings
+
+**Use Cases:**
+
+- Custom identity provider uses "administrator" instead of "admin"
+- Integration with Active Directory using "Administrators" group
+- Multi-tenant deployments with role prefixes like "tenant1_admin"
+
+#### `API_AUTH_ROLE_OPERATOR`
+
+- **Description**: Role name in JWT that grants operator privileges
+- **Type**: String
+- **Default**: `"operator"`
+- **Example**: `API_AUTH_ROLE_OPERATOR=power_user`
+
+**Effect on Authorization:**
+
+Users with this role receive operational access:
+
+- Generate events with standard limits
+- Access all views
+- Cannot modify system settings
+
+**Use Cases:**
+
+- Enterprise systems using "PowerUser" or "Operator" roles
+- DevOps teams with custom role naming conventions
+- Service mesh deployments with specific role requirements
+
+#### `API_AUTH_ROLE_USER`
+
+- **Description**: Role name in JWT that grants basic user privileges
+- **Type**: String
+- **Default**: `"user"`
+- **Example**: `API_AUTH_ROLE_USER=viewer`
+
+**Effect on Authorization:**
+
+Users with this role receive read-only access:
+
+- View events in all views
+- Cannot generate events
+- Cannot modify system settings
+
+**Use Cases:**
+
+- Read-only access for monitoring teams
+- Auditor or compliance roles
+- External stakeholders needing visibility without control
+
+#### Role Mapping Examples
+
+**Example 1: Active Directory Integration**
+
+```ini
+# Map AD groups to application roles
+API_AUTH_ROLE_ADMIN=Domain Admins
+API_AUTH_ROLE_OPERATOR=DevOps Team
+API_AUTH_ROLE_USER=All Employees
+```
+
+**Example 2: Multi-Tenant Environment**
+
+```ini
+# Tenant-specific role prefixes
+API_AUTH_ROLE_ADMIN=tenant_admin
+API_AUTH_ROLE_OPERATOR=tenant_operator
+API_AUTH_ROLE_USER=tenant_user
+```
+
+**Example 3: Service Mesh (Istio)**
+
+```ini
+# Istio RequestAuthentication with custom claims
+API_AUTH_ROLE_ADMIN=mesh-admin
+API_AUTH_ROLE_OPERATOR=mesh-operator
+API_AUTH_ROLE_USER=mesh-viewer
+```
+
+**Example 4: Corporate Standards**
+
+```ini
+# Organization-wide role naming
+API_AUTH_ROLE_ADMIN=ADMIN
+API_AUTH_ROLE_OPERATOR=POWER_USER
+API_AUTH_ROLE_USER=READ_ONLY
+```
+
+#### Role Hierarchy
+
+The application enforces a role hierarchy:
+
+```
+admin > operator > user
+```
+
+- Users with `admin` role automatically have `operator` privileges
+- Users with `operator` role do NOT automatically have `admin` privileges
+- All authenticated users have at least `user` privileges
+
+**Important**: Role names are **case-sensitive** in JWT tokens. Ensure your identity provider issues tokens with matching case.
+
 ### Default Gateway URLs
 
 #### `API_DEFAULT_GENERATOR_GATEWAYS__URLS`
@@ -195,6 +308,7 @@ Public clients using PKCE don't require a client secret.
 - **Description**: List of default gateway URLs for event publishing
 - **Type**: JSON Array of URLs
 - **Default**:
+
   ```json
   [
     "http://localhost:8884/events/pub",
@@ -202,6 +316,7 @@ Public clients using PKCE don't require a client secret.
     "http://event-player:8080/events/pub"
   ]
   ```
+
 - **Example**: `API_DEFAULT_GENERATOR_GATEWAYS__URLS='["https://events.myapp.com/publish"]'`
 
 URLs that appear in the gateway dropdown in the UI. The first URL is selected by default.
@@ -210,12 +325,20 @@ URLs that appear in the gateway dropdown in the UI. The first URL is selected by
 
 #### `API_BROWSER_QUEUE_SIZE`
 
-- **Description**: Maximum size of the in-memory event queue for SSE streaming
+- **Description**: Maximum number of event accordion items rendered in the DOM
 - **Type**: Integer
 - **Default**: `1000`
-- **Example**: `API_BROWSER_QUEUE_SIZE=5000`
+- **Example**: `API_BROWSER_QUEUE_SIZE=3000`
 
-Controls how many events are kept in memory for SSE clients. Increase for high-throughput scenarios, decrease to reduce memory usage.
+Controls the visual list size in the main event view. This is a UI display limit that affects DOM rendering performance.
+
+**Effect on User Experience:**
+
+- **Higher values** (2000-3000): More events visible in the scrollable list, but slower DOM rendering
+- **Lower values** (500-1000): Faster UI rendering, fewer events immediately visible
+- **Recommended**: 1000-3000 for balance between visibility and performance
+
+**Important**: This only controls what's displayed in the UI. Events beyond this limit are still stored in IndexedDB (controlled by storage settings below) and can be searched/filtered.
 
 #### `API_HTTP_CLIENT_TIMEOUT`
 
@@ -225,6 +348,187 @@ Controls how many events are kept in memory for SSE clients. Increase for high-t
 - **Example**: `API_HTTP_CLIENT_TIMEOUT=60.0`
 
 Timeout for HTTP requests when publishing events to gateway URLs.
+
+### Frontend Storage Configuration
+
+CloudEvent Player uses a tiered storage system in the browser's IndexedDB to manage events efficiently. Both tiers use capacity-based cleanup for predictable behavior.
+
+#### Storage Architecture Overview
+
+The application implements a two-tier storage strategy with **capacity-based cleanup** (FIFO queues):
+
+- **Tier 1 (Recent Events)**: Full event objects with complete data payload - **capacity-based** cleanup (FIFO queue)
+- **Tier 2 (Metadata Only)**: Lightweight event metadata for analytics - **capacity-based** cleanup (FIFO queue)
+
+Both tiers operate as FIFO (First-In-First-Out) queues. When capacity is exceeded, the oldest entries are automatically removed to make room for new ones. This provides predictable storage behavior regardless of event timing.
+
+#### `API_STORAGE_MAX_RECENT_EVENTS`
+
+- **Description**: Maximum number of complete event objects stored in IndexedDB Tier 1
+- **Type**: Integer
+- **Default**: `5000`
+- **Example**: `API_STORAGE_MAX_RECENT_EVENTS=10000`
+- **Cleanup Method**: **CAPACITY-BASED** (FIFO queue)
+
+**How It Works:**
+
+Tier 1 operates as a FIFO (First-In-First-Out) queue. When the count exceeds this limit, the oldest events are automatically removed to make room for new ones. Cleanup is purely capacity-based, not age-based.
+
+**Effect on User Experience:**
+
+Controls how many events users can click to view full details without requiring a server request. Once capacity is reached, oldest events are removed even if they're very recent.
+
+- **Higher values** (10000-20000): More events available for detailed inspection
+- **Lower values** (2000-5000): Less browser memory/disk usage, faster queries
+- **Recommended**: 5000-10000 for normal use, 20000+ for high-volume analysis scenarios
+
+**Business Impact**: Determines how far back users can investigate event details. In high-volume environments, this is typically measured in time (e.g., "last 30 minutes") rather than event count.
+
+#### `API_STORAGE_MAX_METADATA_EVENTS`
+
+- **Description**: Maximum number of metadata entries stored in Tier 2
+- **Type**: Integer
+- **Default**: `100000`
+- **Example**: `API_STORAGE_MAX_METADATA_EVENTS=200000`
+- **Cleanup Method**: **CAPACITY-BASED** (FIFO queue)
+
+**How It Works:**
+
+Tier 2 operates as a FIFO (First-In-First-Out) queue. When the count exceeds this limit, the oldest metadata entries are automatically removed to make room for new ones. Cleanup is purely capacity-based, not age-based.
+
+**Effect on User Experience:**
+
+Defines how far back the event timeline and dashboard charts can extend. Once capacity is reached, oldest metadata is removed to make room for new events.
+
+**Metadata Structure** (lightweight, ~100-200 bytes per event):
+
+- Event ID
+- Timestamp
+- Type
+- Source
+- Subject
+- Data length
+- Content type
+
+**Capacity Examples:**
+
+- **Higher values** (150000-200000): Longer event history visible in charts and lists
+- **Lower values** (50000-100000): Faster queries, less storage overhead
+- **Recommended**: 50000-200000 depending on event volume and retention needs
+
+**Business Impact**: Determines the time window for trend analysis, dashboard metrics, and historical reporting. Metadata is lightweight, so higher values are feasible without significant performance impact.
+
+### Storage Cleanup Behavior Summary
+
+| Tier                       | Cleanup Method        | Setting                       |
+| -------------------------- | --------------------- | ----------------------------- |
+| **Tier 1 (Recent Events)** | Capacity-based (FIFO) | `storage_max_recent_events`   |
+| **Tier 2 (Metadata)**      | Capacity-based (FIFO) | `storage_max_metadata_events` |
+
+**Key Insight:** Both tiers use the **same cleanup strategy**:
+
+- **Capacity-based FIFO queues**: When limit is reached, oldest entries are removed
+- **Predictable behavior**: Storage limits are enforced consistently regardless of event timing
+- **Simple tuning**: Adjust capacity based on your event volume and retention needs
+
+### Storage Configuration Hierarchy
+
+Understanding the relationship between these settings:
+
+```
+Display Layer (UI/DOM):
+├─ API_BROWSER_QUEUE_SIZE (1000)
+│  └─ What users see in the event list (accordion items)
+
+Storage Layer (IndexedDB) - BOTH CAPACITY-BASED:
+├─ Tier 1 - Full Event Objects (CAPACITY-BASED):
+│  ├─ API_STORAGE_MAX_RECENT_EVENTS (5000)
+│  └─ FIFO queue: Removes oldest when full
+│
+└─ Tier 2 - Metadata Only (CAPACITY-BASED):
+   ├─ API_STORAGE_MAX_METADATA_EVENTS (100K)
+   └─ FIFO queue: Removes oldest when full
+```
+
+### Storage Configuration Examples
+
+#### Development/Low Volume
+
+```ini
+API_BROWSER_QUEUE_SIZE=1000
+API_STORAGE_MAX_RECENT_EVENTS=5000      # 5K full events
+API_STORAGE_MAX_METADATA_EVENTS=50000   # 50K metadata entries
+```
+
+**Use Case**: Local development, testing, or low-volume event streams.
+
+#### Production/Normal Volume
+
+```ini
+API_BROWSER_QUEUE_SIZE=2000
+API_STORAGE_MAX_RECENT_EVENTS=10000     # 10K full events
+API_STORAGE_MAX_METADATA_EVENTS=100000  # 100K metadata entries
+```
+
+**Use Case**: Production environments with moderate event throughput (100-1000 events/minute).
+
+#### Production/High Volume
+
+```ini
+API_BROWSER_QUEUE_SIZE=3000
+API_STORAGE_MAX_RECENT_EVENTS=20000     # 20K full events
+API_STORAGE_MAX_METADATA_EVENTS=200000  # 200K metadata entries
+```
+
+**Use Case**: High-throughput production systems requiring extended retention for analysis (1000+ events/minute).
+
+#### Analytics/Forensics
+
+```ini
+API_BROWSER_QUEUE_SIZE=2000
+API_STORAGE_MAX_RECENT_EVENTS=15000     # 15K full events
+API_STORAGE_MAX_METADATA_EVENTS=300000  # 300K metadata entries
+```
+
+**Use Case**: Environments where users need maximum event history for detailed analysis and trend identification.
+
+### Storage Performance Considerations
+
+#### Browser Impact
+
+- **IndexedDB Storage**: Each browser has storage limits (typically 50-100 GB, or 10-50% of available disk)
+- **Query Performance**: Larger datasets require more time for filtering and search operations
+- **Memory Usage**: Full events in Tier 1 consume more memory than metadata-only Tier 2
+
+#### Tuning Guidelines
+
+1. **Monitor browser storage usage**: Use browser DevTools → Application → Storage
+2. **Adjust based on event size**: Large event payloads may require lower `MAX_RECENT_EVENTS`
+3. **Balance display vs. storage**: `BROWSER_QUEUE_SIZE` should be ≤ `STORAGE_MAX_RECENT_EVENTS`
+4. **Calculate retention window**: In high-volume environments, capacity translates to time (e.g., 10K events at 100/min = ~100 minutes)
+5. **Test with realistic data**: Validate configuration with production-like event volumes
+
+#### Common Issues and Solutions
+
+**Issue**: "Browser storage quota exceeded"
+
+- **Solution**: Reduce `STORAGE_MAX_RECENT_EVENTS` or `STORAGE_MAX_METADATA_EVENTS`
+
+**Issue**: "Slow filtering/search performance"
+
+- **Solution**: Reduce `STORAGE_MAX_METADATA_EVENTS` to speed up queries
+
+**Issue**: "Recent events not showing full details"
+
+- **Solution**: Increase `STORAGE_MAX_RECENT_EVENTS` to store more full events
+
+**Issue**: "Dashboard charts not showing enough historical data"
+
+- **Solution**: Increase `STORAGE_MAX_METADATA_EVENTS` to extend the time window
+
+**Issue**: "Events disappearing too quickly in high-volume scenarios"
+
+- **Solution**: Increase both `STORAGE_MAX_RECENT_EVENTS` and `STORAGE_MAX_METADATA_EVENTS` to extend retention
 
 ## Configuration Examples
 

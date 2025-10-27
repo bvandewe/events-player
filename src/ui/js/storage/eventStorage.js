@@ -1,8 +1,10 @@
 /**
  * EventStorageManager - Two-tier storage system for CloudEvents
  * 
- * Tier 1: IndexedDB for recent full events (display/inspection) - persisted across page loads
- * Tier 2: IndexedDB for long-term metadata (analytics/visualizations)
+ * Tier 1: IndexedDB for recent full events - capacity-based cleanup (FIFO queue)
+ * Tier 2: IndexedDB for long-term metadata - capacity-based cleanup (FIFO queue)
+ * 
+ * Both tiers use capacity-based cleanup: oldest events removed when limit exceeded
  * 
  * SINGLETON: Only one instance should exist, shared across all views
  */
@@ -25,11 +27,11 @@ class EventStorageManager {
 
         // Tier 1 configuration: IndexedDB full events (capacity-based)
         this.maxRecentEvents = options.maxRecentEvents || 5000;
-        this.maxRecentAge = options.maxRecentAge || 1800000; // 30 minutes default (kept for future use)
+        this.maxRecentAge = options.maxRecentAge || 1800000; // NOT USED - reserved for future
 
-        // Tier 2 configuration: IndexedDB metadata
+        // Tier 2 configuration: IndexedDB metadata (capacity-based)
         this.maxMetadataEvents = options.maxMetadataEvents || 100000;
-        this.maxMetadataAge = options.maxMetadataAge || 86400000; // 24 hours default
+        this.maxMetadataAge = options.maxMetadataAge || 86400000; // NOT USED - reserved for future
 
         // Tier 2: IndexedDB reference
         this.db = null;
@@ -55,11 +57,9 @@ class EventStorageManager {
         this.cleanupInterval = null;
         this.cleanupIntervalMs = 300000; // 5 minutes
 
-        console.log('[EventStorage] Initialized with config:', {
+        console.info('📦 EventStorage initialized', {
             maxRecentEvents: this.maxRecentEvents,
-            maxRecentAge: `${this.maxRecentAge / 1000}s`,
-            maxMetadataEvents: this.maxMetadataEvents,
-            maxMetadataAge: `${this.maxMetadataAge / 1000}s`
+            maxMetadataEvents: this.maxMetadataEvents
         });
 
         EventStorageManager.instance = this;
@@ -273,9 +273,8 @@ class EventStorageManager {
     }
 
     /**
-     * Cleanup Tier 1: capacity-based with optional age limit
+     * Cleanup Tier 1: capacity-based cleanup (FIFO queue)
      * Only deletes events if we exceed maxRecentEvents count
-     * Age-based cleanup is secondary and optional
      */
     async cleanupRecentEvents() {
         return new Promise((resolve, reject) => {
@@ -374,39 +373,87 @@ class EventStorageManager {
     }
 
     /**
-     * Cleanup Tier 2: remove old metadata from IndexedDB
+     * Cleanup Tier 2: capacity-based cleanup for metadata
+     * Only deletes metadata entries if we exceed maxMetadataEvents count
      */
     async cleanupMetadata() {
-        const now = Date.now();
-        const cutoffTime = now - this.maxMetadataAge;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['metadata'], 'readwrite');
+            const store = transaction.objectStore('metadata');
 
+            // Count total metadata entries
+            const countRequest = store.count();
+            countRequest.onsuccess = async () => {
+                const totalCount = countRequest.result;
+
+                // Only cleanup if we exceed capacity
+                if (totalCount > this.maxMetadataEvents) {
+                    const excess = totalCount - this.maxMetadataEvents;
+                    console.log(`[EventStorage] Metadata over capacity (${totalCount}/${this.maxMetadataEvents}), removing ${excess} oldest entries`);
+                    await this.deleteOldestMetadata(excess);
+                    this.stats.metadataCount = await this.countMetadata();
+                    this.stats.lastCleanup = new Date();
+                    this.persistStats(); // Persist cleanup timestamp
+                    resolve(excess);
+                } else {
+                    // Under capacity, no cleanup needed
+                    this.stats.metadataCount = totalCount;
+                    resolve(0);
+                }
+            };
+
+            countRequest.onerror = () => {
+                console.error('[EventStorage] Error counting metadata for cleanup:', countRequest.error);
+                reject(countRequest.error);
+            };
+        });
+    }
+
+    /**
+     * Delete oldest metadata entries by timestamp
+     */
+    async deleteOldestMetadata(count) {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(['metadata'], 'readwrite');
             const store = transaction.objectStore('metadata');
             const index = store.index('timestamp');
-            const range = IDBKeyRange.upperBound(cutoffTime);
+            const request = index.openCursor(); // Ascending order (oldest first)
 
-            const request = index.openCursor(range);
-            let deletedCount = 0;
+            let deleted = 0;
 
             request.onsuccess = (event) => {
                 const cursor = event.target.result;
-                if (cursor) {
+                if (cursor && deleted < count) {
                     cursor.delete();
-                    deletedCount++;
+                    deleted++;
                     cursor.continue();
                 } else {
-                    if (deletedCount > 0) {
-                        console.log(`[EventStorage] Cleaned up ${deletedCount} old metadata entries`);
+                    if (deleted > 0) {
+                        console.log(`[EventStorage] Deleted ${deleted} oldest metadata entries (over limit)`);
                     }
-                    this.stats.lastCleanup = new Date();
-                    this.persistStats(); // Persist cleanup timestamp
-                    resolve(deletedCount);
+                    resolve(deleted);
                 }
             };
 
             request.onerror = () => {
-                console.error('[EventStorage] Error cleaning metadata:', request.error);
+                console.error('[EventStorage] Error deleting oldest metadata:', request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Count metadata entries in IndexedDB
+     */
+    async countMetadata() {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['metadata'], 'readonly');
+            const store = transaction.objectStore('metadata');
+            const request = store.count();
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => {
+                console.error('[EventStorage] Error counting metadata:', request.error);
                 reject(request.error);
             };
         });

@@ -56,8 +56,8 @@ async def get_ui(
 
     # Extract user roles for authorization
     user_roles = current_user.get("roles", []) if current_user else []
-    is_admin = "admin" in user_roles
-    is_operator = "operator" in user_roles or is_admin
+    is_admin = settings.auth_role_admin in user_roles
+    is_operator = settings.auth_role_operator in user_roles or is_admin
 
     return templates.TemplateResponse(
         "index.html",
@@ -69,11 +69,13 @@ async def get_ui(
             "default_events_settings": default_events_settings,
             "default_events_gateways": default_events_gateways,
             "browser_queue_size": settings.browser_queue_size,
+            # Storage configuration for frontend
+            "storage_max_recent_events": settings.storage_max_recent_events,
+            "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
             "keycloak_url": settings.keycloak_url_external or settings.keycloak_url,
             "keycloak_realm": settings.keycloak_realm,
             "keycloak_client_id": settings.keycloak_client_id,
-            "auth_mode": settings.auth_mode,
             # User authorization info
             "user_authenticated": current_user is not None,
             "user_is_admin": is_admin,
@@ -99,8 +101,8 @@ async def get_timeline(
 
     # Extract user roles for authorization
     user_roles = current_user.get("roles", []) if current_user else []
-    is_admin = "admin" in user_roles
-    is_operator = "operator" in user_roles or is_admin
+    is_admin = settings.auth_role_admin in user_roles
+    is_operator = settings.auth_role_operator in user_roles or is_admin
 
     return templates.TemplateResponse(
         "html/timeline.html",
@@ -112,11 +114,13 @@ async def get_timeline(
             "default_events_settings": default_events_settings,
             "default_events_gateways": default_events_gateways,
             "browser_queue_size": settings.browser_queue_size,
+            # Storage configuration for frontend
+            "storage_max_recent_events": settings.storage_max_recent_events,
+            "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
             "keycloak_url": settings.keycloak_url_external or settings.keycloak_url,
             "keycloak_realm": settings.keycloak_realm,
             "keycloak_client_id": settings.keycloak_client_id,
-            "auth_mode": settings.auth_mode,
             # User authorization info
             "user_authenticated": current_user is not None,
             "user_is_admin": is_admin,
@@ -142,8 +146,8 @@ async def get_dashboard(
 
     # Extract user roles for authorization
     user_roles = current_user.get("roles", []) if current_user else []
-    is_admin = "admin" in user_roles
-    is_operator = "operator" in user_roles or is_admin
+    is_admin = settings.auth_role_admin in user_roles
+    is_operator = settings.auth_role_operator in user_roles or is_admin
 
     return templates.TemplateResponse(
         "html/dashboard.html",
@@ -155,11 +159,13 @@ async def get_dashboard(
             "default_events_settings": default_events_settings,
             "default_events_gateways": default_events_gateways,
             "browser_queue_size": settings.browser_queue_size,
+            # Storage configuration for frontend
+            "storage_max_recent_events": settings.storage_max_recent_events,
+            "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
             "keycloak_url": settings.keycloak_url_external or settings.keycloak_url,
             "keycloak_realm": settings.keycloak_realm,
             "keycloak_client_id": settings.keycloak_client_id,
-            "auth_mode": settings.auth_mode,
             # User authorization info
             "user_authenticated": current_user is not None,
             "user_is_admin": is_admin,
@@ -349,7 +355,7 @@ async def generate_events(
     # Only admin can use iterations > 1 or custom delay (non-default)
     # Default delay is 100ms, operators can use default settings (iterations=1, delay=100)
     if generator_request.iterations > 1 or generator_request.delay != 100:
-        if "admin" not in current_user.get("roles", []):
+        if settings.auth_role_admin not in current_user.get("roles", []):
             raise HTTPException(
                 status_code=403,
                 detail="Only administrators can use iterations > 1 or custom delay settings",
