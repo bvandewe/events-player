@@ -73,9 +73,9 @@ async def get_ui(
             "storage_max_recent_events": settings.storage_max_recent_events,
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
-            "keycloak_url": settings.keycloak_url_external or settings.keycloak_url,
-            "keycloak_realm": settings.keycloak_realm,
-            "keycloak_client_id": settings.keycloak_client_id,
+            "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
+            "oauth_realm": settings.oauth_realm,
+            "oauth_client_id": settings.oauth_client_id,
             # User authorization info
             "user_authenticated": current_user is not None,
             "user_is_admin": is_admin,
@@ -118,9 +118,9 @@ async def get_timeline(
             "storage_max_recent_events": settings.storage_max_recent_events,
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
-            "keycloak_url": settings.keycloak_url_external or settings.keycloak_url,
-            "keycloak_realm": settings.keycloak_realm,
-            "keycloak_client_id": settings.keycloak_client_id,
+            "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
+            "oauth_realm": settings.oauth_realm,
+            "oauth_client_id": settings.oauth_client_id,
             # User authorization info
             "user_authenticated": current_user is not None,
             "user_is_admin": is_admin,
@@ -163,9 +163,9 @@ async def get_dashboard(
             "storage_max_recent_events": settings.storage_max_recent_events,
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
-            "keycloak_url": settings.keycloak_url_external or settings.keycloak_url,
-            "keycloak_realm": settings.keycloak_realm,
-            "keycloak_client_id": settings.keycloak_client_id,
+            "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
+            "oauth_realm": settings.oauth_realm,
+            "oauth_client_id": settings.oauth_client_id,
             # User authorization info
             "user_authenticated": current_user is not None,
             "user_is_admin": is_admin,
@@ -217,20 +217,22 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
                 "roles": user.get("roles", []),
                 "groups": user.get("groups", []),
             },
-            "mode": "istio" if settings.auth_jwks_url and not settings.keycloak_url else "unknown",
+            "mode": (
+                "istio" if settings.auth_jwks_url and not settings.oauth_server_url else "unknown"
+            ),
         }
 
     return {
         "authenticated": False,
         "user": None,
-        "mode": "keycloak" if settings.keycloak_url else "none",
-        "keycloak_config": (
+        "mode": "oauth" if settings.oauth_server_url else "none",
+        "oauth_config": (
             {
-                "url": settings.keycloak_url_external or settings.keycloak_url,
-                "realm": settings.keycloak_realm,
-                "client_id": settings.keycloak_client_id,
+                "url": settings.oauth_server_url_external or settings.oauth_server_url,
+                "realm": settings.oauth_realm,
+                "client_id": settings.oauth_client_id,
             }
-            if settings.keycloak_url
+            if settings.oauth_server_url
             else None
         ),
     }
@@ -247,7 +249,7 @@ async def oauth_callback(callback_request: OAuthCallbackRequest):
     Exchange OAuth authorization code for access token.
 
     This endpoint is called by the frontend after the user completes
-    the OAuth flow with Keycloak.
+    the OAuth flow with the identity provider.
     """
     try:
         # Exchange code for token

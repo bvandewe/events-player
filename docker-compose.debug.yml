@@ -54,12 +54,12 @@ services:
       auth_role_operator: "operator" # Role name in JWT that grants operator privileges
       auth_role_user: "user" # Role name in JWT that grants user privileges
 
-      # Keycloak OAuth Configuration
-      keycloak_url: http://keycloak:8080
-      keycloak_url_external: http://localhost:8885
-      keycloak_realm: events-player
-      keycloak_client_id: events-player-web
-      keycloak_client_secret: ""
+      # OAuth/OIDC Configuration (works with any OIDC-compliant IDP like Keycloak, Auth0, Okta, etc.)
+      oauth_server_url: http://keycloak:8080 # OAuth server base URL (for backend API calls)
+      oauth_server_url_external: http://localhost:8885 # OAuth server URL for browser (frontend)
+      oauth_realm: events-player # OAuth realm/tenant name
+      oauth_client_id: events-player-web # OAuth client ID
+      oauth_client_secret: "" # OAuth client secret (optional for public clients)
     depends_on:
       - ui-builder
       - keycloak

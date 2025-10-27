@@ -109,7 +109,7 @@ For detailed authentication setup, see the [Authentication & Authorization](auth
 When `true`, all endpoints require valid authentication. When `false`, authentication is optional. The authentication method is auto-detected:
 
 - **Istio/Service Mesh**: JWT already validated by the mesh, user info extracted from headers
-- **Keycloak**: OAuth 2.0 + OIDC flow when Keycloak is configured
+- **OAuth/OIDC**: OAuth 2.0 + OIDC flow when OAuth/OIDC is configured
 - **None**: When no auth is configured, the application runs in open mode
 
 #### `AUTH_JWKS_URL`
@@ -117,7 +117,7 @@ When `true`, all endpoints require valid authentication. When `false`, authentic
 - **Description**: JWKS endpoint URL for JWT validation
 - **Type**: String (URL)
 - **Required**: When using Istio/Service Mesh authentication
-- **Example**: `AUTH_JWKS_URL=http://keycloak:8080/realms/events-player/protocol/openid-connect/certs`
+- **Example**: `AUTH_JWKS_URL=http://oauth server:8080/realms/events-player/protocol/openid-connect/certs`
 
 Provides public keys for JWT signature verification.
 
@@ -139,46 +139,46 @@ Must match the issuer in JWT tokens.
 
 The intended audience for the JWT token.
 
-#### `KEYCLOAK_URL`
+#### `OAUTH_SERVER_URL`
 
-- **Description**: Internal Keycloak URL (for backend)
+- **Description**: Internal OAuth/OIDC URL (for backend)
 - **Type**: String (URL)
-- **Required**: When using Keycloak authentication
-- **Example**: `KEYCLOAK_URL=http://keycloak:8080`
+- **Required**: When using OAuth/OIDC authentication
+- **Example**: `OAUTH_SERVER_URL=http://oauth server:8080`
 
 Used by backend for token exchange. Can be internal Docker hostname.
 
-#### `KEYCLOAK_URL_EXTERNAL`
+#### `OAUTH_SERVER_URL_EXTERNAL`
 
-- **Description**: External Keycloak URL (for frontend)
+- **Description**: External OAuth/OIDC URL (for frontend)
 - **Type**: String (URL)
-- **Required**: When using Keycloak authentication
-- **Example**: `KEYCLOAK_URL_EXTERNAL=http://localhost:8090`
+- **Required**: When using OAuth/OIDC authentication
+- **Example**: `OAUTH_SERVER_URL_EXTERNAL=http://localhost:8090`
 
 URL accessible from browsers for OAuth redirects.
 
-#### `KEYCLOAK_REALM`
+#### `OAUTH_REALM`
 
-- **Description**: Keycloak realm name
+- **Description**: OAuth/OIDC realm name
 - **Type**: String
 - **Default**: `"events-player"`
-- **Example**: `KEYCLOAK_REALM=events-player`
+- **Example**: `OAUTH_REALM=events-player`
 
-#### `KEYCLOAK_CLIENT_ID`
+#### `OAUTH_CLIENT_ID`
 
-- **Description**: Keycloak client ID for the web application
+- **Description**: OAuth/OIDC client ID for the web application
 - **Type**: String
 - **Default**: `"events-player-web"`
-- **Example**: `KEYCLOAK_CLIENT_ID=events-player-web`
+- **Example**: `OAUTH_CLIENT_ID=events-player-web`
 
 Must be a public client configured with PKCE support.
 
-#### `KEYCLOAK_CLIENT_SECRET`
+#### `OAUTH_CLIENT_SECRET`
 
 - **Description**: Client secret (leave empty for public clients)
 - **Type**: String
 - **Default**: `""`
-- **Example**: `KEYCLOAK_CLIENT_SECRET=`
+- **Example**: `OAUTH_CLIENT_SECRET=`
 
 Public clients using PKCE don't require a client secret.
 

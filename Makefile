@@ -42,7 +42,7 @@ docker-build: ## Build Docker image
 	@echo "Building Docker image..."
 	docker-compose -f docker-compose.debug.yml build
 
-docker-dev: ## Build Docker image
+docker-dev: ## Build and start Docker image
 	@echo "Building and running Docker image..."
 	docker-compose -f docker-compose.debug.yml up --build -d
 
