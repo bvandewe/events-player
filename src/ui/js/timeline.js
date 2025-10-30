@@ -13,7 +13,7 @@ import {
     Legend
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 
 // Register Chart.js components
 Chart.register(
@@ -71,9 +71,13 @@ const timelineController = (() => {
 
     // Stats elements
     let statTotalEvents;
+    let statTotalEventsTime;
     let statPeakRate;
+    let statPeakRateTime;
     let statAvgRate;
+    let statAvgRateTime;
     let statQuietPeriods;
+    let statQuietPeriodsSize;
 
     /**
      * Initialize the timeline view
@@ -87,9 +91,13 @@ const timelineController = (() => {
         // Initialize DOM element references
         bucketSizeSelect = document.getElementById('bucketSize');
         statTotalEvents = document.getElementById('statTotalEvents');
+        statTotalEventsTime = document.getElementById('statTotalEventsTime');
         statPeakRate = document.getElementById('statPeakRate');
+        statPeakRateTime = document.getElementById('statPeakRateTime');
         statAvgRate = document.getElementById('statAvgRate');
+        statAvgRateTime = document.getElementById('statAvgRateTime');
         statQuietPeriods = document.getElementById('statQuietPeriods');
+        statQuietPeriodsSize = document.getElementById('statQuietPeriodsSize');
 
         // Initialize storage manager
         await storageManager.init();
@@ -331,8 +339,12 @@ const timelineController = (() => {
 
             console.log('[Timeline] Filtered data:', filteredData ? filteredData.length : 'null', 'buckets');
 
+            // Get events for additional statistics
+            const events = await storageManager.getRecentEvents(1); // Get most recent event
+            const lastEvent = events && events.length > 0 ? events[0] : null;
+
             // Calculate and update statistics (using all data including zeros)
-            updateStatistics(filteredData, bucketSize);
+            updateStatistics(filteredData, bucketSize, lastEvent);
 
             // Filter out zero buckets for display only
             const displayData = filteredData.filter(bucket => bucket.count > 0);
@@ -393,12 +405,16 @@ const timelineController = (() => {
     /**
      * Calculate and update statistics
      */
-    function updateStatistics(data, bucketSizeMs) {
+    function updateStatistics(data, bucketSizeMs, lastEvent) {
         if (data.length === 0) {
             statTotalEvents.textContent = '0';
+            statTotalEventsTime.textContent = '';
             statPeakRate.textContent = '0/min';
+            statPeakRateTime.textContent = '';
             statAvgRate.textContent = '0/min';
+            statAvgRateTime.textContent = '';
             statQuietPeriods.textContent = '0';
+            statQuietPeriodsSize.textContent = '';
             return;
         }
 
@@ -406,19 +422,55 @@ const timelineController = (() => {
         const total = data.reduce((sum, bucket) => sum + bucket.count, 0);
         statTotalEvents.textContent = total.toLocaleString();
 
+        // Last event received time
+        if (lastEvent && lastEvent.timestamp) {
+            const lastEventTime = new Date(lastEvent.timestamp);
+            statTotalEventsTime.textContent = `Last event: ${formatDistanceToNow(lastEventTime, { addSuffix: true })}`;
+        } else {
+            statTotalEventsTime.textContent = '';
+        }
+
         // Peak rate (normalize to events per minute)
         const peak = Math.max(...data.map(b => b.count));
         const peakPerMinute = Math.round((peak / bucketSizeMs) * 60000);
         statPeakRate.textContent = `${peakPerMinute}/min`;
+
+        // Find the timestamp(s) of the peak bucket(s)
+        const peakBuckets = data.filter(b => b.count === peak);
+        if (peakBuckets.length > 0) {
+            if (peakBuckets.length === 1) {
+                const peakTime = new Date(peakBuckets[0].timestamp);
+                statPeakRateTime.textContent = peakTime.toLocaleString();
+            } else {
+                // Multiple peaks - show count
+                statPeakRateTime.textContent = `${peakBuckets.length} occurrences`;
+            }
+        } else {
+            statPeakRateTime.textContent = '';
+        }
 
         // Average rate
         const avgPerBucket = total / data.length;
         const avgPerMinute = Math.round((avgPerBucket / bucketSizeMs) * 60000);
         statAvgRate.textContent = `${avgPerMinute}/min`;
 
+        // Last updated (current time)
+        statAvgRateTime.textContent = `Updated: ${formatDistanceToNow(new Date(), { addSuffix: true })}`;
+
         // Quiet periods (buckets with 0 events)
         const quietPeriods = data.filter(b => b.count === 0).length;
         statQuietPeriods.textContent = quietPeriods.toLocaleString();
+
+        // Bucket size description
+        const bucketSizeLabels = {
+            60000: '1 minute buckets',
+            300000: '5 minute buckets',
+            900000: '15 minute buckets',
+            3600000: '1 hour buckets',
+            21600000: '6 hour buckets',
+            86400000: '1 day buckets'
+        };
+        statQuietPeriodsSize.textContent = bucketSizeLabels[bucketSizeMs] || `${bucketSizeMs}ms buckets`;
     }
 
     /**

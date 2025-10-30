@@ -24,7 +24,15 @@
     <main class="container-fluid p-4">
         <div class="row mb-4">
             <div class="col text-center">
-                <h2 class="mb-3">Metrics Dashboard</h2>
+                <h2 class="mb-3">
+                    Metrics Dashboard
+                    <span id="dashboardFilterIndicator" class="d-none align-middle ms-2">
+                        <span class="badge rounded-circle bg-danger p-2" style="width: 10px; height: 10px;" data-bs-toggle="tooltip" data-bs-title="Filters active"></span>
+                        <button id="dashboardFilterClearBtn" class="btn btn-sm btn-outline-secondary border-0 py-0 px-2 ms-1" data-bs-toggle="tooltip" data-bs-title="Clear all filters" style="font-size: 0.75rem;">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </span>
+                </h2>
                 <p class="text-secondary">
                     Monitor event patterns, distributions, and activity metrics
                 </p>
@@ -41,6 +49,7 @@
                             <div>
                                 <h6 class="card-subtitle mb-2 text-white-50">Total Events</h6>
                                 <h2 class="card-title mb-0" id="statTotalEvents">0</h2>
+                                <small class="text-white-50" id="statTotalEventsTime"></small>
                             </div>
                             <i class="bi bi-collection fs-1 text-white-50"></i>
                         </div>
@@ -57,6 +66,7 @@
                                 <h6 class="card-subtitle mb-2 text-white-50">Avg Rate</h6>
                                 <h2 class="card-title mb-0" id="statAvgRate">0</h2>
                                 <small class="text-white-50">events/min</small>
+                                <small class="text-white-50 d-block" id="statAvgRateTime"></small>
                             </div>
                             <i class="bi bi-speedometer2 fs-1 text-white-50"></i>
                         </div>
@@ -72,6 +82,7 @@
                             <div>
                                 <h6 class="card-subtitle mb-2 text-white-50">Event Types</h6>
                                 <h2 class="card-title mb-0" id="statUniqueTypes">0</h2>
+                                <small class="text-white-50" id="statUniqueTypesInfo"></small>
                             </div>
                             <i class="bi bi-diagram-3 fs-1 text-white-50"></i>
                         </div>
@@ -87,6 +98,7 @@
                             <div>
                                 <h6 class="card-subtitle mb-2 text-white-50">Event Sources</h6>
                                 <h2 class="card-title mb-0" id="statUniqueSources">0</h2>
+                                <small class="text-white-50" id="statUniqueSourcesInfo"></small>
                             </div>
                             <i class="bi bi-hdd-stack fs-1 text-white-50"></i>
                         </div>

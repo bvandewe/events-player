@@ -2,7 +2,15 @@
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col text-center">
-            <h2 class="mb-3">Event Stream</h2>
+            <h2 class="mb-3">
+                Event Stream
+                <span id="eventsFilterIndicator" class="d-none align-middle ms-2">
+                    <span class="badge rounded-circle bg-danger p-2" style="width: 10px; height: 10px;" data-bs-toggle="tooltip" data-bs-title="Filters active"></span>
+                    <button id="eventsFilterClearBtn" class="btn btn-sm btn-outline-secondary border-0 py-0 px-2 ms-1" data-bs-toggle="tooltip" data-bs-title="Clear all filters" style="font-size: 0.75rem;">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </span>
+            </h2>
             <p class="text-secondary mb-0">Real-time view of incoming CloudEvents with full details and search capabilities</p>
         </div>
     </div>

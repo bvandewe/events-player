@@ -48,7 +48,7 @@ export const sseEventsController = (() => {
 
         // create type badge (left-aligned)
         const typeBadge = document.createElement('span');
-        typeBadge.classList.add('badge', 'text-bg-success', 'p-1', 'text-truncate', 'me-auto');
+        typeBadge.classList.add('badge', 'text-bg-success', 'p-1', 'text-truncate', 'me-auto', 'ms-2');
         typeBadge.textContent = eventType;
         typeBadge.style.maxWidth = '33%';
 
@@ -60,7 +60,7 @@ export const sseEventsController = (() => {
 
         // create subject badge (right-aligned)
         const subjectBadge = document.createElement('span');
-        subjectBadge.classList.add('badge', 'text-bg-warning', 'p-1', 'text-truncate', 'ms-auto');
+        subjectBadge.classList.add('badge', 'text-bg-warning', 'p-1', 'text-truncate', 'ms-auto', 'me-2');
         subjectBadge.textContent = eventSubject || '(none)';
         subjectBadge.style.maxWidth = '33%';
 
