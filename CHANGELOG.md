@@ -1,5 +1,45 @@
 # CHANGE LOG
 
+## 0.3.5 - 2025-10-30
+
+### Features
+
+#### Role Display Enhancement
+
+- Display only highest relevant role in user dropdown instead of all JWT roles
+- Reduces UI clutter when users have many Keycloak roles assigned
+- Priority order: admin > operator > user
+- Backend now provides role mappings to frontend via `/api/auth/info` endpoint
+- Frontend determines and displays single badge for highest application role
+
+### Bug Fixes
+
+#### Authentication & Token Management
+
+- Fixed token refresh not updating role mappings in frontend
+- After token refresh, now re-fetches auth info to get current role mappings and user data
+- Fixed JWKS auto-refresh when signing key not found during Keycloak key rotation
+- Invalidates JWKS cache and retries when token kid not found in current key set
+- Prevents 401 errors when users have tokens signed with newly rotated keys
+- Fixed OAuth redirect URL missing `/auth` prefix for old Keycloak versions (pre-v17)
+- Old Keycloak requires `/auth/realms/{realm}/...` URL format
+
+#### Error Handling
+
+- Fixed toast error "Cannot read properties of undefined (reading 'join')"
+- Toast now handles three error message formats:
+  - FastAPI validation errors: `{detail: [{type, msg, loc}]}`
+  - String error messages: `{detail: "Authentication required"}`
+  - Unknown formats: JSON stringified as fallback
+- Prevents JavaScript errors when displaying simple error messages
+
+#### Code Quality
+
+- Fixed Pylance type checking errors for JWT exceptions
+- Import `ExpiredSignatureError` and `JWTClaimsError` from `jose.exceptions` instead of `jwt` module
+- Removed unused `BaseHTTPMiddleware` import
+- Improved code maintainability and IDE support
+
 ## 0.3.4 - 2025-10-27
 
 ### Configuration
