@@ -1,6 +1,0 @@
-virtualService:
-  host: test-events.k.ccie.cisco.com
-environment:
-  api_log_level: DEBUG
-  api_default_generator_gateways: '{\"urls\": [\"http://localhost/events/pub\", \"http://gateway-mozart.cloud-streams/api/events/pub\", \"http://gateway-sessions.cloud-streams/api/events/pub\", \"http://gateway-infra.cloud-streams/api/events/pub\"]}'
-  api_browser_queue_size: 3000
