@@ -20,11 +20,10 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 
 import httpx
-from jose import jwt, JWTError, jwk
-from jose.exceptions import JWKError
+from jose import jwt, jwk
+from jose.exceptions import JWTError, JWKError, ExpiredSignatureError, JWTClaimsError
 from fastapi import Request, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from .settings import settings
 
@@ -194,10 +193,10 @@ class JWTValidator:
             logger.debug(f"Token validated for user: {payload.get('sub', 'unknown')}")
             return payload
 
-        except jwt.ExpiredSignatureError:
+        except ExpiredSignatureError:
             logger.warning("Token has expired")
             raise HTTPException(status_code=401, detail="Token has expired")
-        except jwt.JWTClaimsError as e:
+        except JWTClaimsError as e:
             logger.warning(f"Invalid token claims: {e}")
             raise HTTPException(status_code=401, detail=f"Invalid token claims: {str(e)}")
         except JWTError as e:
