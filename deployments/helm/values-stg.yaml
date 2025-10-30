@@ -1,6 +1,0 @@
-virtualService:
-  host: test-events.sj.ccie.cisco.com
-environment:
-  api_log_level: INFO 
-  api_default_generator_gateways: '{\"urls\": [\"http://localhost/events/pub\", \"http://lds-sessions-adapter.mozart/api/v1/events/pub\", \"http://lds-sessions-adapter.sj.ccie.cisco.com/api/v1/events/pub\"]}'
-  api_browser_queue_size: 2000

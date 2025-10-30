@@ -20,7 +20,7 @@ player:
     port: 8080
   env:
     # Application Settings
-    tag: "v0.3.4"
+    repository_url: "https://github.com/bvandewe/events-player"
     log_level: "INFO"
     log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     

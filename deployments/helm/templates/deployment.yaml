@@ -24,7 +24,9 @@ spec:
           env:
             # Application Settings
             - name: tag
-              value: "{{ .Values.player.env.tag }}"
+              value: "{{ .Values.player.image.tag }}"
+            - name: repository_url
+              value: "{{ .Values.player.env.repository_url }}"
             - name: log_level
               value: "{{ .Values.player.env.log_level }}"
             - name: log_format
