@@ -44,7 +44,7 @@ class AuthManager {
             console.log('[Auth] Already initialized, skipping...');
             return;
         }
-        
+
         console.log('[Auth] Initializing authentication manager...');
 
         // 1. Check for existing JWT in sessionStorage
@@ -130,7 +130,7 @@ class AuthManager {
 
         // Start periodic token validation (every 60 seconds)
         this.startTokenValidation();
-        
+
         // Mark as initialized
         this.initialized = true;
         console.log('[Auth] Initialization complete');
