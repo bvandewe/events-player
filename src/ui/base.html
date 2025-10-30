@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <title>{% block title %}CloudEvents Player{% endblock %}</title>
+    <link rel="stylesheet" href="{% block scss_path %}scss/app.scss{% endblock %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa&family=Roboto">
+    <link rel="stylesheet" href="{% block bootstrap_icons %}../../node_modules/bootstrap-icons/font/bootstrap-icons.css{% endblock %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% block favicon_32 %}img/favicon-32x32.ico{% endblock %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% block favicon_16 %}img/favicon-16x16.ico{% endblock %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body data-bs-theme="dark" 
+      data-browser_queue_size="{{ browser_queue_size }}"
+      data-storage-max-recent-events="{{ storage_max_recent_events }}"
+      data-storage-max-metadata-events="{{ storage_max_metadata_events }}"
+      data-auth-required="{{ auth_required }}"
+      data-oauth-url="{{ oauth_url }}"
+      data-oauth-realm="{{ oauth_realm }}"
+      data-oauth-client-id="{{ oauth_client_id }}">
+
+    {% include "html/nav.html" %}
+    
+    {% block content %}{% endblock %}
+    
+    {% include "html/footer.html" %}
+    {% include "html/filters-panel.html" %}
+    {% include "html/offcanvas.html" %}
+    {% include "html/help.html" %}
+    {% include "html/toast.html" %}
+    {% include "html/confirm.html" %}
+    {% include "html/clearStorageModal.html" %}
+    {% include "html/tasksModal.html" %}
+    {% include "html/clientsModal.html" %}
+    
+    <!-- Common app initialization - loads authentication, storage, etc -->
+    <script type="module" src="{% block app_js %}js/app.js{% endblock %}"></script>
+    <!-- Page-specific scripts -->
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
