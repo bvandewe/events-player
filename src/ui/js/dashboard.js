@@ -921,6 +921,45 @@ const dashboardController = (() => {
                     config.options.plugins.legend.display = true;
                 }
 
+                // Re-add onClick handlers (lost during JSON serialization)
+                switch (chartId) {
+                    case 'eventsPerMinuteChart':
+                        config.options.onClick = (event, activeElements) => {
+                            if (activeElements.length > 0) {
+                                const dataIndex = activeElements[0].index;
+                                const timestamp = config.data.datasets[0].data[dataIndex].x;
+                                handleTimeRangeClick(timestamp, 60000); // 1 minute bucket
+                            }
+                        };
+                        break;
+                    case 'topTypesChart':
+                        config.options.onClick = (event, activeElements) => {
+                            if (activeElements.length > 0) {
+                                const dataIndex = activeElements[0].index;
+                                const eventType = config.data.labels[dataIndex];
+                                handleTypeClick(eventType);
+                            }
+                        };
+                        break;
+                    case 'topSourcesChart':
+                        config.options.onClick = (event, activeElements) => {
+                            if (activeElements.length > 0) {
+                                const dataIndex = activeElements[0].index;
+                                const eventSource = config.data.labels[dataIndex];
+                                handleSourceClick(eventSource);
+                            }
+                        };
+                        break;
+                    case 'hourlyDistributionChart':
+                        config.options.onClick = (event, activeElements) => {
+                            if (activeElements.length > 0) {
+                                const dataIndex = activeElements[0].index;
+                                handleHourClick(dataIndex);
+                            }
+                        };
+                        break;
+                }
+
                 // Show modal
                 if (!bsModal) {
                     bsModal = new bootstrap.Modal(modal);
