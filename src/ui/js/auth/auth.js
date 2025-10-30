@@ -26,6 +26,7 @@ class AuthManager {
         this.tokenCheckInterval = null; // For periodic token validation
         this.authRequired = false; // Track if auth is required from backend
         this.roleMappings = null; // Store role mappings from backend (admin, operator, user)
+        this.initialized = false; // Track if already initialized
     }
 
     /**
@@ -38,6 +39,12 @@ class AuthManager {
      * 4. Handles OAuth callback if present
      */
     async init() {
+        // Make init() idempotent - safe to call multiple times
+        if (this.initialized) {
+            console.log('[Auth] Already initialized, skipping...');
+            return;
+        }
+        
         console.log('[Auth] Initializing authentication manager...');
 
         // 1. Check for existing JWT in sessionStorage
@@ -123,6 +130,10 @@ class AuthManager {
 
         // Start periodic token validation (every 60 seconds)
         this.startTokenValidation();
+        
+        // Mark as initialized
+        this.initialized = true;
+        console.log('[Auth] Initialization complete');
     }
 
     /**
@@ -671,6 +682,7 @@ class AuthManager {
      * Render authentication UI
      */
     renderAuthUI() {
+        console.log('[Auth] renderAuthUI called - mode:', this.mode, 'token:', !!this.token, 'userInfo:', !!this.userInfo, 'authRequired:', this.authRequired);
         const authContainer = document.getElementById('authContainer');
         if (!authContainer) {
             console.warn('[Auth] authContainer not found in DOM');
