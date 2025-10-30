@@ -197,6 +197,15 @@ class AuthManager {
 
             if (response.ok) {
                 const data = await response.json();
+
+                // Store auth_required status from backend
+                this.authRequired = data.auth_required !== undefined ? data.auth_required : false;
+
+                // Store role mappings from backend
+                if (data.role_mappings) {
+                    this.roleMappings = data.role_mappings;
+                }
+
                 if (data.authenticated) {
                     this.userInfo = data.user;
                     return true;

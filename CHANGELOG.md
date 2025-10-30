@@ -1,5 +1,24 @@
 # CHANGE LOG
 
+## 0.3.6 - 2025-10-30
+
+### Bug Fixes
+
+#### Authentication UI
+
+- **Fixed authentication icon showing gear instead of user profile when authenticated**
+- Root cause: `validateToken()` method fetched `/api/auth/info` but only extracted `userInfo`, not `authRequired` flag
+- Result: UI displayed "admin features only" mode (gear icon) even when user was fully authenticated
+- Solution: Extract both `authRequired` and `roleMappings` from auth info response during token validation
+- Authentication UI now correctly displays user profile with role badge and logout option across all views
+
+#### Template System
+
+- Reverted attempted Jinja2 template inheritance approach that broke Parcel compilation
+- Restored multi-page architecture with standalone HTML files for each view (events, timeline, dashboard)
+- Parcel now correctly compiles all HTML templates to `static/` directory
+- Fixed timeline and dashboard views returning raw unprocessed templates
+
 ## 0.3.5 - 2025-10-30
 
 ### Features
