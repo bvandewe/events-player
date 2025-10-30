@@ -87,14 +87,8 @@ const dashboardController = (() => {
     async function init() {
         console.log('[Dashboard] Initializing...');
 
-        // Initialize authentication
-        try {
-            await authManager.init();
-            console.log('[Dashboard] Authentication initialized');
-            authorizationManager.init(authManager);
-        } catch (error) {
-            console.error('[Dashboard] Failed to initialize authentication:', error);
-        }
+        // Note: Authentication is initialized by app.js which loads first
+        // authManager and authorizationManager are available as shared instances
 
         // Initialize DOM element references
         statTotalEvents = document.getElementById('statTotalEvents');

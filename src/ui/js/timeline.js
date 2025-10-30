@@ -81,14 +81,8 @@ const timelineController = (() => {
     async function init() {
         console.log('[Timeline] Initializing...');
 
-        // Initialize authentication
-        try {
-            await authManager.init();
-            console.log('[Timeline] Authentication initialized');
-            authorizationManager.init(authManager);
-        } catch (error) {
-            console.error('[Timeline] Failed to initialize authentication:', error);
-        }
+        // Note: Authentication is initialized by app.js which loads first
+        // authManager and authorizationManager are available as shared instances
 
         // Initialize DOM element references
         bucketSizeSelect = document.getElementById('bucketSize');
