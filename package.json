@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "This micro-app can be used as a test subscriber and/or emitter of [CloudEvents](https://cloudevents.io/).",
   "scripts": {
-    "start": "npm run copy && parcel serve src/ui/index.html src/ui/html/timeline.html src/ui/html/*.html --public-url /static/ --dist-dir static",
-    "dev": "npm run copy && parcel serve src/ui/index.html src/ui/html/timeline.html src/ui/html/*.html --public-url /static/ --dist-dir static --hmr-port 1234",
-    "build": "npm run copy && parcel build src/ui/index.html src/ui/html/timeline.html src/ui/html/*.html --public-url /static/ --dist-dir static --no-scope-hoist",
+    "start": "npm run copy && parcel serve src/ui/index.html --public-url /static/ --dist-dir static",
+    "dev": "npm run copy && parcel serve src/ui/index.html --public-url /static/ --dist-dir static --hmr-port 1234",
+    "build": "npm run copy && parcel build src/ui/index.html --public-url /static/ --dist-dir static --no-scope-hoist",
     "copy": "copyfiles -f src/ui/img/*.* static/img"
   },
   "repository": {
