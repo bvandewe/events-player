@@ -37,14 +37,23 @@ storageManager.init().then(() => {
     console.error('[App] Failed to initialize storage manager:', error);
 });
 
-authManager.init().then(() => {
-    console.log('[App] Authentication initialized');
+// Wait for DOM to be ready before initializing auth UI
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuth);
+} else {
+    initAuth();
+}
 
-    // Initialize authorization based on user roles
-    authorizationManager.init(authManager);
-}).catch(error => {
-    console.error('[App] Failed to initialize authentication:', error);
-});
+function initAuth() {
+    authManager.init().then(() => {
+        console.log('[App] Authentication initialized');
+
+        // Initialize authorization based on user roles
+        authorizationManager.init(authManager);
+    }).catch(error => {
+        console.error('[App] Failed to initialize authentication:', error);
+    });
+}
 
 var browser_queue_size = bodyElement.getAttribute("data-browser_queue_size");
 
