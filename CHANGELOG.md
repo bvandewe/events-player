@@ -1,5 +1,24 @@
 # CHANGE LOG
 
+## 0.3.7 - 2025-10-30
+
+### Improvements
+
+#### UI/UX Enhancements
+
+- **Badge alignment**: Event type badge now aligned left, source badge centered, and subject badge aligned right in event list
+- **Quick filter buttons**: Added discreet filter buttons (type, source, subject) to each event header for quick filtering
+  - Buttons visible to all users regardless of authorization level
+  - One-click filtering with toast notification feedback
+- **Bootstrap tooltips**: Replaced all native browser tooltips with Bootstrap tooltips for better styling and UX
+  - Smoother animations and consistent look across the application
+  - Applied to filter buttons, connection status, admin controls, and more
+- **Filter indicator improvement**: Removed intrusive filter banner, replaced with enhanced tooltip on Filters nav item
+  - Displays detailed list of active filters on hover
+  - Cleaner interface without blocking content
+- **Authorization UX**: Removed distracting tooltip from restricted event headers for unauthorized users
+  - Cursor change to "not-allowed" provides sufficient visual feedback
+
 ## 0.3.6 - 2025-10-30
 
 ### Bug Fixes
