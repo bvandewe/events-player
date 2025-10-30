@@ -49,7 +49,7 @@ class JWTValidator:
     @lru_cache(maxsize=1)
     def _get_jwks_url(self) -> str:
         """Get JWKS URL from settings."""
-        return settings.auth_jwks_url
+        return settings.get_auth_jwks_url()
 
     async def _fetch_jwks(self) -> Dict[str, Any]:
         """
@@ -181,11 +181,12 @@ class JWTValidator:
                 "verify_aud": settings.auth_audience != "",
             }
 
+            auth_issuer = settings.get_auth_issuer()
             payload = jwt.decode(
                 token,
                 signing_key,
                 algorithms=[settings.auth_algorithm],
-                issuer=settings.auth_issuer if settings.auth_issuer else None,
+                issuer=auth_issuer if auth_issuer else None,
                 audience=settings.auth_audience if settings.auth_audience else None,
                 options=options,
             )
