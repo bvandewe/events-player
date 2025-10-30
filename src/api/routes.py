@@ -239,6 +239,11 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
             "mode": (
                 "istio" if settings.auth_jwks_url and not settings.oauth_server_url else "unknown"
             ),
+            "role_mappings": {
+                "admin": settings.auth_role_admin,
+                "operator": settings.auth_role_operator,
+                "user": settings.auth_role_user,
+            },
         }
 
     return {
@@ -255,6 +260,11 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
             if settings.oauth_server_url
             else None
         ),
+        "role_mappings": {
+            "admin": settings.auth_role_admin,
+            "operator": settings.auth_role_operator,
+            "user": settings.auth_role_user,
+        },
     }
 
 
