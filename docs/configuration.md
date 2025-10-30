@@ -156,21 +156,21 @@ The intended audience for the JWT token.
 
 #### `OAUTH_SERVER_URL`
 
-- **Description**: Internal OAuth/OIDC URL (for backend)
+- **Description**: OAuth/OIDC server URL
 - **Type**: String (URL)
 - **Required**: When using OAuth/OIDC authentication
-- **Example**: `OAUTH_SERVER_URL=http://oauth server:8080`
+- **Example**: `OAUTH_SERVER_URL=https://keycloak.example.com`
 
-Used by backend for token exchange. Can be internal Docker hostname.
+The base URL of your OAuth/OIDC server. This URL should be accessible from browsers for OAuth redirects and from the backend for token exchange. For old Keycloak versions (< v17), set `OAUTH_LEGACY_KEYCLOAK=true` to automatically add the `/auth` prefix.
 
-#### `OAUTH_SERVER_URL_EXTERNAL`
+#### `OAUTH_LEGACY_KEYCLOAK`
 
-- **Description**: External OAuth/OIDC URL (for frontend)
-- **Type**: String (URL)
-- **Required**: When using OAuth/OIDC authentication
-- **Example**: `OAUTH_SERVER_URL_EXTERNAL=http://localhost:8090`
+- **Description**: Enable legacy Keycloak URL format (< v17)
+- **Type**: Boolean
+- **Default**: `false`
+- **Example**: `OAUTH_LEGACY_KEYCLOAK=true`
 
-URL accessible from browsers for OAuth redirects.
+Set to `true` for Keycloak versions before v17 that require `/auth` prefix in URLs. When enabled, the application automatically converts `https://keycloak.example.com` to `https://keycloak.example.com/auth` for all OAuth endpoints.
 
 #### `OAUTH_REALM`
 

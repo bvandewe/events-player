@@ -98,9 +98,13 @@ def custom_openapi():
     )
 
     # Add security schemes if OAuth is configured
-    if settings.oauth_server_url_external and settings.oauth_client_id:
-        auth_url = f"{settings.oauth_server_url_external}/realms/{settings.oauth_realm}/protocol/openid-connect/auth"
-        token_url = f"{settings.oauth_server_url_external}/realms/{settings.oauth_realm}/protocol/openid-connect/token"
+    if settings.oauth_server_url and settings.oauth_client_id:
+        auth_url = (
+            f"{settings.oauth_base_url}/realms/{settings.oauth_realm}/protocol/openid-connect/auth"
+        )
+        token_url = (
+            f"{settings.oauth_base_url}/realms/{settings.oauth_realm}/protocol/openid-connect/token"
+        )
 
         # Ensure components exists
         if "components" not in openapi_schema:

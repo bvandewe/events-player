@@ -79,7 +79,7 @@ async def get_ui(
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
             "auth_required": settings.auth_required,
-            "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
+            "oauth_url": settings.oauth_base_url,
             "oauth_realm": settings.oauth_realm,
             "oauth_client_id": settings.oauth_client_id,
             # User authorization info
@@ -130,7 +130,7 @@ async def get_timeline(
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
             "auth_required": settings.auth_required,
-            "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
+            "oauth_url": settings.oauth_base_url,
             "oauth_realm": settings.oauth_realm,
             "oauth_client_id": settings.oauth_client_id,
             # User authorization info
@@ -181,7 +181,7 @@ async def get_dashboard(
             "storage_max_metadata_events": settings.storage_max_metadata_events,
             # Auth configuration for frontend
             "auth_required": settings.auth_required,
-            "oauth_url": settings.oauth_server_url_external or settings.oauth_server_url,
+            "oauth_url": settings.oauth_base_url,
             "oauth_realm": settings.oauth_realm,
             "oauth_client_id": settings.oauth_client_id,
             # User authorization info
@@ -253,7 +253,7 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
         "mode": "oauth" if settings.oauth_server_url else "none",
         "oauth_config": (
             {
-                "url": settings.oauth_server_url_external or settings.oauth_server_url,
+                "url": settings.oauth_base_url,
                 "realm": settings.oauth_realm,
                 "client_id": settings.oauth_client_id,
             }
