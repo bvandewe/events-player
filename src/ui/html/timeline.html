@@ -1,153 +1,180 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <title>Timeline - CloudEvents Player</title>
+    <link rel="stylesheet" href="../scss/app.scss">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa&family=Roboto">
+    <link rel="stylesheet" href="../../../node_modules/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.ico">
+</head>
+<body data-bs-theme="dark" 
+      data-browser_queue_size="{{ browser_queue_size }}"
+      data-auth_mode="{{ auth_mode }}"
+      data-auth_issuer="{{ keycloak_url }}/realms/{{ keycloak_realm }}"
+      data-auth_client_id="{{ keycloak_client_id }}"
+      data-auth_redirect_uri="{{ request.url.scheme }}://{{ request.url.netloc }}/timeline">
 
-{% block title %}Timeline - CloudEvents Player{% endblock %}
+    {% include "html/nav.html" %}
 
-{% block scss_path %}../scss/app.scss{% endblock %}
-{% block bootstrap_icons %}../../../node_modules/bootstrap-icons/font/bootstrap-icons.css{% endblock %}
-{% block favicon_32 %}../img/favicon-32x32.ico{% endblock %}
-{% block favicon_16 %}../img/favicon-16x16.ico{% endblock %}
-{% block app_js %}../js/app.js{% endblock %}
-
-{% block content %}
-<!-- Main Content -->
-<main class="container-fluid p-4">
-    <div class="row mb-4">
-        <div class="col text-center">
-            <h2 class="mb-3">Event Activity Timeline</h2>
-            <p class="text-secondary">
-                Visualize event activity and identify patterns over time
-            </p>
+    <!-- Main Content -->
+    <main class="container-fluid p-4">
+        <div class="row mb-4">
+            <div class="col text-center">
+                <h2 class="mb-3">Event Activity Timeline</h2>
+                <p class="text-secondary">
+                    Visualize event activity and identify patterns over time
+                </p>
+            </div>
         </div>
-    </div>
 
-    <!-- Chart -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-activity text-primary"></i> Event Activity Over Time
-                    </h5>
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <label for="bucketSize" class="form-label mb-0 small">Granularity:</label>
-                            <select class="form-select form-select-sm" id="bucketSize" style="width: auto;">
-                                <option value="10000">10 seconds</option>
-                                <option value="30000">30 seconds</option>
-                                <option value="60000" selected>1 minute</option>
-                                <option value="300000">5 minutes</option>
-                                <option value="600000">10 minutes</option>
-                                <option value="1800000">30 minutes</option>
-                                <option value="3600000">1 hour</option>
-                            </select>
+        <!-- Chart -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-activity text-primary"></i> Event Activity Over Time
+                        </h5>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="bucketSize" class="form-label mb-0 small">Granularity:</label>
+                                <select class="form-select form-select-sm" id="bucketSize" style="width: auto;">
+                                    <option value="10000">10 seconds</option>
+                                    <option value="30000">30 seconds</option>
+                                    <option value="60000" selected>1 minute</option>
+                                    <option value="300000">5 minutes</option>
+                                    <option value="600000">10 minutes</option>
+                                    <option value="1800000">30 minutes</option>
+                                    <option value="3600000">1 hour</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    data-chart-enlarge="timelineChart"
+                                    data-chart-title="Event Activity Over Time"
+                                    title="Enlarge chart">
+                                <i class="bi bi-arrows-fullscreen"></i>
+                            </button>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary" id="enlargeChartBtn" title="Enlarge chart">
-                            <i class="bi bi-arrows-fullscreen"></i>
-                        </button>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div style="height: 300px; position: relative;">
+                    <div class="card-body" style="height: 400px; position: relative;">
                         <canvas id="timelineChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Statistics -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-secondary">Total Events</h6>
-                    <h3 class="card-title mb-0" id="statTotalEvents">0</h3>
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    Total Events
+                                    <i class="bi bi-info-circle text-muted" 
+                                       style="font-size: 0.75rem; cursor: help;"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top"
+                                       title="Total number of events in the current time range and matching current filters"></i>
+                                </h6>
+                                <h3 class="card-title" id="statTotalEvents">0</h3>
+                            </div>
+                            <i class="bi bi-collection fs-1 text-primary opacity-25"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-secondary">Peak Rate</h6>
-                    <h3 class="card-title mb-0">
-                        <span id="statPeakRate">0</span>
-                        <small class="text-secondary fs-6">/period</small>
-                    </h3>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    Peak Rate
+                                    <i class="bi bi-info-circle text-muted" 
+                                       style="font-size: 0.75rem; cursor: help;"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top"
+                                       title="Highest number of events per minute observed in any time bucket"></i>
+                                </h6>
+                                <h3 class="card-title" id="statPeakRate">0/min</h3>
+                            </div>
+                            <i class="bi bi-graph-up-arrow fs-1 text-danger opacity-25"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-secondary">Average Rate</h6>
-                    <h3 class="card-title mb-0">
-                        <span id="statAvgRate">0</span>
-                        <small class="text-secondary fs-6">/period</small>
-                    </h3>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    Average Rate
+                                    <i class="bi bi-info-circle text-muted" 
+                                       style="font-size: 0.75rem; cursor: help;"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top"
+                                       title="Average number of events per minute across all time buckets with activity"></i>
+                                </h6>
+                                <h3 class="card-title" id="statAvgRate">0/min</h3>
+                            </div>
+                            <i class="bi bi-speedometer2 fs-1 text-success opacity-25"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-secondary">Quiet Periods</h6>
-                    <h3 class="card-title mb-0" id="statQuietPeriods">0</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Event Types Breakdown -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-diagram-3 text-primary"></i> Activity by Event Type
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Event Type</th>
-                                    <th class="text-end">Count</th>
-                                    <th class="text-end">%</th>
-                                    <th>Activity</th>
-                                </tr>
-                            </thead>
-                            <tbody id="eventTypesTableBody">
-                                <tr>
-                                    <td colspan="4" class="text-center text-secondary">
-                                        <em>No data available</em>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    Quiet Periods
+                                    <i class="bi bi-info-circle text-muted" 
+                                       style="font-size: 0.75rem; cursor: help;"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top"
+                                       title="Number of time buckets with zero events, indicating periods of inactivity"></i>
+                                </h6>
+                                <h3 class="card-title" id="statQuietPeriods">0</h3>
+                            </div>
+                            <i class="bi bi-moon-stars fs-1 text-info opacity-25"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</main>
+    </main>
 
-<!-- Chart Enlarge Modal -->
-<div class="modal fade" id="chartEnlargeModal" tabindex="-1" aria-labelledby="chartEnlargeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="chartEnlargeModalLabel">Chart</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="height: 70vh; position: relative;">
-                <canvas id="enlargedChart"></canvas>
+    <!-- Chart Enlarge Modal -->
+    <div class="modal fade" id="chartEnlargeModal" tabindex="-1" aria-labelledby="chartEnlargeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chartEnlargeModalLabel">Chart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="height: 70vh; position: relative;">
+                    <canvas id="enlargedChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block extra_scripts %}
-<script type="module" src="../js/timeline.js"></script>
-{% endblock %}
+    {% include "html/footer.html" %}
+    {% include "html/filters-panel.html" %}
+    {% include "html/offcanvas.html" %}
+    {% include "html/help.html" %}
+    {% include "html/toast.html" %}
+    {% include "html/confirm.html" %}
+    {% include "html/clearStorageModal.html" %}
+    {% include "html/tasksModal.html" %}
+    {% include "html/clientsModal.html" %}
+
+    <script type="module" src="../js/timeline.js"></script>
+</body>
+</html>
