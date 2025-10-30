@@ -24,7 +24,18 @@ export const toastController = (() => {
 
         if ("detail" in result) {
             toastEl.classList.add("text-bg-warning");
-            var message = `${result.detail[0].type}: ${result.detail[0].msg} in ${result.detail[0].loc.join(", ")}`;
+
+            // Handle different detail formats
+            if (Array.isArray(result.detail)) {
+                // FastAPI validation error format: array of error objects
+                var message = `${result.detail[0].type}: ${result.detail[0].msg} in ${result.detail[0].loc.join(", ")}`;
+            } else if (typeof result.detail === 'string') {
+                // Simple string error message
+                var message = result.detail;
+            } else {
+                // Unknown format
+                var message = JSON.stringify(result.detail);
+            }
         } else {
             toastEl.classList.add("text-bg-primary");
             var message = `${result.status}: ${result.message} (Task.id: ${result.task_id})`;

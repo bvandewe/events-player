@@ -232,6 +232,26 @@ class AuthManager {
                 this.userInfo = data.user_info;
             }
 
+            // Re-fetch auth info to get updated role mappings
+            try {
+                const authInfoResponse = await fetch('/api/auth/info', {
+                    headers: {
+                        'Authorization': `Bearer ${this.token}`
+                    }
+                });
+                if (authInfoResponse.ok) {
+                    const authInfo = await authInfoResponse.json();
+                    if (authInfo.role_mappings) {
+                        this.roleMappings = authInfo.role_mappings;
+                    }
+                    if (authInfo.user) {
+                        this.userInfo = authInfo.user;
+                    }
+                }
+            } catch (error) {
+                console.warn('[Auth] Failed to fetch updated auth info after refresh:', error);
+            }
+
             console.log('[Auth] Access token refreshed successfully');
             return true;
 
