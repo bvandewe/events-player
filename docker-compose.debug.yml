@@ -43,7 +43,7 @@ services:
       http_client_timeout: 30.0
 
       # Authentication & Authorization
-      auth_required: "false" # Set to "true" to require authentication
+      auth_required: "true" # Set to "true" to require authentication
       auth_jwks_url: http://keycloak:8080/realms/events-player/protocol/openid-connect/certs
       auth_issuer: http://localhost:8885/realms/events-player
       auth_audience: events-player-web
@@ -55,8 +55,9 @@ services:
       auth_role_user: "user" # Role name in JWT that grants user privileges
 
       # OAuth/OIDC Configuration (works with any OIDC-compliant IDP like Keycloak, Auth0, Okta, etc.)
-      oauth_server_url: http://keycloak:8080 # OAuth server base URL (for backend API calls)
-      oauth_server_url_external: http://localhost:8885 # OAuth server URL for browser (frontend)
+      # Simplified: Single URL works for both backend and frontend
+      oauth_server_url: http://localhost:8885 # OAuth server URL accessible from browser
+      oauth_legacy_keycloak: "false" # Set to "true" for Keycloak < v17 (adds /auth prefix)
       oauth_realm: events-player # OAuth realm/tenant name
       oauth_client_id: events-player-web # OAuth client ID
       oauth_client_secret: "" # OAuth client secret (optional for public clients)

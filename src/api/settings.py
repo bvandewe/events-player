@@ -101,11 +101,32 @@ class ApiSettings(BaseSettings):
     auth_role_user: str = "user"  # Role name in JWT that grants user privileges
 
     # OAuth/OIDC settings (for OAuth-based authentication with any IDP)
-    oauth_server_url: str = ""  # OAuth server base URL (for backend API calls)
-    oauth_server_url_external: str = ""  # OAuth server URL for browser (frontend)
+    # Simplified configuration - one URL for both frontend and backend
+    oauth_server_url: str = ""  # OAuth server base URL (e.g., https://keycloak.example.com)
+    oauth_legacy_keycloak: bool = False  # Set to True for Keycloak < v17 (adds /auth prefix)
     oauth_realm: str = "events-player"  # OAuth realm/tenant name
     oauth_client_id: str = ""  # OAuth client ID
     oauth_client_secret: str = ""  # OAuth client secret
+
+    @property
+    def oauth_base_url(self) -> str:
+        """
+        Get the OAuth base URL with /auth prefix if using legacy Keycloak.
+
+        Returns the properly formatted base URL for OAuth endpoints.
+        For legacy Keycloak (< v17), adds /auth prefix.
+        For modern Keycloak (>= v17) and other OIDC providers, uses URL as-is.
+        """
+        if not self.oauth_server_url:
+            return ""
+
+        base_url = self.oauth_server_url.rstrip("/")
+
+        # Add /auth for legacy Keycloak versions (< v17)
+        if self.oauth_legacy_keycloak and "/auth" not in base_url:
+            return f"{base_url}/auth"
+
+        return base_url
 
 
 settings = ApiSettings()
