@@ -1,5 +1,36 @@
 # CHANGE LOG
 
+## 0.3.8 - 2025-10-30
+
+### Improvements
+
+#### UI/UX Enhancements
+
+- **Dashboard metrics cards**: Improved readability with better color contrast
+  - Changed from solid dark backgrounds to Bootstrap subtle colors (bg-*-subtle)
+  - Applied dark contrasting text colors (text-*-emphasis, text-*)
+  - Primary card: dark blue text on light blue background
+  - Success card: dark green text on light green background
+  - Info card: dark blue text on light cyan background
+  - Warning card: dark orange text on light yellow background
+- **Filters in dropdown menu**: Moved filters from offcanvas panel to Bootstrap navbar dropdown
+  - Filters now accessible via dropdown menu under "Filters" nav item
+  - Compact 400px wide dropdown with proper labels for all controls
+  - Active filter count badge visible next to "Filters" text
+  - Clear All Filters button at bottom of dropdown
+  - Removed Alt/Option keyboard shortcut
+  - Removed offcanvas panel completely
+- **Responsive event stream**: Page header hidden on viewports < 1400px for better space usage
+- **Enhanced chart modals**: Added click-to-filter functionality to all enlarged chart modals
+  - Events Per Minute: click to filter by time range
+  - Top Types: click to filter by event type
+  - Top Sources: click to filter by source
+  - Hourly Distribution: click to filter by hour
+- **Filter indicators on view titles**: Added red dot indicator with clear button to all view titles when filters are active
+- **Contextual information on timeline cards**: Added last event time, update time, peak timestamps, and bucket size info
+- **Contextual information on dashboard cards**: Added last event time, update time, most common type/source info
+- **Dashboard click-to-filter**: Added click handlers to all dashboard charts for drill-down filtering
+
 ## 0.3.7 - 2025-10-30
 
 ### Improvements
