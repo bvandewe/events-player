@@ -58,6 +58,7 @@ services:
       # Simplified: Single URL works for both backend and frontend
       # auth_jwks_url and auth_issuer are automatically derived from these settings
       oauth_server_url: http://localhost:8885 # OAuth server URL accessible from browser
+      oauth_server_url_backend: http://keycloak:8080 # OAuth server URL for backend (Docker internal)
       oauth_legacy_keycloak: "false" # Set to "true" for Keycloak < v17 (adds /auth prefix)
       oauth_realm: events-player # OAuth realm/tenant name
       oauth_client_id: events-player-web # OAuth client ID
