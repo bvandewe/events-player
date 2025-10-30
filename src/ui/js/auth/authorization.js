@@ -5,6 +5,8 @@
  * Works in conjunction with server-side authorization enforcement.
  */
 
+import * as bootstrap from 'bootstrap';
+
 class AuthorizationManager {
     constructor() {
         this.userRoles = [];
@@ -125,7 +127,10 @@ class AuthorizationManager {
             iterationsInput.max = 1;
             iterationsInput.value = 1;
             iterationsInput.style.opacity = '0.7';
-            iterationsInput.title = 'Only administrators can change iterations';
+            iterationsInput.setAttribute('data-bs-toggle', 'tooltip');
+            iterationsInput.setAttribute('data-bs-placement', 'top');
+            iterationsInput.setAttribute('data-bs-title', 'Only administrators can change iterations');
+            new bootstrap.Tooltip(iterationsInput);
         }
 
         if (delayInput) {
@@ -134,7 +139,10 @@ class AuthorizationManager {
             delayInput.max = 100;
             delayInput.value = 100;
             delayInput.style.opacity = '0.7';
-            delayInput.title = 'Only administrators can change delay';
+            delayInput.setAttribute('data-bs-toggle', 'tooltip');
+            delayInput.setAttribute('data-bs-placement', 'top');
+            delayInput.setAttribute('data-bs-title', 'Only administrators can change delay');
+            new bootstrap.Tooltip(delayInput);
         }
 
         // Also disable the labels
@@ -163,7 +171,6 @@ class AuthorizationManager {
             button.removeAttribute('data-bs-toggle');
             button.removeAttribute('data-bs-target');
             button.setAttribute('aria-expanded', 'false');
-            button.title = 'Only operators and administrators can view event details';
         });
 
         // Listen for new accordion items being added
@@ -180,7 +187,6 @@ class AuthorizationManager {
                                 button.removeAttribute('data-bs-toggle');
                                 button.removeAttribute('data-bs-target');
                                 button.setAttribute('aria-expanded', 'false');
-                                button.title = 'Only operators and administrators can view event details';
                             }
                         }
                     });

@@ -24,9 +24,11 @@ class GlobalFilterController {
         this.clearButton = null;
         this.activeFiltersCount = null;
         this.filtersPanelElement = null;
+        this.filtersNavLink = null;
 
-        // Bootstrap offcanvas instance
+        // Bootstrap instances
         this.offcanvasInstance = null;
+        this.tooltipInstance = null;
 
         // Click outside handler
         this.handleClickOutside = this.handleClickOutside.bind(this);
@@ -52,6 +54,7 @@ class GlobalFilterController {
         this.timeRangeSelect = document.getElementById('globalEventTimeRange');
         this.clearButton = document.getElementById('globalClearFiltersBtn');
         this.activeFiltersCount = document.getElementById('activeFiltersCount');
+        this.filtersNavLink = document.getElementById('filtersNavLink');
 
         if (!this.typeSelect || !this.sourceSelect || !this.subjectSelect || !this.filtersPanelElement) {
             console.error('[GlobalFilters] Required DOM elements not found');
@@ -60,6 +63,17 @@ class GlobalFilterController {
 
         // Initialize Bootstrap offcanvas instance
         this.offcanvasInstance = new bootstrap.Offcanvas(this.filtersPanelElement);
+
+        // Initialize Bootstrap tooltip for filter nav link
+        if (this.filtersNavLink) {
+            this.filtersNavLink.setAttribute('data-bs-toggle-tooltip', 'tooltip');
+            this.filtersNavLink.setAttribute('data-bs-placement', 'bottom');
+            this.filtersNavLink.setAttribute('data-bs-html', 'true');
+            this.tooltipInstance = new bootstrap.Tooltip(this.filtersNavLink, {
+                trigger: 'hover',
+                html: true
+            });
+        }
 
         // Setup auto-dismiss on click outside
         // Setup auto dismiss (click outside)
@@ -272,23 +286,74 @@ class GlobalFilterController {
     }
 
     /**
-     * Update the active filters count badge
+     * Update the active filters count badge and tooltip
      */
     updateActiveFiltersCount() {
         const filters = appState.get('filters');
         let count = 0;
+        const filterParts = [];
 
-        if (filters.type) count++;
-        if (filters.source) count++;
-        if (filters.subject !== null) count++;
-        if (filters.timeRange && filters.timeRange !== 'all') count++;
+        if (filters.type) {
+            count++;
+            filterParts.push(`<strong>Type:</strong> ${filters.type}`);
+        }
+        if (filters.source) {
+            count++;
+            filterParts.push(`<strong>Source:</strong> ${filters.source}`);
+        }
+        if (filters.subject !== null) {
+            count++;
+            filterParts.push(`<strong>Subject:</strong> ${filters.subject || '(empty)'}`);
+        }
+        if (filters.timeRange && filters.timeRange !== 'all') {
+            count++;
+            const timeRangeLabels = {
+                '1h': 'Last 1 hour',
+                '6h': 'Last 6 hours',
+                '24h': 'Last 24 hours',
+                '7d': 'Last 7 days'
+            };
+            filterParts.push(`<strong>Time:</strong> ${timeRangeLabels[filters.timeRange] || filters.timeRange}`);
+        }
 
+        // Update badge
         if (this.activeFiltersCount) {
             this.activeFiltersCount.textContent = count;
             if (count > 0) {
                 this.activeFiltersCount.classList.remove('d-none');
             } else {
                 this.activeFiltersCount.classList.add('d-none');
+            }
+        }
+
+        // Update tooltip
+        if (this.tooltipInstance && this.filtersNavLink) {
+            if (count > 0) {
+                const tooltipContent = `
+                    <div class="text-start">
+                        <div class="fw-bold mb-1">Active Filters:</div>
+                        ${filterParts.map(part => `<div class="small">${part}</div>`).join('')}
+                    </div>
+                `;
+                this.filtersNavLink.setAttribute('data-bs-title', tooltipContent);
+                // Update the tooltip instance
+                if (this.tooltipInstance._element) {
+                    this.tooltipInstance.dispose();
+                    this.tooltipInstance = new bootstrap.Tooltip(this.filtersNavLink, {
+                        trigger: 'hover',
+                        html: true
+                    });
+                }
+            } else {
+                this.filtersNavLink.setAttribute('data-bs-title', 'No active filters');
+                // Update the tooltip instance
+                if (this.tooltipInstance._element) {
+                    this.tooltipInstance.dispose();
+                    this.tooltipInstance = new bootstrap.Tooltip(this.filtersNavLink, {
+                        trigger: 'hover',
+                        html: true
+                    });
+                }
             }
         }
     }

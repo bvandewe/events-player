@@ -4,6 +4,7 @@ import { sseConnection } from './connection';
 import { connectionStatus } from './connectionStatus';
 import { appState } from '../state/appState';
 import { globalFilterController } from '../ui/globalFilters';
+import * as bootstrap from 'bootstrap';
 
 export const sseEventsController = (() => {
 
@@ -43,23 +44,23 @@ export const sseEventsController = (() => {
 
         // create the third span element with classes "mx-auto", "align-middle", and "text-info-emphasis", and set its text content
         const span3 = document.createElement('span');
-        span3.classList.add('mx-auto', 'align-middle', 'text-info-emphasis', 'd-flex', 'gap-3', 'justify-content-evenly', 'flex-grow-1');
+        span3.classList.add('mx-auto', 'align-middle', 'text-info-emphasis', 'd-flex', 'gap-3', 'justify-content-between', 'flex-grow-1');
 
-        // create type badge
+        // create type badge (left-aligned)
         const typeBadge = document.createElement('span');
-        typeBadge.classList.add('badge', 'text-bg-success', 'p-1', 'text-truncate');
+        typeBadge.classList.add('badge', 'text-bg-success', 'p-1', 'text-truncate', 'me-auto');
         typeBadge.textContent = eventType;
         typeBadge.style.maxWidth = '33%';
 
-        // create source badge
+        // create source badge (centered)
         const sourceBadge = document.createElement('span');
-        sourceBadge.classList.add('badge', 'bg-secondary', 'p-1', 'text-truncate');
+        sourceBadge.classList.add('badge', 'bg-secondary', 'p-1', 'text-truncate', 'mx-auto');
         sourceBadge.textContent = eventSource;
         sourceBadge.style.maxWidth = '33%';
 
-        // create subject badge (if subject exists)
+        // create subject badge (right-aligned)
         const subjectBadge = document.createElement('span');
-        subjectBadge.classList.add('badge', 'text-bg-warning', 'p-1', 'text-truncate');
+        subjectBadge.classList.add('badge', 'text-bg-warning', 'p-1', 'text-truncate', 'ms-auto');
         subjectBadge.textContent = eventSubject || '(none)';
         subjectBadge.style.maxWidth = '33%';
 
@@ -68,10 +69,64 @@ export const sseEventsController = (() => {
         span3.appendChild(sourceBadge);
         span3.appendChild(subjectBadge);
 
+        // Helper function to create filter button
+        const createFilterButton = (filterType, value, icon, title) => {
+            const btn = document.createElement('button');
+            btn.classList.add('btn', 'btn-sm', 'btn-outline-secondary', 'opacity-50', 'border-0', 'p-1');
+            btn.style.fontSize = '0.7rem';
+            btn.setAttribute('data-bs-toggle', 'tooltip');
+            btn.setAttribute('data-bs-placement', 'top');
+            btn.setAttribute('data-bs-title', title);
+            btn.setAttribute('type', 'button');
+            btn.innerHTML = `<i class="bi bi-${icon}"></i>`;
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent accordion toggle
+
+                // Clear existing filters and apply the new one
+                const filters = {
+                    type: filterType === 'type' ? value : '',
+                    source: filterType === 'source' ? value : '',
+                    subject: filterType === 'subject' ? value : null,
+                    timeRange: 'all'
+                };
+
+                appState.updateFilters(filters);
+
+                // Show a subtle toast notification
+                toastController.addToast({
+                    message: `Filtering by ${filterType}: ${value || '(none)'}`,
+                    type: 'info',
+                    duration: 2000
+                });
+            });
+
+            return btn;
+        };
+
+        // Create filter buttons container
+        const filterButtonsContainer = document.createElement('span');
+        filterButtonsContainer.classList.add('d-flex', 'gap-1', 'ms-2', 'align-middle');
+
+        // Create individual filter buttons
+        const typeButton = createFilterButton('type', eventType, 'funnel', `Filter by type: ${eventType}`);
+        const sourceButton = createFilterButton('source', eventSource, 'geo-alt', `Filter by source: ${eventSource}`);
+        const subjectButton = createFilterButton('subject', eventSubject || '', 'tag', `Filter by subject: ${eventSubject || '(none)'}`);
+
+        filterButtonsContainer.appendChild(typeButton);
+        filterButtonsContainer.appendChild(sourceButton);
+        filterButtonsContainer.appendChild(subjectButton);
+
+        // Initialize Bootstrap tooltips for the filter buttons
+        new bootstrap.Tooltip(typeButton);
+        new bootstrap.Tooltip(sourceButton);
+        new bootstrap.Tooltip(subjectButton);
+
         // append the span elements to the button element
         button.appendChild(span1);
         button.appendChild(span2);
         button.appendChild(span3);
+        button.appendChild(filterButtonsContainer);
 
         // append the button element to the h2 element
         accordionHeader.appendChild(button);
@@ -103,56 +158,6 @@ export const sseEventsController = (() => {
 
     const incrementEventsCount = () => {
         sseConnection.incrementCount();
-    };
-
-    /**
-     * Show filter banner when URL parameters are present
-     */
-    const showFilterBanner = (filters) => {
-        const { startTime, endTime, typeFilter, sourceFilter, subjectFilter } = filters;
-
-        // Defensive check - banner only exists on main events list page
-        if (!eventsStack) {
-            return; // Skip banner display if not on events list page
-        }
-
-        // Find or create filter banner container
-        let banner = document.getElementById('filter-banner');
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'filter-banner';
-            banner.className = 'alert alert-info alert-dismissible fade show mb-3 text-center';
-            banner.setAttribute('role', 'alert');
-
-            // Insert before events stack
-            eventsStack.parentNode.insertBefore(banner, eventsStack);
-        }
-
-        const filterParts = [];
-
-        if (startTime || endTime) {
-            const start = startTime ? new Date(startTime).toLocaleString() : 'start';
-            const end = endTime ? new Date(endTime).toLocaleString() : 'now';
-            filterParts.push(`<strong>Time:</strong> ${start} to ${end}`);
-        }
-
-        if (typeFilter) {
-            filterParts.push(`<strong>Type:</strong> ${typeFilter}`);
-        }
-
-        if (sourceFilter) {
-            filterParts.push(`<strong>Source:</strong> ${sourceFilter}`);
-        }
-
-        if (subjectFilter !== null) {
-            filterParts.push(`<strong>Subject:</strong> ${subjectFilter || '(empty)'}`);
-        }
-
-        banner.innerHTML = `
-            <i class="bi bi-funnel-fill me-2"></i>
-            <strong>Filtered View:</strong> ${filterParts.join(' | ')}
-            <button type="button" class="btn-close" onclick="window.location.href='/'"></button>
-        `;
     };
 
     const handleNewEvent = async (event) => {
@@ -405,9 +410,6 @@ export const sseEventsController = (() => {
                 });
 
                 console.log('[Events] After filtering:', events.length, 'events');
-
-                // Show filter info banner (use original URL params for display)
-                showFilterBanner({ startTime, endTime, typeFilter, sourceFilter, subjectFilter });
             }
 
             if (events && events.length > 0) {
