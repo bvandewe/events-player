@@ -53,6 +53,8 @@ spec:
             # OAuth/OIDC Configuration
             - name: oauth_server_url
               value: "{{ .Values.player.env.oauth_server_url }}"
+            - name: oauth_server_url_backend
+              value: "{{ .Values.player.env.oauth_server_url_backend }}"
             - name: oauth_legacy_keycloak
               value: "{{ .Values.player.env.oauth_legacy_keycloak }}"
             - name: oauth_realm

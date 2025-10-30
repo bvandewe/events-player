@@ -40,6 +40,9 @@ player:
     # Simplified: Single URL, realm, and client_id are all you need
     # auth_jwks_url and auth_issuer are automatically derived from these
     oauth_server_url: "http://localhost:8090"  # OAuth server URL accessible from browser
+    oauth_server_url_backend: ""  # Optional: Backend URL for server-to-server calls (e.g., Docker internal URL)
+                                   # Leave empty to use oauth_server_url (typical for Kubernetes)
+                                   # Set for Docker Compose: oauth_server_url_backend: "http://keycloak:8080"
     oauth_legacy_keycloak: "false"  # Set to "true" for Keycloak < v17 (adds /auth prefix)
     oauth_realm: "mario-pizzeria"
     oauth_client_id: "mario-public-app"

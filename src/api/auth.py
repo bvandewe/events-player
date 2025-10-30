@@ -531,7 +531,8 @@ async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) 
         raise HTTPException(status_code=500, detail="OAuth server not configured for OAuth flow")
 
     token_endpoint = (
-        f"{settings.oauth_base_url}/realms/{settings.oauth_realm}" f"/protocol/openid-connect/token"
+        f"{settings.oauth_base_url_backend}/realms/{settings.oauth_realm}"
+        f"/protocol/openid-connect/token"
     )
 
     # Prepare token request
@@ -597,7 +598,8 @@ async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail="OAuth server not configured for token refresh")
 
     token_endpoint = (
-        f"{settings.oauth_base_url}/realms/{settings.oauth_realm}" f"/protocol/openid-connect/token"
+        f"{settings.oauth_base_url_backend}/realms/{settings.oauth_realm}"
+        f"/protocol/openid-connect/token"
     )
 
     # Prepare token refresh request

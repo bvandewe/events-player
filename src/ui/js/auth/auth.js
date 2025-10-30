@@ -45,24 +45,40 @@ class AuthManager {
 
         if (this.token) {
             console.log('[Auth] Found token in sessionStorage, validating...');
-            try {
-                await this.validateToken(this.token);
-                if (this.userInfo) {
-                    console.log('[Auth] Token valid, user authenticated:', this.userInfo.username);
+            const isValid = await this.validateToken(this.token);
+            if (isValid && this.userInfo) {
+                console.log('[Auth] Token valid, user authenticated:', this.userInfo.username);
+                this.mode = 'authenticated';
+                this.renderAuthUI();
+                return;
+            } else {
+                // Token invalid or expired, try to refresh it
+                console.log('[Auth] Token validation failed, attempting refresh...');
+                const refreshSuccess = await this.refreshAccessToken();
+                if (refreshSuccess) {
+                    console.log('[Auth] Token refreshed successfully');
                     this.mode = 'authenticated';
                     this.renderAuthUI();
                     return;
+                } else {
+                    console.warn('[Auth] Token refresh failed, clearing stored tokens');
+                    sessionStorage.removeItem('access_token');
+                    sessionStorage.removeItem('refresh_token');
+                    this.token = null;
                 }
-            } catch (error) {
-                console.warn('[Auth] Stored token invalid, removing:', error);
-                sessionStorage.removeItem('access_token');
-                this.token = null;
             }
         }
 
         // 2. Check if we're in Istio mode (JWT already validated by server)
+        // Also send any token we have in sessionStorage to check if still valid
         try {
-            const response = await fetch('/api/auth/info');
+            const headers = {};
+            if (this.token) {
+                headers['Authorization'] = `Bearer ${this.token}`;
+            }
+            const response = await fetch('/api/auth/info', {
+                headers: headers
+            });
             if (response.ok) {
                 const data = await response.json();
 
