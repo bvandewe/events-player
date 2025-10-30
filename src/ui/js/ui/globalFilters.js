@@ -23,8 +23,6 @@ class GlobalFilterController {
         this.timeRangeSelect = null;
         this.clearButton = null;
         this.activeFiltersCount = null;
-        this.filtersPanelElement = null;
-        this.filtersNavLink = null;
 
         // Filter indicators on each view
         this.filterIndicators = {
@@ -39,12 +37,7 @@ class GlobalFilterController {
         };
 
         // Bootstrap instances
-        this.offcanvasInstance = null;
-        this.tooltipInstance = null;
         this.indicatorTooltips = [];
-
-        // Click outside handler
-        this.handleClickOutside = this.handleClickOutside.bind(this);
     }
 
     /**
@@ -60,14 +53,12 @@ class GlobalFilterController {
         this.storageManager = storageManager;
 
         // Get DOM elements
-        this.filtersPanelElement = document.getElementById('filtersPanel');
         this.typeSelect = document.getElementById('globalEventTypeFilter');
         this.sourceSelect = document.getElementById('globalEventSourceFilter');
         this.subjectSelect = document.getElementById('globalEventSubjectFilter');
         this.timeRangeSelect = document.getElementById('globalEventTimeRange');
         this.clearButton = document.getElementById('globalClearFiltersBtn');
         this.activeFiltersCount = document.getElementById('activeFiltersCount');
-        this.filtersNavLink = document.getElementById('filtersNavLink');
 
         // Get filter indicators and clear buttons for each view
         this.filterIndicators.events = document.getElementById('eventsFilterIndicator');
@@ -78,23 +69,14 @@ class GlobalFilterController {
         this.filterClearButtons.timeline = document.getElementById('timelineFilterClearBtn');
         this.filterClearButtons.dashboard = document.getElementById('dashboardFilterClearBtn');
 
-        if (!this.typeSelect || !this.sourceSelect || !this.subjectSelect || !this.filtersPanelElement) {
+        if (!this.typeSelect || !this.sourceSelect || !this.subjectSelect) {
             console.error('[GlobalFilters] Required DOM elements not found');
             return;
         }
 
-        // Initialize Bootstrap offcanvas instance
-        this.offcanvasInstance = new bootstrap.Offcanvas(this.filtersPanelElement);
-
-        // Initialize Bootstrap tooltip for filter nav link
-        if (this.filtersNavLink) {
-            this.filtersNavLink.setAttribute('data-bs-toggle-tooltip', 'tooltip');
-            this.filtersNavLink.setAttribute('data-bs-placement', 'bottom');
-            this.filtersNavLink.setAttribute('data-bs-html', 'true');
-            this.tooltipInstance = new bootstrap.Tooltip(this.filtersNavLink, {
-                trigger: 'hover',
-                html: true
-            });
+        // Initialize Bootstrap tooltips for clear button
+        if (this.clearButton) {
+            new bootstrap.Tooltip(this.clearButton);
         }
 
         // Initialize Bootstrap tooltips for filter indicators
@@ -264,7 +246,7 @@ class GlobalFilterController {
             if (indicator) {
                 const badge = indicator.querySelector('.badge');
                 const button = indicator.querySelector('button');
-                
+
                 if (badge) {
                     this.indicatorTooltips.push(new bootstrap.Tooltip(badge));
                 }
@@ -385,35 +367,16 @@ class GlobalFilterController {
     }
 
     /**
-     * Update the active filters count badge and tooltip
+     * Update the active filters count badge
      */
     updateActiveFiltersCount() {
         const filters = appState.get('filters');
         let count = 0;
-        const filterParts = [];
 
-        if (filters.type) {
-            count++;
-            filterParts.push(`<strong>Type:</strong> ${filters.type}`);
-        }
-        if (filters.source) {
-            count++;
-            filterParts.push(`<strong>Source:</strong> ${filters.source}`);
-        }
-        if (filters.subject !== null) {
-            count++;
-            filterParts.push(`<strong>Subject:</strong> ${filters.subject || '(empty)'}`);
-        }
-        if (filters.timeRange && filters.timeRange !== 'all') {
-            count++;
-            const timeRangeLabels = {
-                '1h': 'Last 1 hour',
-                '6h': 'Last 6 hours',
-                '24h': 'Last 24 hours',
-                '7d': 'Last 7 days'
-            };
-            filterParts.push(`<strong>Time:</strong> ${timeRangeLabels[filters.timeRange] || filters.timeRange}`);
-        }
+        if (filters.type) count++;
+        if (filters.source) count++;
+        if (filters.subject !== null) count++;
+        if (filters.timeRange && filters.timeRange !== 'all') count++;
 
         // Update badge
         if (this.activeFiltersCount) {
@@ -422,37 +385,6 @@ class GlobalFilterController {
                 this.activeFiltersCount.classList.remove('d-none');
             } else {
                 this.activeFiltersCount.classList.add('d-none');
-            }
-        }
-
-        // Update tooltip
-        if (this.tooltipInstance && this.filtersNavLink) {
-            if (count > 0) {
-                const tooltipContent = `
-                    <div class="text-start">
-                        <div class="fw-bold mb-1">Active Filters:</div>
-                        ${filterParts.map(part => `<div class="small">${part}</div>`).join('')}
-                    </div>
-                `;
-                this.filtersNavLink.setAttribute('data-bs-title', tooltipContent);
-                // Update the tooltip instance
-                if (this.tooltipInstance._element) {
-                    this.tooltipInstance.dispose();
-                    this.tooltipInstance = new bootstrap.Tooltip(this.filtersNavLink, {
-                        trigger: 'hover',
-                        html: true
-                    });
-                }
-            } else {
-                this.filtersNavLink.setAttribute('data-bs-title', 'No active filters');
-                // Update the tooltip instance
-                if (this.tooltipInstance._element) {
-                    this.tooltipInstance.dispose();
-                    this.tooltipInstance = new bootstrap.Tooltip(this.filtersNavLink, {
-                        trigger: 'hover',
-                        html: true
-                    });
-                }
             }
         }
     }
@@ -504,60 +436,6 @@ class GlobalFilterController {
         }
 
         return true;
-    }
-
-    /**
-     * Setup auto-dismiss when clicking outside the panel
-     */
-    setupAutoDismiss() {
-        // Listen for offcanvas show event
-        this.filtersPanelElement.addEventListener('shown.bs.offcanvas', () => {
-            console.log('[GlobalFilters] Panel opened, adding click listener');
-            // Add click listener after a short delay to avoid immediate closing
-            setTimeout(() => {
-                document.addEventListener('click', this.handleClickOutside);
-            }, 100);
-        });
-
-        // Listen for offcanvas hide event to clean up
-        this.filtersPanelElement.addEventListener('hidden.bs.offcanvas', () => {
-            console.log('[GlobalFilters] Panel closed, removing click listener');
-            document.removeEventListener('click', this.handleClickOutside);
-        });
-    }
-
-    /**
-     * Setup escape key to close the panel
-     */
-    setupEscapeKey() {
-        const handleEscape = (event) => {
-            if (event.key === 'Escape' && this.offcanvasInstance) {
-                const isVisible = this.filtersPanelElement.classList.contains('show');
-                if (isVisible) {
-                    console.log('[GlobalFilters] Escape key pressed, hiding panel');
-                    this.offcanvasInstance.hide();
-                }
-            }
-        };
-
-        document.addEventListener('keydown', handleEscape);
-    }
-
-    /**
-     * Handle clicks outside the filters panel
-     * @param {Event} event - Click event
-     */
-    handleClickOutside(event) {
-        // Check if click is outside the offcanvas panel
-        const isClickInside = this.filtersPanelElement.contains(event.target);
-
-        // Check if click is on the nav toggle button (to allow opening)
-        const isToggleButton = event.target.closest('[data-bs-target="#filtersPanel"]');
-
-        if (!isClickInside && !isToggleButton && this.offcanvasInstance) {
-            console.log('[GlobalFilters] Click outside detected, hiding panel');
-            this.offcanvasInstance.hide();
-        }
     }
 }
 

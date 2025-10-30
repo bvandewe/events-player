@@ -43,15 +43,15 @@
         <div class="row mb-4">
             <!-- Total Events -->
             <div class="col-md-3">
-                <div class="card bg-primary text-white">
+                <div class="card bg-primary-subtle">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-subtitle mb-2 opacity-75">Total Events</h6>
-                                <h2 class="card-title mb-0 fw-bold" id="statTotalEvents">0</h2>
-                                <small class="opacity-75" id="statTotalEventsTime"></small>
+                                <h6 class="card-subtitle mb-2 text-primary-emphasis">Total Events</h6>
+                                <h2 class="card-title mb-0 fw-bold text-primary" id="statTotalEvents">0</h2>
+                                <small class="text-primary-emphasis" id="statTotalEventsTime"></small>
                             </div>
-                            <i class="bi bi-collection fs-1 opacity-25"></i>
+                            <i class="bi bi-collection fs-1 text-primary opacity-25"></i>
                         </div>
                     </div>
                 </div>
@@ -59,16 +59,16 @@
 
             <!-- Average Rate -->
             <div class="col-md-3">
-                <div class="card bg-success text-white">
+                <div class="card bg-success-subtle">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-subtitle mb-2 opacity-75">Avg Rate</h6>
-                                <h2 class="card-title mb-0 fw-bold" id="statAvgRate">0</h2>
-                                <small class="opacity-75">events/min</small>
-                                <small class="opacity-75 d-block" id="statAvgRateTime"></small>
+                                <h6 class="card-subtitle mb-2 text-success-emphasis">Avg Rate</h6>
+                                <h2 class="card-title mb-0 fw-bold text-success" id="statAvgRate">0</h2>
+                                <small class="text-success-emphasis">events/min</small>
+                                <small class="text-success-emphasis d-block" id="statAvgRateTime"></small>
                             </div>
-                            <i class="bi bi-speedometer2 fs-1 opacity-25"></i>
+                            <i class="bi bi-speedometer2 fs-1 text-success opacity-25"></i>
                         </div>
                     </div>
                 </div>
@@ -76,15 +76,15 @@
 
             <!-- Unique Types -->
             <div class="col-md-3">
-                <div class="card bg-info text-white">
+                <div class="card bg-info-subtle">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-subtitle mb-2 opacity-75">Event Types</h6>
-                                <h2 class="card-title mb-0 fw-bold" id="statUniqueTypes">0</h2>
-                                <small class="opacity-75" id="statUniqueTypesInfo"></small>
+                                <h6 class="card-subtitle mb-2 text-info-emphasis">Event Types</h6>
+                                <h2 class="card-title mb-0 fw-bold text-info" id="statUniqueTypes">0</h2>
+                                <small class="text-info-emphasis" id="statUniqueTypesInfo"></small>
                             </div>
-                            <i class="bi bi-diagram-3 fs-1 opacity-25"></i>
+                            <i class="bi bi-diagram-3 fs-1 text-info opacity-25"></i>
                         </div>
                     </div>
                 </div>
@@ -92,15 +92,15 @@
 
             <!-- Unique Sources -->
             <div class="col-md-3">
-                <div class="card bg-warning text-white">
+                <div class="card bg-warning-subtle">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-subtitle mb-2 opacity-75">Event Sources</h6>
-                                <h2 class="card-title mb-0 fw-bold" id="statUniqueSources">0</h2>
-                                <small class="opacity-75" id="statUniqueSourcesInfo"></small>
+                                <h6 class="card-subtitle mb-2 text-warning-emphasis">Event Sources</h6>
+                                <h2 class="card-title mb-0 fw-bold text-warning" id="statUniqueSources">0</h2>
+                                <small class="text-warning-emphasis" id="statUniqueSourcesInfo"></small>
                             </div>
-                            <i class="bi bi-hdd-stack fs-1 opacity-25"></i>
+                            <i class="bi bi-hdd-stack fs-1 text-warning opacity-25"></i>
                         </div>
                     </div>
                 </div>
@@ -298,7 +298,6 @@
     </div>
 
     {% include "html/toast.html" %}
-    {% include "html/filters-panel.html" %}
     {% include "html/offcanvas.html" %}
     {% include "html/help.html" %}
     {% include "html/confirm.html" %}
