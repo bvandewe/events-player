@@ -1,9 +1,9 @@
 replicaCount: 1
 image:
   repository: ghcr.io/bvandewe/events-player
-  tag: latest
+  tag: v0.3.4
 ports:
-  containerPort: 80
+  containerPort: 8080
 service:
   type: ClusterIP # LoadBalancer # Adjust based on your environment needs
   port: 80
@@ -11,7 +11,40 @@ virtualService:
   host: test-events.domain.com
   gateway: istio-system/all-ccie-gateway
 environment:
-  api_log_level: DEBUG 
-  api_log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  api_default_generator_gateways: '{\"urls\": [\"http://localhost/events/pub\"]}'
-  api_browser_queue_size: 1000
+  # Application Settings
+  tag: "v0.3.4"
+  log_level: INFO
+  log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # Authentication & Authorization
+  auth_required: "true"
+  auth_jwks_url: http://keycloak:8080/realms/mario-pizzeria/protocol/openid-connect/certs
+  auth_issuer: http://localhost:8090/realms/mario-pizzeria
+  auth_audience: events-player-web
+  auth_algorithm: RS256
+  
+  # Role Mapping Configuration
+  auth_role_admin: "manager"    # Role name in JWT that grants admin privileges
+  auth_role_operator: "chef"    # Role name in JWT that grants operator privileges
+  auth_role_user: "driver"      # Role name in JWT that grants user privileges
+  
+  # OAuth/OIDC Configuration
+  oauth_server_url: http://keycloak:8080
+  oauth_server_url_external: http://localhost:8090
+  oauth_realm: mario-pizzeria
+  oauth_client_id: mario-public-app
+  oauth_client_secret: ""
+  
+  # HTTP Client Configuration
+  http_client_timeout: 30.0
+  
+  # Default Generator Settings
+  default_generator_gateways: '{\"urls\": [\"http://localhost:8085/events/pub\", \"http://event-player:8080/events/pub\", \"http://mario-pizzeria-app:8080/api/v1/events/pub\"]}'
+  default_generator_event: '{\"event_source\": \"https://dummy.source.com/sys-admin\", \"event_type\": \"com.source.dummy.test.requested.v1\", \"event_subject\": \"some.interesting.concept.key_abcde12345\", \"event_data\": {\"foo\": \"bar\"}}'
+  
+  # Frontend Display Configuration
+  browser_queue_size: 1000
+  
+  # Frontend Storage Configuration (IndexedDB)
+  storage_max_recent_events: 5000
+  storage_max_metadata_events: 100000
