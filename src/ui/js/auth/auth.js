@@ -54,18 +54,22 @@ class AuthManager {
             console.log('[Auth] Found token in sessionStorage, validating...');
             const isValid = await this.validateToken(this.token);
             if (isValid && this.userInfo) {
-                console.log('[Auth] Token valid, user authenticated:', this.userInfo.username);
+                console.log('[Auth] ✓ Token valid, user authenticated:', this.userInfo.username);
                 this.mode = 'authenticated';
+                console.log('[Auth] Calling renderAuthUI() after token validation...');
                 this.renderAuthUI();
+                console.log('[Auth] init() returning early (authenticated via token)');
                 return;
             } else {
                 // Token invalid or expired, try to refresh it
                 console.log('[Auth] Token validation failed, attempting refresh...');
                 const refreshSuccess = await this.refreshAccessToken();
                 if (refreshSuccess) {
-                    console.log('[Auth] Token refreshed successfully');
+                    console.log('[Auth] ✓ Token refreshed successfully');
                     this.mode = 'authenticated';
+                    console.log('[Auth] Calling renderAuthUI() after token refresh...');
                     this.renderAuthUI();
+                    console.log('[Auth] init() returning early (authenticated via refresh)');
                     return;
                 } else {
                     console.warn('[Auth] Token refresh failed, clearing stored tokens');
@@ -682,15 +686,28 @@ class AuthManager {
      * Render authentication UI
      */
     renderAuthUI() {
-        console.log('[Auth] renderAuthUI called - mode:', this.mode, 'token:', !!this.token, 'userInfo:', !!this.userInfo, 'authRequired:', this.authRequired);
+        console.log('[Auth] ========== renderAuthUI DEBUG ==========');
+        console.log('[Auth] mode:', this.mode);
+        console.log('[Auth] token exists:', !!this.token);
+        console.log('[Auth] userInfo:', this.userInfo);
+        console.log('[Auth] authRequired:', this.authRequired);
+        console.log('[Auth] isAuthenticated():', this.isAuthenticated());
+        
         const authContainer = document.getElementById('authContainer');
+        console.log('[Auth] authContainer element:', authContainer);
+        
         if (!authContainer) {
-            console.warn('[Auth] authContainer not found in DOM');
+            console.error('[Auth] ❌ authContainer NOT FOUND in DOM!');
+            console.log('[Auth] Available elements with id:', 
+                Array.from(document.querySelectorAll('[id]')).map(el => el.id));
             return;
         }
 
+        console.log('[Auth] ✓ authContainer found, current content:', authContainer.innerHTML.substring(0, 100));
+
         // Clear existing content
         authContainer.innerHTML = '';
+        console.log('[Auth] Cleared authContainer');
 
         // When auth is not required, show admin features without login/logout
         if (!this.authRequired) {
@@ -701,13 +718,20 @@ class AuthManager {
 
         // Show UI if OAuth is configured OR if user is authenticated
         const shouldShowUI = this.isAuthenticated() || this.mode === 'oauth';
+        console.log('[Auth] shouldShowUI:', shouldShowUI, '(authenticated:', this.isAuthenticated(), 'OR mode === oauth:', this.mode === 'oauth', ')');
 
         if (!shouldShowUI) {
-            console.log('[Auth] Not showing auth UI - mode:', this.mode, 'authenticated:', this.isAuthenticated());
+            console.log('[Auth] ❌ Not showing auth UI - exiting');
             return;
         }
 
+        console.log('[Auth] ✓ Should show UI, checking if authenticated...');
+        
         if (this.isAuthenticated()) {
+            console.log('[Auth] ✓ User IS authenticated, rendering user dropdown...');
+            console.log('[Auth] Username:', this.userInfo?.username || this.userInfo?.email);
+            console.log('[Auth] Roles:', this.userInfo?.roles);
+            
             // Show user info
             const userDiv = document.createElement('div');
             userDiv.className = 'auth-user-info';
@@ -929,10 +953,16 @@ class AuthManager {
             dropdown.appendChild(menu);
             userDiv.appendChild(dropdown);
             authContainer.appendChild(userDiv);
+            
+            console.log('[Auth] ✓ User dropdown added to authContainer');
+        } else {
+            console.log('[Auth] User NOT authenticated, showing login button instead');
         }
 
         // Show the container
         authContainer.classList.remove('d-none');
+        console.log('[Auth] ✓ authContainer made visible');
+        console.log('[Auth] ========== renderAuthUI COMPLETE ==========');
     }
 
     /**
@@ -1069,7 +1099,29 @@ class AuthManager {
 
         return null;
     }
+    
+    /**
+     * Debug helper - print current auth state
+     */
+    debugState() {
+        console.log('=== AUTH STATE DEBUG ===');
+        console.log('initialized:', this.initialized);
+        console.log('mode:', this.mode);
+        console.log('token exists:', !!this.token);
+        console.log('token value (first 20 chars):', this.token?.substring(0, 20));
+        console.log('userInfo:', this.userInfo);
+        console.log('authRequired:', this.authRequired);
+        console.log('oauthConfig:', this.oauthConfig);
+        console.log('isAuthenticated():', this.isAuthenticated());
+        console.log('sessionStorage access_token:', !!sessionStorage.getItem('access_token'));
+        console.log('sessionStorage refresh_token:', !!sessionStorage.getItem('refresh_token'));
+        console.log('authContainer in DOM:', !!document.getElementById('authContainer'));
+        console.log('========================');
+    }
 }
 
 // Create and export global instance
 export const authManager = new AuthManager();
+
+// Make debugState available globally for easy console access
+window.debugAuth = () => authManager.debugState();
