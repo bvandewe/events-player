@@ -129,27 +129,27 @@ The authentication method is auto-detected when enabled:
 
 #### `AUTH_JWKS_URL`
 
-- **Description**: JWKS endpoint URL for JWT validation
+- **Description**: JWKS endpoint URL for JWT validation (auto-derived from OAuth config)
 - **Type**: String (URL)
-- **Required**: When using Istio/Service Mesh authentication
-- **Example**: `AUTH_JWKS_URL=http://oauth server:8080/realms/events-player/protocol/openid-connect/certs`
+- **Default**: Auto-derived from `OAUTH_SERVER_URL` + `OAUTH_REALM`
+- **Example**: `AUTH_JWKS_URL=http://oauth.example.com/realms/my-realm/protocol/openid-connect/certs`
 
-Provides public keys for JWT signature verification.
+Only set explicitly if using Istio/Service Mesh without OAuth, or if using a non-standard OIDC provider. For Keycloak, this is automatically derived from `OAUTH_SERVER_URL` and `OAUTH_REALM`.
 
 #### `AUTH_ISSUER`
 
-- **Description**: Expected JWT issuer (iss claim)
+- **Description**: Expected JWT issuer (iss claim, auto-derived from OAuth config)
 - **Type**: String
-- **Required**: When using Istio/Service Mesh authentication
-- **Example**: `AUTH_ISSUER=http://localhost:8090/realms/events-player`
+- **Default**: Auto-derived from `OAUTH_SERVER_URL` + `OAUTH_REALM`
+- **Example**: `AUTH_ISSUER=http://oauth.example.com/realms/my-realm`
 
-Must match the issuer in JWT tokens.
+Only set explicitly if using Istio/Service Mesh without OAuth, or if using a non-standard OIDC provider. For Keycloak, this is automatically derived from `OAUTH_SERVER_URL` and `OAUTH_REALM`.
 
 #### `AUTH_AUDIENCE`
 
 - **Description**: Expected JWT audience (aud claim)
 - **Type**: String
-- **Required**: When using Istio/Service Mesh authentication
+- **Required**: When JWT audience validation is needed
 - **Example**: `AUTH_AUDIENCE=events-player-web`
 
 The intended audience for the JWT token.

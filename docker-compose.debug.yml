@@ -44,8 +44,8 @@ services:
 
       # Authentication & Authorization
       auth_required: "true" # Set to "true" to require authentication
-      auth_jwks_url: http://keycloak:8080/realms/events-player/protocol/openid-connect/certs
-      auth_issuer: http://localhost:8885/realms/events-player
+      # auth_jwks_url and auth_issuer are auto-derived from oauth_* settings below
+      # Only set these explicitly if using Istio/Service Mesh without OAuth
       auth_audience: events-player-web
       auth_algorithm: RS256
 
@@ -56,6 +56,7 @@ services:
 
       # OAuth/OIDC Configuration (works with any OIDC-compliant IDP like Keycloak, Auth0, Okta, etc.)
       # Simplified: Single URL works for both backend and frontend
+      # auth_jwks_url and auth_issuer are automatically derived from these settings
       oauth_server_url: http://localhost:8885 # OAuth server URL accessible from browser
       oauth_legacy_keycloak: "false" # Set to "true" for Keycloak < v17 (adds /auth prefix)
       oauth_realm: events-player # OAuth realm/tenant name

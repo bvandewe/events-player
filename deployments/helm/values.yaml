@@ -26,8 +26,8 @@ player:
     
     # Authentication & Authorization
     auth_required: "false"  # Set to "true" to enable authentication
-    auth_jwks_url: "http://keycloak:8080/realms/mario-pizzeria/protocol/openid-connect/certs"
-    auth_issuer: "http://localhost:8090/realms/mario-pizzeria"
+    # auth_jwks_url and auth_issuer are auto-derived from oauth_* settings below
+    # Only set these explicitly if using Istio/Service Mesh without OAuth
     auth_audience: "events-player-web"
     auth_algorithm: "RS256"
     
@@ -37,7 +37,8 @@ player:
     auth_role_user: "driver"      # Role name in JWT that grants user privileges
     
     # OAuth/OIDC Configuration
-    # Simplified: Single URL works for both backend and frontend
+    # Simplified: Single URL, realm, and client_id are all you need
+    # auth_jwks_url and auth_issuer are automatically derived from these
     oauth_server_url: "http://localhost:8090"  # OAuth server URL accessible from browser
     oauth_legacy_keycloak: "false"  # Set to "true" for Keycloak < v17 (adds /auth prefix)
     oauth_realm: "mario-pizzeria"

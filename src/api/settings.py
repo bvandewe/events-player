@@ -89,8 +89,8 @@ class ApiSettings(BaseSettings):
     #   - OAuth/OIDC: OAuth 2.0 + OIDC flow when oauth_server_url is configured
     #   - None: When auth_required=False, authentication is optional
     auth_required: bool = False  # Require authentication for all endpoints
-    auth_jwks_url: str = ""  # JWKS endpoint for JWT validation (Istio mode)
-    auth_issuer: str = ""  # Expected JWT issuer
+    auth_jwks_url: str = ""  # JWKS endpoint (optional - auto-derived from oauth_* if not set)
+    auth_issuer: str = ""  # Expected JWT issuer (optional - auto-derived from oauth_* if not set)
     auth_audience: str = ""  # Expected JWT audience
     auth_algorithm: str = "RS256"  # JWT signature algorithm
 
@@ -102,6 +102,7 @@ class ApiSettings(BaseSettings):
 
     # OAuth/OIDC settings (for OAuth-based authentication with any IDP)
     # Simplified configuration - one URL for both frontend and backend
+    # When configured, auth_issuer and auth_jwks_url are auto-derived if not explicitly set
     oauth_server_url: str = ""  # OAuth server base URL (e.g., https://keycloak.example.com)
     oauth_legacy_keycloak: bool = False  # Set to True for Keycloak < v17 (adds /auth prefix)
     oauth_realm: str = "events-player"  # OAuth realm/tenant name
@@ -127,6 +128,38 @@ class ApiSettings(BaseSettings):
             return f"{base_url}/auth"
 
         return base_url
+
+    def get_auth_jwks_url(self) -> str:
+        """
+        Get JWKS URL for JWT validation.
+
+        Returns explicitly configured auth_jwks_url if set,
+        otherwise derives it from OAuth configuration.
+        """
+        if self.auth_jwks_url:
+            return self.auth_jwks_url
+
+        # Auto-derive from OAuth config for Keycloak/OIDC
+        if self.oauth_base_url and self.oauth_realm:
+            return f"{self.oauth_base_url}/realms/{self.oauth_realm}/protocol/openid-connect/certs"
+
+        return ""
+
+    def get_auth_issuer(self) -> str:
+        """
+        Get expected JWT issuer.
+
+        Returns explicitly configured auth_issuer if set,
+        otherwise derives it from OAuth configuration.
+        """
+        if self.auth_issuer:
+            return self.auth_issuer
+
+        # Auto-derive from OAuth config for Keycloak/OIDC
+        if self.oauth_base_url and self.oauth_realm:
+            return f"{self.oauth_base_url}/realms/{self.oauth_realm}"
+
+        return ""
 
 
 settings = ApiSettings()
