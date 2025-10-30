@@ -692,13 +692,13 @@ class AuthManager {
         console.log('[Auth] userInfo:', this.userInfo);
         console.log('[Auth] authRequired:', this.authRequired);
         console.log('[Auth] isAuthenticated():', this.isAuthenticated());
-        
+
         const authContainer = document.getElementById('authContainer');
         console.log('[Auth] authContainer element:', authContainer);
-        
+
         if (!authContainer) {
             console.error('[Auth] ❌ authContainer NOT FOUND in DOM!');
-            console.log('[Auth] Available elements with id:', 
+            console.log('[Auth] Available elements with id:',
                 Array.from(document.querySelectorAll('[id]')).map(el => el.id));
             return;
         }
@@ -726,12 +726,12 @@ class AuthManager {
         }
 
         console.log('[Auth] ✓ Should show UI, checking if authenticated...');
-        
+
         if (this.isAuthenticated()) {
             console.log('[Auth] ✓ User IS authenticated, rendering user dropdown...');
             console.log('[Auth] Username:', this.userInfo?.username || this.userInfo?.email);
             console.log('[Auth] Roles:', this.userInfo?.roles);
-            
+
             // Show user info
             const userDiv = document.createElement('div');
             userDiv.className = 'auth-user-info';
@@ -953,7 +953,7 @@ class AuthManager {
             dropdown.appendChild(menu);
             userDiv.appendChild(dropdown);
             authContainer.appendChild(userDiv);
-            
+
             console.log('[Auth] ✓ User dropdown added to authContainer');
         } else {
             console.log('[Auth] User NOT authenticated, showing login button instead');
@@ -1099,7 +1099,7 @@ class AuthManager {
 
         return null;
     }
-    
+
     /**
      * Debug helper - print current auth state
      */
