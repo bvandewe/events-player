@@ -158,8 +158,20 @@ class JWTValidator:
 
             # Get signing key
             signing_key = self._get_signing_key(token, jwks)
+
+            # If key not found, invalidate cache and try one more time
+            # This handles key rotation scenarios where the token is signed with a new key
             if not signing_key:
-                raise HTTPException(status_code=401, detail="Unable to find signing key for token")
+                logger.info("Signing key not found in cached JWKS, refreshing JWKS cache...")
+                self._jwks_cache = None  # Invalidate cache
+                self._jwks_cache_time = None
+                jwks = await self._fetch_jwks()  # Fetch fresh JWKS
+                signing_key = self._get_signing_key(token, jwks)
+
+                if not signing_key:
+                    raise HTTPException(
+                        status_code=401, detail="Unable to find signing key for token"
+                    )
 
             # Validate and decode token
             options = {
