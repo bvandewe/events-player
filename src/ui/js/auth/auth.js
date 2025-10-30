@@ -25,6 +25,7 @@ class AuthManager {
         this.mode = null; // 'istio' | 'oauth' | 'none'
         this.tokenCheckInterval = null; // For periodic token validation
         this.authRequired = false; // Track if auth is required from backend
+        this.roleMappings = null; // Store role mappings from backend (admin, operator, user)
     }
 
     /**
@@ -67,6 +68,11 @@ class AuthManager {
 
                 // Store auth_required status from backend
                 this.authRequired = data.auth_required !== undefined ? data.auth_required : false;
+
+                // Store role mappings from backend
+                if (data.role_mappings) {
+                    this.roleMappings = data.role_mappings;
+                }
 
                 if (data.authenticated) {
                     console.log('[Auth] Istio mode detected, user pre-authenticated:', data.user.username);
@@ -677,17 +683,16 @@ class AuthManager {
             username.textContent = this.userInfo.username || this.userInfo.email || 'User';
             button.appendChild(username);
 
-            // Role badges
-            if (this.userInfo.roles && this.userInfo.roles.length > 0) {
+            // Role badge - show only highest relevant role
+            const highestRole = this.getHighestRelevantRole();
+            if (highestRole) {
                 const rolesSpan = document.createElement('span');
                 rolesSpan.className = 'ms-2';
 
-                this.userInfo.roles.forEach(role => {
-                    const badge = document.createElement('span');
-                    badge.className = `badge rounded-pill ${this.getRoleBadgeClass(role)} ms-1`;
-                    badge.textContent = role;
-                    rolesSpan.appendChild(badge);
-                });
+                const badge = document.createElement('span');
+                badge.className = `badge rounded-pill ${this.getRoleBadgeClass(highestRole)} ms-1`;
+                badge.textContent = highestRole;
+                rolesSpan.appendChild(badge);
 
                 button.appendChild(rolesSpan);
             }
@@ -989,6 +994,32 @@ class AuthManager {
             'user': 'bg-info text-dark'
         };
         return roleClasses[role] || 'bg-secondary';
+    }
+
+    /**
+     * Get the highest relevant role for display purposes
+     * Returns the application role (admin/operator/user) based on configured role mappings
+     * Priority: admin > operator > user
+     */
+    getHighestRelevantRole() {
+        if (!this.userInfo || !this.userInfo.roles || !this.roleMappings) {
+            return null;
+        }
+
+        const userRoles = this.userInfo.roles;
+
+        // Check in priority order: admin > operator > user
+        if (userRoles.includes(this.roleMappings.admin)) {
+            return 'admin';
+        }
+        if (userRoles.includes(this.roleMappings.operator)) {
+            return 'operator';
+        }
+        if (userRoles.includes(this.roleMappings.user)) {
+            return 'user';
+        }
+
+        return null;
     }
 }
 
