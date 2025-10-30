@@ -26,9 +26,22 @@ class GlobalFilterController {
         this.filtersPanelElement = null;
         this.filtersNavLink = null;
 
+        // Filter indicators on each view
+        this.filterIndicators = {
+            events: null,
+            timeline: null,
+            dashboard: null
+        };
+        this.filterClearButtons = {
+            events: null,
+            timeline: null,
+            dashboard: null
+        };
+
         // Bootstrap instances
         this.offcanvasInstance = null;
         this.tooltipInstance = null;
+        this.indicatorTooltips = [];
 
         // Click outside handler
         this.handleClickOutside = this.handleClickOutside.bind(this);
@@ -56,6 +69,15 @@ class GlobalFilterController {
         this.activeFiltersCount = document.getElementById('activeFiltersCount');
         this.filtersNavLink = document.getElementById('filtersNavLink');
 
+        // Get filter indicators and clear buttons for each view
+        this.filterIndicators.events = document.getElementById('eventsFilterIndicator');
+        this.filterIndicators.timeline = document.getElementById('timelineFilterIndicator');
+        this.filterIndicators.dashboard = document.getElementById('dashboardFilterIndicator');
+
+        this.filterClearButtons.events = document.getElementById('eventsFilterClearBtn');
+        this.filterClearButtons.timeline = document.getElementById('timelineFilterClearBtn');
+        this.filterClearButtons.dashboard = document.getElementById('dashboardFilterClearBtn');
+
         if (!this.typeSelect || !this.sourceSelect || !this.subjectSelect || !this.filtersPanelElement) {
             console.error('[GlobalFilters] Required DOM elements not found');
             return;
@@ -74,6 +96,9 @@ class GlobalFilterController {
                 html: true
             });
         }
+
+        // Initialize Bootstrap tooltips for filter indicators
+        this.initializeIndicatorTooltips();
 
         // Setup auto-dismiss on click outside
         // Setup auto dismiss (click outside)
@@ -95,6 +120,9 @@ class GlobalFilterController {
 
         // Update active filter count badge
         this.updateActiveFiltersCount();
+
+        // Update filter indicators on all views
+        this.updateFilterIndicators();
 
         this.initialized = true;
         console.log('[GlobalFilters] Initialized');
@@ -224,6 +252,62 @@ class GlobalFilterController {
     }
 
     /**
+     * Initialize Bootstrap tooltips for filter indicators
+     */
+    initializeIndicatorTooltips() {
+        // Clear any existing tooltips
+        this.indicatorTooltips.forEach(tooltip => tooltip.dispose());
+        this.indicatorTooltips = [];
+
+        // Initialize tooltips for all indicators and buttons
+        Object.values(this.filterIndicators).forEach(indicator => {
+            if (indicator) {
+                const badge = indicator.querySelector('.badge');
+                const button = indicator.querySelector('button');
+                
+                if (badge) {
+                    this.indicatorTooltips.push(new bootstrap.Tooltip(badge));
+                }
+                if (button) {
+                    this.indicatorTooltips.push(new bootstrap.Tooltip(button));
+                }
+            }
+        });
+    }
+
+    /**
+     * Update filter indicators on all views
+     */
+    updateFilterIndicators() {
+        const hasFilters = this.hasActiveFilters();
+
+        // Show or hide indicators based on whether filters are active
+        Object.values(this.filterIndicators).forEach(indicator => {
+            if (indicator) {
+                if (hasFilters) {
+                    indicator.classList.remove('d-none');
+                } else {
+                    indicator.classList.add('d-none');
+                }
+            }
+        });
+    }
+
+    /**
+     * Check if there are any active filters
+     * @returns {boolean} True if any filters are active
+     */
+    hasActiveFilters() {
+        const filters = appState.get('filters');
+        return !!(
+            filters.type ||
+            filters.source ||
+            filters.subject !== null ||
+            (filters.timeRange && filters.timeRange !== 'all')
+        );
+    }
+
+    /**
      * Setup event listeners for filter changes
      */
     setupEventListeners() {
@@ -242,6 +326,9 @@ class GlobalFilterController {
 
             // Update active filter count badge
             this.updateActiveFiltersCount();
+
+            // Update filter indicators on all views
+            this.updateFilterIndicators();
         };
 
         if (this.typeSelect) {
@@ -265,6 +352,15 @@ class GlobalFilterController {
                 this.clearFilters();
             });
         }
+
+        // Setup event listeners for clear buttons on each view
+        Object.values(this.filterClearButtons).forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    this.clearFilters();
+                });
+            }
+        });
     }
 
     /**
@@ -281,6 +377,9 @@ class GlobalFilterController {
 
         // Update active filter count badge
         this.updateActiveFiltersCount();
+
+        // Update filter indicators on all views
+        this.updateFilterIndicators();
 
         console.log('[GlobalFilters] Filters cleared');
     }

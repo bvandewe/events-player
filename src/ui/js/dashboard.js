@@ -77,9 +77,13 @@ const dashboardController = (() => {
 
     // Stats elements
     let statTotalEvents;
+    let statTotalEventsTime;
     let statAvgRate;
+    let statAvgRateTime;
     let statUniqueTypes;
+    let statUniqueTypesInfo;
     let statUniqueSources;
+    let statUniqueSourcesInfo;
 
     /**
      * Initialize the dashboard view
@@ -92,9 +96,13 @@ const dashboardController = (() => {
 
         // Initialize DOM element references
         statTotalEvents = document.getElementById('statTotalEvents');
+        statTotalEventsTime = document.getElementById('statTotalEventsTime');
         statAvgRate = document.getElementById('statAvgRate');
+        statAvgRateTime = document.getElementById('statAvgRateTime');
         statUniqueTypes = document.getElementById('statUniqueTypes');
+        statUniqueTypesInfo = document.getElementById('statUniqueTypesInfo');
         statUniqueSources = document.getElementById('statUniqueSources');
+        statUniqueSourcesInfo = document.getElementById('statUniqueSourcesInfo');
 
         // Initialize storage manager
         await storageManager.init();
@@ -198,6 +206,13 @@ const dashboardController = (() => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                onClick: (event, activeElements) => {
+                    if (activeElements.length > 0) {
+                        const dataIndex = activeElements[0].index;
+                        const timestamp = charts.eventsPerMinute.data.datasets[0].data[dataIndex].x;
+                        handleTimeRangeClick(timestamp, 60000); // 1 minute bucket
+                    }
+                },
                 scales: {
                     x: {
                         type: 'time',
@@ -232,6 +247,9 @@ const dashboardController = (() => {
                         callbacks: {
                             title: (context) => {
                                 return dateFns.format(new Date(context[0].parsed.x), 'PPpp');
+                            },
+                            afterTitle: () => {
+                                return 'Click to filter events';
                             }
                         }
                     }
@@ -261,9 +279,23 @@ const dashboardController = (() => {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                onClick: (event, activeElements) => {
+                    if (activeElements.length > 0) {
+                        const dataIndex = activeElements[0].index;
+                        const eventType = charts.topTypes.data.labels[dataIndex];
+                        handleTypeClick(eventType);
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: () => {
+                                return 'Click to filter by type';
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -299,9 +331,23 @@ const dashboardController = (() => {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                onClick: (event, activeElements) => {
+                    if (activeElements.length > 0) {
+                        const dataIndex = activeElements[0].index;
+                        const eventSource = charts.topSources.data.labels[dataIndex];
+                        handleSourceClick(eventSource);
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: () => {
+                                return 'Click to filter by source';
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -330,9 +376,22 @@ const dashboardController = (() => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                onClick: (event, activeElements) => {
+                    if (activeElements.length > 0) {
+                        const dataIndex = activeElements[0].index;
+                        handleHourClick(dataIndex);
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: () => {
+                                return 'Click to filter by hour';
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -351,6 +410,125 @@ const dashboardController = (() => {
                 }
             }
         });
+    }
+
+    /**
+     * Handle click on time-based chart (Events Per Minute)
+     * Navigate to Events view with time range filter
+     */
+    function handleTimeRangeClick(timestamp, bucketSizeMs) {
+        console.log('[Dashboard] Clicked on timestamp:', new Date(timestamp));
+
+        // Get current filter values from global state
+        const filters = appState.get('filters');
+        const typeFilter = filters.type || '';
+        const sourceFilter = filters.source || '';
+        const subjectFilter = filters.subject !== null ? filters.subject : '';
+
+        // Calculate time range for the clicked bucket
+        const startTime = timestamp;
+        const endTime = timestamp + bucketSizeMs;
+
+        // Build URL with filter parameters
+        const params = new URLSearchParams();
+        params.set('startTime', startTime.toString());
+        params.set('endTime', endTime.toString());
+
+        if (typeFilter) {
+            params.set('type', typeFilter);
+        }
+        if (sourceFilter) {
+            params.set('source', sourceFilter);
+        }
+        if (subjectFilter) {
+            params.set('subject', subjectFilter);
+        }
+
+        // Navigate to Events view with filters
+        console.log('[Dashboard] Navigating to Events view with time range:', Object.fromEntries(params));
+        window.location.href = `/?${params.toString()}`;
+    }
+
+    /**
+     * Handle click on event type chart
+     * Navigate to Events view filtered by type
+     */
+    function handleTypeClick(eventType) {
+        console.log('[Dashboard] Clicked on event type:', eventType);
+
+        // Update filters to include the clicked type
+        const filters = {
+            type: eventType,
+            source: '',
+            subject: null,
+            timeRange: appState.get('filters').timeRange || 'all'
+        };
+
+        appState.updateFilters(filters);
+
+        // Navigate to Events view
+        console.log('[Dashboard] Navigating to Events view with type filter');
+        window.location.href = '/';
+    }
+
+    /**
+     * Handle click on event source chart
+     * Navigate to Events view filtered by source
+     */
+    function handleSourceClick(eventSource) {
+        console.log('[Dashboard] Clicked on event source:', eventSource);
+
+        // Update filters to include the clicked source
+        const filters = {
+            type: '',
+            source: eventSource,
+            subject: null,
+            timeRange: appState.get('filters').timeRange || 'all'
+        };
+
+        appState.updateFilters(filters);
+
+        // Navigate to Events view
+        console.log('[Dashboard] Navigating to Events view with source filter');
+        window.location.href = '/';
+    }
+
+    /**
+     * Handle click on hourly distribution chart
+     * Navigate to Events view filtered by hour of day
+     */
+    function handleHourClick(hour) {
+        console.log('[Dashboard] Clicked on hour:', hour);
+
+        // Get current filter values
+        const filters = appState.get('filters');
+        const typeFilter = filters.type || '';
+        const sourceFilter = filters.source || '';
+        const subjectFilter = filters.subject !== null ? filters.subject : '';
+
+        // Calculate time range for today at the clicked hour
+        const now = new Date();
+        const startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, 0, 0).getTime();
+        const endTime = startTime + (60 * 60 * 1000); // 1 hour
+
+        // Build URL with filter parameters
+        const params = new URLSearchParams();
+        params.set('startTime', startTime.toString());
+        params.set('endTime', endTime.toString());
+
+        if (typeFilter) {
+            params.set('type', typeFilter);
+        }
+        if (sourceFilter) {
+            params.set('source', sourceFilter);
+        }
+        if (subjectFilter) {
+            params.set('subject', subjectFilter);
+        }
+
+        // Navigate to Events view with filters
+        console.log('[Dashboard] Navigating to Events view with hour filter:', Object.fromEntries(params));
+        window.location.href = `/?${params.toString()}`;
     }
 
     /**
@@ -425,6 +603,19 @@ const dashboardController = (() => {
         const total = events.length;
         statTotalEvents.textContent = total.toLocaleString();
 
+        // Last event received time
+        if (total > 0) {
+            const lastEvent = events[events.length - 1]; // Events are sorted by timestamp
+            if (lastEvent && lastEvent.timestamp) {
+                const lastEventTime = new Date(lastEvent.timestamp);
+                statTotalEventsTime.textContent = `Last event: ${dateFns.formatDistanceToNow(lastEventTime, { addSuffix: true })}`;
+            } else {
+                statTotalEventsTime.textContent = '';
+            }
+        } else {
+            statTotalEventsTime.textContent = '';
+        }
+
         // Calculate average rate
         let avgRate = 0;
         if (total > 0 && startTime) {
@@ -441,13 +632,46 @@ const dashboardController = (() => {
         }
         statAvgRate.textContent = avgRate;
 
+        // Last updated time
+        statAvgRateTime.textContent = `Updated: ${dateFns.formatDistanceToNow(new Date(), { addSuffix: true })}`;
+
         // Count unique types
         const uniqueTypes = new Set(events.map(e => e.type));
         statUniqueTypes.textContent = uniqueTypes.size;
 
+        // Most common type info
+        if (uniqueTypes.size > 0) {
+            const typeCounts = {};
+            events.forEach(e => {
+                typeCounts[e.type] = (typeCounts[e.type] || 0) + 1;
+            });
+            const sortedTypes = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]);
+            const topType = sortedTypes[0];
+            statUniqueTypesInfo.textContent = `Most common: ${topType[0].split('.').pop()}`;
+        } else {
+            statUniqueTypesInfo.textContent = '';
+        }
+
         // Count unique sources
         const uniqueSources = new Set(events.map(e => e.source));
         statUniqueSources.textContent = uniqueSources.size;
+
+        // Most common source info
+        if (uniqueSources.size > 0) {
+            const sourceCounts = {};
+            events.forEach(e => {
+                sourceCounts[e.source] = (sourceCounts[e.source] || 0) + 1;
+            });
+            const sortedSources = Object.entries(sourceCounts).sort((a, b) => b[1] - a[1]);
+            const topSource = sortedSources[0];
+            // Extract domain or last part of URL
+            const sourceLabel = topSource[0].includes('://')
+                ? new URL(topSource[0]).hostname
+                : topSource[0].split('/').pop();
+            statUniqueSourcesInfo.textContent = `Most common: ${sourceLabel}`;
+        } else {
+            statUniqueSourcesInfo.textContent = '';
+        }
     }
 
     /**
