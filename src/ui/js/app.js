@@ -33,6 +33,12 @@ storageManager.init().then(() => {
             console.error('[App] Failed to initialize global filters:', error);
         });
     });
+
+    // Initialize unified dashboard controller
+    import('./unifiedDashboard').then(({ unifiedDashboardController }) => {
+        unifiedDashboardController.init();
+        console.log('[App] Unified dashboard initialized');
+    });
 }).catch(error => {
     console.error('[App] Failed to initialize storage manager:', error);
 });
