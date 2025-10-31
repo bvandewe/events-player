@@ -2,29 +2,34 @@
 
 Get CloudEvent Player up and running in 5 minutes.
 
+## Prerequisites
+
+**None!** CloudEvent Player works out of the box with zero configuration. Just start it and go.
+
 ## Step 1: Start the Application
 
 Choose your preferred method to run CloudEvent Player:
 
-=== "Pull (Fastest)"
+=== "Docker Run (Fastest)"
 
-    Pull the pre-built image from GitHub Container Registry:
+    Pull and run the pre-built image from GitHub Container Registry:
 
     ```bash
-    # Pull the latest image
-    docker pull ghcr.io/bvandewe/events-player:latest
-
-    # Run the container
     docker run -d \
       --name event-player \
       -p 8884:8080 \
       ghcr.io/bvandewe/events-player:latest
+    ```
 
-    # Verify it's running
+    **That's it!** No environment variables required. The application uses sensible defaults.
+
+    Verify it's running:
+
+    ```bash
     curl http://localhost:8884/health
     ```
 
-    **Using Docker Compose:**
+=== "Docker Compose"
 
     Create a `docker-compose.yml` file:
 
@@ -37,16 +42,19 @@ Choose your preferred method to run CloudEvent Player:
         restart: unless-stopped
     ```
 
-    Then start it:
+    Start it:
 
     ```bash
     docker-compose up -d
+    ```
 
-    # Verify it's running
+    Verify it's running:
+
+    ```bash
     curl http://localhost:8884/health
     ```
 
-=== "Build (From Source)"
+=== "Build From Source"
 
     Build from source code:
 
@@ -57,8 +65,11 @@ Choose your preferred method to run CloudEvent Player:
 
     # Start with Docker Compose (builds automatically)
     docker-compose up -d
+    ```
 
-    # Verify it's running
+    Verify it's running:
+
+    ```bash
     curl http://localhost:8884/health
     ```
 
@@ -67,10 +78,10 @@ Choose your preferred method to run CloudEvent Player:
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-10-16T00:00:00Z",
+  "timestamp": "2025-10-31T00:00:00Z",
   "active_tasks": 0,
   "active_clients": 0,
-  "version": "0.1.17"
+  "version": "0.4.0"
 }
 ```
 
@@ -82,50 +93,73 @@ Open your browser to:
 http://localhost:8884
 ```
 
-You should see the CloudEvent Player web interface with:
+You should see the **Unified Dashboard** with:
 
-- An empty event stream
-- A "Generate Events" button in the top-left
-- A search bar
+- **Real-time Metrics**: Total events, avg rate, event types, event sources
+- **Tabs**: Streams (event list) and Timeline (visual chart)
+- **Search box**: In the tab bar for filtering events
+- **Export button**: Download events as JSON
+- **Generator button**: Top navigation bar (⚡ Generator)
 
 ## Step 3: Generate Your First Event
 
-1. Click the **"Generate Events"** button (top-left corner)
+1. Click the **"⚡ Generator"** button in the top navigation bar
 
-2. The generator panel will open with default values:
+2. The generator panel will open on the right side with default values:
 
    - **Event Gateway**: `http://localhost:8884/events/pub`
-   - **Event Source**: `cloudevent-player`
-   - **Event Type**: `com.cloudevent.player.generated.v1`
-   - **Event Subject**: `test-event`
+   - **Event Source**: `https://dummy.source.com/sys-admin`
+   - **Event Type**: `com.source.dummy.test.requested.v1`
+   - **Event Subject**: `some.interesting.concept.key_abcde12345`
    - **Event Data**: `{"foo": "bar"}`
    - **Iterations**: `1`
-   - **Delay**: `1000`
+   - **Delay**: `100` (milliseconds)
 
 3. Click the **"Generate"** button at the bottom of the panel
 
-4. Watch your event appear in the stream!
+4. Watch your event appear in the **Streams** tab in real-time!
+
+   The metrics at the top will update automatically showing:
+   - Total Events: 1
+   - Event rate
+   - Top event type and source
 
 ## Step 4: Inspect the Event
 
-Click on the event card to expand it and view:
+Click on the event card in the Streams tab to expand it and view the complete CloudEvent structure:
 
 ```json
 {
   "specversion": "1.0",
   "id": "a1b2c3d4-5678-90ab-cdef-123456789abc",
-  "time": "2025-10-16T12:34:56.789012",
+  "time": "2025-10-31T12:34:56.789012",
   "datacontenttype": "application/json",
-  "type": "com.cloudevent.player.generated.v1",
-  "source": "cloudevent-player",
-  "subject": "test-event",
+  "type": "com.source.dummy.test.requested.v1",
+  "source": "https://dummy.source.com/sys-admin",
+  "subject": "some.interesting.concept.key_abcde12345",
   "data": {
     "foo": "bar"
   }
 }
 ```
 
-## Step 5: Generate Multiple Events
+## Step 5: Explore the Timeline View
+
+1. Click the **"Timeline"** tab
+2. See a visual chart showing event activity over time
+3. Use the **"Bucket Size"** dropdown to change time granularity (1 sec to 1 hr)
+4. Events are color-coded by source
+
+## Step 6: Try the Search Feature
+
+1. Go back to the **"Streams"** tab
+2. Type `foo` in the search box (in the tab bar)
+3. Only events containing "foo" anywhere in their payload will be shown
+4. Clear the search to see all events again
+
+The search term is automatically saved and restored when you reload the page!
+
+## Step 7: Generate Multiple Events
 
 Try generating multiple events:
 

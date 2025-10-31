@@ -34,24 +34,40 @@ graph TB
 
 ### 🎯 **Event Generation**
 
-Generate CloudEvents with customizable properties, data payloads, and delivery options. Perfect for testing event-driven architectures without writing code. Support for background task management with admin controls.
+Generate CloudEvents with customizable properties, data payloads, and delivery options. Perfect for testing event-driven architectures without writing code.
+
+- **Built-in Generator UI**: Side panel with form for quick event creation
+- **Batch Generation**: Generate multiple events with configurable delays
+- **Background Tasks**: Long-running event generation managed by admin controls
+- **Custom Gateways**: Send events to any HTTP endpoint
+- **Form Persistence**: Generator settings saved automatically
 
 ### 📡 **Real-Time Monitoring**
 
-Watch events flow through your system with Server-Sent Events (SSE) streaming. See events as they arrive with syntax-highlighted JSON in multiple views:
+Watch events flow through your system with Server-Sent Events (SSE) streaming. See events as they arrive with syntax-highlighted JSON in a **unified dashboard**:
 
-- **Events List View**: Traditional list with accordion expansion
-- **Timeline Chart View**: Visual timeline with Chart.js showing event activity over time
-- **Shared Filtering**: Synchronized filters across all views for consistent data exploration
+- **Unified Dashboard**: Single-page view combining all features
+  - **Streams Tab**: Real-time event list with accordion expansion
+  - **Timeline Tab**: Visual Chart.js timeline showing event activity over time
+  - **Search**: Filter events by any text in payload (with persistence)
+  - **Real-time Metrics**: Total events, avg rate, top types/sources
+  - **Analytics Charts**: Top sources, types, subjects (click to filter)
+  - **Storage Indicators**: Two-tier IndexedDB usage visualization
+
+- **Synchronized Filtering**: Global filters affect streams, timeline, metrics, and charts
+- **Click-to-Filter**: Click any source/type/subject in charts to filter all views
+- **Time-based Buckets**: Configurable timeline granularity (1 sec to 1 hr)
 
 ### 🔍 **Event Inspection**
 
-Examine CloudEvent structure, validate schemas, and debug data payloads with an intuitive web interface. Features include:
+Examine CloudEvent structure, validate schemas, and debug data payloads with an intuitive web interface:
 
-- Click-to-filter on event properties
-- Advanced search across event types, sources, and subjects
-- Time range filtering for focused analysis
-- Real-time event counter showing filtered results
+- **Expandable Event Cards**: Click to view full JSON structure
+- **Syntax Highlighting**: Easy-to-read JSON with proper formatting
+- **Deep Search**: Search anywhere in event payload (CloudEvent attributes + data)
+- **Advanced Filtering**: Filter by type, source, subject, and time range
+- **Real-time Counter**: Shows filtered vs total events
+- **Persistent Search**: Search term survives page reloads
 
 ### 🔄 **Pub/Sub Support**
 

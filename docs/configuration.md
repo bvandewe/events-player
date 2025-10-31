@@ -2,6 +2,16 @@
 
 CloudEvent Player can be configured through environment variables to customize its behavior for different environments and use cases.
 
+## Zero Configuration Required
+
+**CloudEvent Player works out of the box with no configuration.** All settings have sensible defaults, so you can start using it immediately:
+
+```bash
+docker run -p 8884:8080 ghcr.io/bvandewe/events-player:latest
+```
+
+Only configure environment variables when you need to customize behavior for your specific use case.
+
 ## Configuration Methods
 
 CloudEvent Player supports multiple configuration methods, in order of precedence:
@@ -10,112 +20,201 @@ CloudEvent Player supports multiple configuration methods, in order of precedenc
 2. **Environment Files** - `.env` or `.env.prod` files in the application root
 3. **Default Values** - Built-in defaults if no configuration is provided
 
-## Environment Variables
+## Environment Variable Naming
 
-Environment variables are case-insensitive.
+Environment variables can use either format:
 
-### Application Settings
+- **Lowercase with underscores**: `api_log_level=DEBUG`
+- **Uppercase**: `API_LOG_LEVEL=DEBUG`
 
-#### `TAG`
+Both formats are equivalent (case-insensitive). The docs use lowercase for consistency.
+
+## Core Settings
+
+### Application Version
+
+#### `api_tag`
 
 - **Description**: Application version/tag
 - **Type**: String
-- **Default**: `"0.1.0"`
-- **Example**: `TAG=v0.2.0`
+- **Default**: `"0.4.0"`
+- **Example**: `api_tag=v0.4.0`
 
 Used for version identification in logs and API responses.
 
-#### `REPOSITORY_URL`
+#### `api_repository_url`
 
 - **Description**: Repository URL for the application
 - **Type**: String (URL)
 - **Default**: `"https://github.com/bvandewe/events-player"`
-- **Example**: `REPOSITORY_URL=https://github.com/myorg/events-player`
+- **Example**: `api_repository_url=https://github.com/myorg/events-player`
 
 Displayed in the UI and API documentation.
 
 ### Logging Configuration
 
-#### `LOG_LEVEL`
+#### `api_log_level`
 
 - **Description**: Logging level for the application
 - **Type**: String
 - **Default**: `"INFO"`
 - **Valid Values**: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
-- **Example**: `LOG_LEVEL=DEBUG`
+- **Example**: `api_log_level=DEBUG`
 
 Controls the verbosity of application logs. Use `DEBUG` for development and troubleshooting, `INFO` for production.
 
-#### `LOG_FORMAT`
+#### `api_log_format`
 
 - **Description**: Python logging format string
 - **Type**: String
 - **Default**: `"%(asctime)s - %(name)s - %(levelname)s - %(message)s"`
-- **Example**: `LOG_FORMAT="%(levelname)s - %(message)s"`
+- **Example**: `api_log_format="%(levelname)s - %(message)s"`
 
 Customize log output format. See [Python logging documentation](https://docs.python.org/3/library/logging.html#logrecord-attributes) for available attributes.
 
-### Default Event Settings
+### Frontend Display Settings
 
-These settings define the default values used in the event generator form.
+#### `api_browser_queue_size`
 
-#### `DEFAULT_GENERATOR_EVENT__EVENT_SOURCE`
+- **Description**: Maximum number of event accordion items rendered in the DOM
+- **Type**: Integer
+- **Default**: `1000`
+- **Recommended**: 1000-3000
+- **Example**: `api_browser_queue_size=2000`
+
+**What it controls:**
+
+- How many events appear in the Streams tab scrollable list
+- Higher values: More events visible but slower DOM performance
+- Lower values: Faster UI rendering but fewer events immediately visible
+- Events beyond this limit are still stored in IndexedDB and can be searched
+
+**Note:** This is a UI display limit only, not a storage limit.
+
+### Client-Side Storage (IndexedDB)
+
+CloudEvent Player uses a two-tier storage system in the browser:
+
+- **Tier 1 (Recent Events)**: Full event objects with complete data
+- **Tier 2 (Metadata)**: Lightweight metadata for timeline/dashboard
+
+Both tiers use capacity-based cleanup (FIFO) - oldest events removed when limit exceeded.
+
+#### `api_storage_max_recent_events`
+
+- **Description**: Maximum number of complete event objects stored (Tier 1)
+- **Type**: Integer  
+- **Default**: `5000`
+- **Recommended**: 5000-10000 for normal use, 20000+ for high-volume analysis
+- **Example**: `api_storage_max_recent_events=10000`
+
+**Impact:**
+
+- Determines how far back users can view full event details
+- Higher values use more browser memory/disk
+- When exceeded, oldest events are removed (FIFO)
+
+#### `api_storage_max_metadata_events`
+
+- **Description**: Maximum number of metadata entries stored (Tier 2)
+- **Type**: Integer
+- **Default**: `100000`
+- **Recommended**: 50000-200000 depending on event volume
+- **Example**: `api_storage_max_metadata_events=200000`
+
+**Impact:**
+
+- Determines how far back the timeline and dashboard charts extend
+- Higher values provide longer history but slower queries
+- When exceeded, oldest metadata is removed (FIFO)
+
+### Default Event Generator Settings
+
+These settings pre-populate the event generator form:
+
+#### `api_default_generator_gateways`
+
+- **Description**: Default gateway URLs for event generation
+- **Type**: JSON string with `urls` array
+- **Default**: `{"urls": ["http://host.docker.internal:8080/events/pub", "http://event-player:8080/events/pub"]}`
+- **Example**:
+
+```bash
+api_default_generator_gateways='{"urls": ["http://localhost:8884/events/pub", "http://my-service:8080/events"]}'
+```
+
+**Important:** Must be valid JSON with a `urls` array.
+
+#### `api_default_generator_event__event_source`
 
 - **Description**: Default CloudEvent source attribute
 - **Type**: String (URI)
 - **Default**: `"https://dummy.source.com/sys-admin"`
-- **Example**: `DEFAULT_GENERATOR_EVENT__EVENT_SOURCE=https://myapp.com/orders`
+- **Example**: `api_default_generator_event__event_source=https://myapp.com/orders`
 
 The source context in which the event occurred.
 
-#### `DEFAULT_GENERATOR_EVENT__EVENT_TYPE`
+#### `api_default_generator_event__event_type`
 
 - **Description**: Default CloudEvent type attribute
 - **Type**: String
 - **Default**: `"com.source.dummy.test.requested.v1"`
-- **Example**: `DEFAULT_GENERATOR_EVENT__EVENT_TYPE=com.myapp.order.created.v1`
+- **Example**: `api_default_generator_event__event_type=com.myapp.order.created.v1`
 
 The type of event. Use reverse-DNS naming convention.
 
-#### `DEFAULT_GENERATOR_EVENT__EVENT_SUBJECT`
+#### `api_default_generator_event__event_subject`
 
 - **Description**: Default CloudEvent subject attribute
 - **Type**: String
 - **Default**: `"some.interesting.concept.key_abcde12345"`
-- **Example**: `DEFAULT_GENERATOR_EVENT__EVENT_SUBJECT=order.12345`
+- **Example**: `api_default_generator_event__event_subject=order.12345`
 
 The subject of the event in the context of the event producer.
 
-#### `DEFAULT_GENERATOR_EVENT__EVENT_DATA`
+#### `api_default_generator_event__event_data`
 
 - **Description**: Default CloudEvent data payload
-- **Type**: JSON String
+- **Type**: JSON string
 - **Default**: `{"foo": "bar"}`
-- **Example**: `DEFAULT_GENERATOR_EVENT__EVENT_DATA={"orderId": "12345", "amount": 99.99}`
+- **Example**: `api_default_generator_event__event_data={"orderId": "12345", "amount": 99.99}`
 
 The event payload data. Must be valid JSON.
 
-### Authentication & Authorization
+### HTTP Client Configuration
+
+#### `api_http_client_timeout`
+
+- **Description**: Timeout for HTTP client requests (in seconds)
+- **Type**: Float
+- **Default**: `30.0`
+- **Example**: `api_http_client_timeout=60.0`
+
+Used when the application makes HTTP requests to external services.
+
+## Authentication & Authorization
+
+**Authentication is disabled by default.** Set `api_auth_required=true` to enable.
 
 For detailed authentication setup, see the [Authentication & Authorization](authentication.md) guide.
 
-#### `auth_required`
+### Master Authentication Switch
 
-- **Description**: Master switch to enable/disable authentication and authorization
+#### `api_auth_required`
+
+- **Description**: Master switch to enable/disable authentication
 - **Type**: Boolean (string)
-- **Default**: `"false"` (authentication disabled)
-- **Example**: `auth_required=true`
+- **Default**: `"false"` *(authentication disabled)*
+- **Example**: `api_auth_required=true`
 
-**This is the primary setting that controls authentication behavior:**
-
-When `auth_required=false` (default):
+**When `api_auth_required=false` (default):**
 
 - Application works immediately without any authentication setup
-- All features are accessible without login
+- All features accessible without login
 - No OAuth/OIDC configuration required
-- Admin features (Clear Storage, Current Clients, Manage Tasks) available via gear icon
+- Admin features available via gear icon in navigation
 
-When `auth_required=true`:
+**When `api_auth_required=true`:**
 
 - OAuth 2.0/OIDC authentication is enforced
 - Users must log in to access protected features
@@ -124,80 +223,375 @@ When `auth_required=true`:
 
 The authentication method is auto-detected when enabled:
 
-- **Istio/Service Mesh**: JWT already validated by the mesh, user info extracted from headers
-- **OAuth/OIDC**: OAuth 2.0 + OIDC flow when OAuth server is configured
+- **Istio/Service Mesh**: JWT validated by mesh, user info from headers
+- **OAuth/OIDC**: OAuth 2.0 + OIDC flow when OAuth server configured
 
-#### `AUTH_JWKS_URL`
+### OAuth/OIDC Settings
 
-- **Description**: JWKS endpoint URL for JWT validation (auto-derived from OAuth config)
-- **Type**: String (URL)
-- **Default**: Auto-derived from `OAUTH_SERVER_URL` + `OAUTH_REALM`
-- **Example**: `AUTH_JWKS_URL=http://oauth.example.com/realms/my-realm/protocol/openid-connect/certs`
+Only required when `api_auth_required=true`.
 
-Only set explicitly if using Istio/Service Mesh without OAuth, or if using a non-standard OIDC provider. For Keycloak, this is automatically derived from `OAUTH_SERVER_URL` and `OAUTH_REALM`.
+#### `api_oauth_server_url`
 
-#### `AUTH_ISSUER`
-
-- **Description**: Expected JWT issuer (iss claim, auto-derived from OAuth config)
-- **Type**: String
-- **Default**: Auto-derived from `OAUTH_SERVER_URL` + `OAUTH_REALM`
-- **Example**: `AUTH_ISSUER=http://oauth.example.com/realms/my-realm`
-
-Only set explicitly if using Istio/Service Mesh without OAuth, or if using a non-standard OIDC provider. For Keycloak, this is automatically derived from `OAUTH_SERVER_URL` and `OAUTH_REALM`.
-
-#### `AUTH_AUDIENCE`
-
-- **Description**: Expected JWT audience (aud claim)
-- **Type**: String
-- **Required**: When JWT audience validation is needed
-- **Example**: `AUTH_AUDIENCE=events-player-web`
-
-The intended audience for the JWT token.
-
-#### `OAUTH_SERVER_URL`
-
-- **Description**: OAuth/OIDC server URL
+- **Description**: OAuth/OIDC server URL (frontend access)
 - **Type**: String (URL)
 - **Required**: When using OAuth/OIDC authentication
-- **Example**: `OAUTH_SERVER_URL=https://keycloak.example.com`
+- **Example**: `api_oauth_server_url=https://keycloak.example.com`
 
-The base URL of your OAuth/OIDC server. This URL should be accessible from browsers for OAuth redirects and from the backend for token exchange. For old Keycloak versions (< v17), set `OAUTH_LEGACY_KEYCLOAK=true` to automatically add the `/auth` prefix.
+The base URL of your OAuth/OIDC server accessible from browsers.
 
-#### `OAUTH_LEGACY_KEYCLOAK`
+**Auto-derivation:** When set, `api_auth_issuer` and `api_auth_jwks_url` are automatically derived if not explicitly configured.
+
+#### `api_oauth_server_url_backend`
+
+- **Description**: OAuth/OIDC server URL for backend server-to-server calls
+- **Type**: String (URL)
+- **Default**: Falls back to `api_oauth_server_url`
+- **Example**: `api_oauth_server_url_backend=http://keycloak:8080`
+
+Use when Docker internal URL differs from external URL (e.g., `keycloak:8080` vs `localhost:8090`).
+
+#### `api_oauth_legacy_keycloak`
 
 - **Description**: Enable legacy Keycloak URL format (< v17)
 - **Type**: Boolean
 - **Default**: `false`
-- **Example**: `OAUTH_LEGACY_KEYCLOAK=true`
+- **Example**: `api_oauth_legacy_keycloak=true`
 
-Set to `true` for Keycloak versions before v17 that require `/auth` prefix in URLs. When enabled, the application automatically converts `https://keycloak.example.com` to `https://keycloak.example.com/auth` for all OAuth endpoints.
+Set to `true` for Keycloak versions before v17 that require `/auth` prefix.  
+Automatically converts `https://keycloak.example.com` to `https://keycloak.example.com/auth`.
 
-#### `OAUTH_REALM`
+#### `api_oauth_realm`
 
 - **Description**: OAuth/OIDC realm name
 - **Type**: String
 - **Default**: `"events-player"`
-- **Example**: `OAUTH_REALM=events-player`
+- **Example**: `api_oauth_realm=my-realm`
 
-#### `OAUTH_CLIENT_ID`
+#### `api_oauth_client_id`
 
 - **Description**: OAuth/OIDC client ID for the web application
 - **Type**: String
 - **Default**: `"events-player-web"`
-- **Example**: `OAUTH_CLIENT_ID=events-player-web`
+- **Example**: `api_oauth_client_id=events-player-web`
 
 Must be a public client configured with PKCE support.
 
-#### `OAUTH_CLIENT_SECRET`
+#### `api_oauth_client_secret`
 
 - **Description**: Client secret (leave empty for public clients)
 - **Type**: String
-- **Default**: `""`
-- **Example**: `OAUTH_CLIENT_SECRET=`
+- **Default**: `""` (empty)
+- **Example**: `api_oauth_client_secret=`
 
 Public clients using PKCE don't require a client secret.
 
+### JWT Validation Settings
+
+#### `api_auth_jwks_url`
+
+- **Description**: JWKS endpoint URL for JWT validation
+- **Type**: String (URL)
+- **Default**: Auto-derived from `api_oauth_server_url` + `api_oauth_realm`
+- **Example**: `api_auth_jwks_url=http://oauth.example.com/realms/my-realm/protocol/openid-connect/certs`
+
+**When to set explicitly:**
+
+- Using Istio/Service Mesh without OAuth
+- Using a non-standard OIDC provider
+- For Keycloak, this is automatically derived
+
+#### `api_auth_issuer`
+
+- **Description**: Expected JWT issuer (iss claim)
+- **Type**: String
+- **Default**: Auto-derived from `api_oauth_server_url` + `api_oauth_realm`
+- **Example**: `api_auth_issuer=http://oauth.example.com/realms/my-realm`
+
+**When to set explicitly:**
+
+- Using Istio/Service Mesh without OAuth
+- Using a non-standard OIDC provider
+- For Keycloak, this is automatically derived
+
+#### `api_auth_audience`
+
+- **Description**: Expected JWT audience (aud claim)
+- **Type**: String
+- **Default**: `""` (not validated)
+- **Example**: `api_auth_audience=events-player-web`
+
+The intended audience for the JWT token. Leave empty to skip audience validation.
+
+#### `api_auth_algorithm`
+
+- **Description**: JWT signature algorithm
+- **Type**: String
+- **Default**: `"RS256"`
+- **Example**: `api_auth_algorithm=RS256`
+
 ### Role Mapping Configuration
+
+Maps JWT token roles to application roles.
+
+#### `api_auth_role_admin`
+
+- **Description**: Role name in JWT that grants admin privileges
+- **Type**: String
+- **Default**: `"admin"`
+- **Example**: `api_auth_role_admin=app-admin`
+
+**Admin permissions:**
+
+- View and cancel running event generation tasks
+- Clear browser storage
+- View active SSE client connections
+- All operator and user permissions
+
+#### `api_auth_role_operator`
+
+- **Description**: Role name in JWT that grants operator privileges
+- **Type**: String
+- **Default**: `"operator"`
+- **Example**: `api_auth_role_operator=app-operator`
+
+**Operator permissions:**
+
+- Generate events
+- Export events to JSON
+- All user permissions
+
+#### `api_auth_role_user`
+
+- **Description**: Role name in JWT that grants user privileges
+- **Type**: String
+- **Default**: `"user"`
+- **Example**: `api_auth_role_user=app-user`
+
+**User permissions:**
+
+- View events in real-time
+- Search and filter events
+- View dashboard and analytics
+- View timeline charts
+
+## Complete Configuration Examples
+
+### Minimal Setup (No Authentication)
+
+Start CloudEvent Player with defaults - **no configuration needed**:
+
+```bash
+docker run -p 8884:8080 ghcr.io/bvandewe/events-player:latest
+```
+
+### Custom Event Defaults
+
+Pre-configure the event generator form:
+
+```bash
+docker run -p 8884:8080 \
+  -e api_default_generator_gateways='{"urls": ["http://my-service:8080/events"]}' \
+  -e api_default_generator_event__event_source="https://myapp.com/service" \
+  -e api_default_generator_event__event_type="com.myapp.order.created.v1" \
+  -e api_default_generator_event__event_subject="order.123" \
+  ghcr.io/bvandewe/events-player:latest
+```
+
+### High-Volume Setup
+
+Configure for high event volume:
+
+```bash
+docker run -p 8884:8080 \
+  -e api_browser_queue_size=3000 \
+  -e api_storage_max_recent_events=20000 \
+  -e api_storage_max_metadata_events=500000 \
+  ghcr.io/bvandewe/events-player:latest
+```
+
+### OAuth/Keycloak Setup (Modern)
+
+Enable authentication with Keycloak v17+:
+
+```bash
+docker run -p 8884:8080 \
+  -e api_auth_required=true \
+  -e api_oauth_server_url=https://keycloak.example.com \
+  -e api_oauth_realm=my-realm \
+  -e api_oauth_client_id=events-player-web \
+  ghcr.io/bvandewe/events-player:latest
+```
+
+**Note:** `api_auth_jwks_url` and `api_auth_issuer` are auto-derived.
+
+### OAuth/Keycloak Setup (Legacy)
+
+For Keycloak versions < v17:
+
+```bash
+docker run -p 8884:8080 \
+  -e api_auth_required=true \
+  -e api_oauth_server_url=https://keycloak.example.com \
+  -e api_oauth_legacy_keycloak=true \
+  -e api_oauth_realm=my-realm \
+  -e api_oauth_client_id=events-player-web \
+  ghcr.io/bvandewe/events-player:latest
+```
+
+The `/auth` prefix is automatically added to all OAuth URLs.
+
+### Docker Internal Network Setup
+
+Different URLs for frontend (browser) and backend (server-to-server):
+
+```bash
+docker run -p 8884:8080 \
+  -e api_auth_required=true \
+  -e api_oauth_server_url=http://localhost:8090 \
+  -e api_oauth_server_url_backend=http://keycloak:8080 \
+  -e api_oauth_realm=events-player \
+  -e api_oauth_client_id=events-player-web \
+  ghcr.io/bvandewe/events-player:latest
+```
+
+### Custom Role Mapping
+
+Map corporate roles to application roles:
+
+```bash
+docker run -p 8884:8080 \
+  -e api_auth_required=true \
+  -e api_oauth_server_url=https://oauth.corp.com \
+  -e api_oauth_realm=corp \
+  -e api_auth_role_admin=SuperAdmin \
+  -e api_auth_role_operator=PowerUser \
+  -e api_auth_role_user=StandardUser \
+  ghcr.io/bvandewe/events-player:latest
+```
+
+### Development Mode with Debug Logging
+
+```bash
+docker run -p 8884:8080 \
+  -e api_log_level=DEBUG \
+  -e api_log_format="%(levelname)s - %(message)s" \
+  ghcr.io/bvandewe/events-player:latest
+```
+
+## Docker Compose Examples
+
+### Basic Setup
+
+```yaml
+services:
+  event-player:
+    image: ghcr.io/bvandewe/events-player:latest
+    ports:
+      - "8884:8080"
+    restart: unless-stopped
+```
+
+### With Custom Configuration
+
+```yaml
+services:
+  event-player:
+    image: ghcr.io/bvandewe/events-player:latest
+    ports:
+      - "8884:8080"
+    environment:
+      api_log_level: DEBUG
+      api_browser_queue_size: 2000
+      api_storage_max_recent_events: 10000
+      api_default_generator_gateways: '{"urls": ["http://localhost:8884/events/pub", "http://other-service/events"]}'
+    restart: unless-stopped
+```
+
+### With OAuth/Keycloak
+
+```yaml
+services:
+  event-player:
+    image: ghcr.io/bvandewe/events-player:latest
+    ports:
+      - "8884:8080"
+    environment:
+      api_auth_required: "true"
+      api_oauth_server_url: http://localhost:8090
+      api_oauth_server_url_backend: http://keycloak:8080
+      api_oauth_realm: events-player
+      api_oauth_client_id: events-player-web
+    restart: unless-stopped
+    depends_on:
+      - keycloak
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    ports:
+      - "8090:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command: start-dev
+```
+
+## Environment Variable Reference Summary
+
+| Variable | Default | Required | Description |
+|----------|---------|----------|-------------|
+| `api_tag` | `"0.4.0"` | No | Application version |
+| `api_log_level` | `"INFO"` | No | Logging level |
+| `api_browser_queue_size` | `1000` | No | Max events in DOM |
+| `api_storage_max_recent_events` | `5000` | No | Max full events (Tier 1) |
+| `api_storage_max_metadata_events` | `100000` | No | Max metadata (Tier 2) |
+| `api_auth_required` | `"false"` | No | Enable authentication |
+| `api_oauth_server_url` | `""` | If auth enabled | OAuth server URL |
+| `api_oauth_realm` | `"events-player"` | If auth enabled | OAuth realm name |
+| `api_oauth_client_id` | `"events-player-web"` | If auth enabled | OAuth client ID |
+
+## Troubleshooting Configuration
+
+### Issue: Environment variables not taking effect
+
+**Solution:**
+
+- Verify variable names (case-insensitive, but check spelling)
+- Use `api_` prefix for all settings
+- For nested settings like generator defaults, use double underscores: `api_default_generator_event__event_source`
+- Check Docker logs: `docker logs event-player`
+
+### Issue: OAuth authentication not working
+
+**Solution:**
+
+1. Verify `api_auth_required=true` (must be string "true")
+2. Check OAuth server URL is accessible from browser
+3. For Docker networks, set both `api_oauth_server_url` and `api_oauth_server_url_backend`
+4. For legacy Keycloak (< v17), set `api_oauth_legacy_keycloak=true`
+5. Check logs for JWKS fetch errors
+
+### Issue: Events not persisting across page reload
+
+**Solution:**
+
+- This is expected behavior - IndexedDB stores events client-side
+- Increase `api_storage_max_recent_events` if events are being removed too quickly
+- Check browser IndexedDB storage limits (varies by browser)
+
+### Issue: UI performance degradation
+
+**Solution:**
+
+- Reduce `api_browser_queue_size` to render fewer events
+- Keep `api_storage_max_recent_events` reasonable (5000-10000)
+- Clear browser storage periodically (gear icon → Clear Storage)
+
+## Next Steps
+
+- [Quick Start Guide](quick-start.md) - Get up and running
+- [Authentication Guide](authentication.md) - Detailed OAuth/OIDC setup
+- [Deployment Guide](deployment.md) - Production deployment patterns
+- [Usage Guide](usage.md) - Feature walkthrough
 
 CloudEvent Player supports configurable role mapping, allowing you to map JWT token roles to application roles without code changes. This is essential for integrating with identity providers that use different role naming conventions.
 

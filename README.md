@@ -1,29 +1,41 @@
-# CloudEvent Viewer
+# CloudEvent Player
 
 This micro-app can be used as a test **subscriber** and/or test **emitter** of [CloudEvents](https://cloudevents.io/).
 
-It is very useful in an event-driven architecture in order to monitor events and test subscriptions.
+It is very useful in an event-driven architecture to monitor events and test subscriptions in real-time with a unified dashboard interface.
 
-Full Documentation hosted at <https://bvandewe.github.io/events-player/>
+📚 **Full Documentation**: <https://bvandewe.github.io/events-player/>
+
+## Quick Start
+
+**Zero configuration required** - just run and go:
+
+```bash
+docker run -p 8884:8080 ghcr.io/bvandewe/events-player:latest
+```
+
+Then open: <http://localhost:8884>
 
 ## Getting Started
 
-Run two instances locally and send events between each other:
+Run two instances locally and send events between them:
 
 ```mermaid
 flowchart LR
-    A((player:8080)) -->|emits|B((player:8081))
+    A((player:8884)) -->|emits|B((player:8885))
     B -->|emits|A
-
 ```
 
-```sh
-# http://localhost:8080
-docker run -d --rm -it -p 8080:80 -e api_default_generator_gateways='{"urls": ["http://localhost/events/pub", "http://host.docker.internal:8080/events/pub", "http://host.docker.internal:8081/events/pub"]}' ghcr.io/bvandewe/events-player:latest
+```bash
+# Instance 1: http://localhost:8884
+docker run -d --rm -p 8884:8080 \
+  -e api_default_generator_gateways='{"urls": ["http://localhost:8884/events/pub", "http://host.docker.internal:8885/events/pub"]}' \
+  ghcr.io/bvandewe/events-player:latest
 
-# http://localhost:8081
-docker run -d --rm -it -p 8081:80 -e api_default_generator_gateways='{"urls": ["http://localhost/events/pub", "http://host.docker.internal:8080/events/pub", "http://host.docker.internal:8081/events/pub"]}' ghcr.io/bvandewe/events-player:latest
-
+# Instance 2: http://localhost:8885
+docker run -d --rm -p 8885:8080 \
+  -e api_default_generator_gateways='{"urls": ["http://localhost:8885/events/pub", "http://host.docker.internal:8884/events/pub"]}' \
+  ghcr.io/bvandewe/events-player:latest
 ```
 
 ![Demo](assets/cloudevent-player_demo_0.2.gif)
@@ -34,33 +46,50 @@ It can very easily be deployed locally (included in a `docker-compose` file) or 
 
 ## Features
 
-- 🎯 **Event Generation**: Generate CloudEvents with customizable properties and data payloads
-- 📡 **Real-Time Monitoring**: Watch events via Server-Sent Events (SSE) streaming
+- 🎯 **Event Generation**: Generate CloudEvents with customizable properties and batch support
+- 📡 **Real-Time Monitoring**: Server-Sent Events (SSE) streaming with unified dashboard
 - 🔍 **Event Inspection**: Examine CloudEvent structure with syntax-highlighted JSON
+- 📊 **Unified Dashboard**: Single-page view with Streams, Timeline, Metrics, and Analytics
 - 🔄 **Pub/Sub Support**: Acts as both publisher and subscriber
-- 🔐 **Authentication & Authorization**: OAuth 2.0/OIDC with role-based access control (admin, operator, user roles) - **optional, disabled by default**
+- � **Deep Search**: Search anywhere in event payloads with persistence
+- 📈 **Timeline Visualization**: Chart.js timeline with configurable time buckets (1s to 1hr)
+- 🎨 **Interactive Charts**: Click-to-filter on sources, types, and subjects
+- 🔐 **Authentication & Authorization**: OAuth 2.0/OIDC with RBAC - **optional, disabled by default**
+- 💾 **Two-tier Storage**: IndexedDB with separate tiers for full events and metadata
 - 🆔 **Request Tracing**: Built-in Request ID tracing for debugging
 - 🏥 **Health Monitoring**: Health check endpoint for monitoring systems
+
+## Unified Dashboard
+
+CloudEvent Player v0.4.0 features a redesigned unified dashboard:
+
+- **Single-page View**: No more switching between pages
+- **Real-time Metrics**: Total events, avg rate, top types/sources
+- **Tabs**: Streams (event list) and Timeline (visual chart)
+- **Global Filters**: Type, Source, Subject, Time Range affect all views
+- **Search**: Find events by any text in payload
+- **Analytics**: Top sources, types, subjects with click-to-filter
+- **Storage Indicators**: Visualize IndexedDB usage (Tier 1 + Tier 2)
 
 ## Authentication
 
 **Authentication is disabled by default.** The application works out of the box without any authentication configuration.
 
-To enable authentication and authorization, set the `auth_required` environment variable to `"true"`:
+To enable authentication and authorization, set the `api_auth_required` environment variable to `"true"`:
 
-```sh
-docker run -p 8080:80 -e auth_required="true" ghcr.io/bvandewe/events-player:latest
+```bash
+docker run -p 8884:8080 -e api_auth_required="true" ghcr.io/bvandewe/events-player:latest
 ```
 
-When `auth_required=false` (default):
+When `api_auth_required=false` (default):
 
-- All features are accessible without login
+- All features accessible without login
 - No authentication tokens required
-- Admin features (Clear Storage, Current Clients, Manage Tasks) are available via gear icon in navigation
+- Admin features (Clear Storage, Current Clients, Manage Tasks) available via gear icon
 
-When `auth_required=true`:
+When `api_auth_required=true`:
 
-- OAuth 2.0/OIDC authentication is enforced
+- OAuth 2.0/OIDC authentication enforced
 - Role-based access control (admin, operator, user)
 - Login required for event generation and admin features
 
@@ -68,42 +97,54 @@ See the [full authentication documentation](https://bvandewe.github.io/events-pl
 
 ## Limitations
 
-There is currently NO PERSISTANCE anywhere so refreshing the page on the browser will reset the state.  
-The frontend keeps a given amount of events as a rolling buffer with a configurable max-size (i.e. 1000 last events, older events are discarded).
+- **No Server-Side Persistence**: Refreshing the browser resets client-side state
+- **Client-Side Storage Only**: Events stored in browser IndexedDB (capacity-based FIFO queues)
+  - Tier 1: Full events (default: 5000 max)
+  - Tier 2: Metadata (default: 100,000 max)
+- **Display Limit**: Configurable max events rendered in DOM (default: 1000)
 
 ## Usage
 
-The root URL shows a simple HTML page that automatically appends new CloudEvents as they are received by the backend (on the `POST /events/pub` endpoint) - and pops older events if the maximum stack size is reached.
+The root URL shows the **Unified Dashboard** with:
 
-- The UI stacks the events so that the most recent one is on top.
-- User can search for any String anywhere in any events with the filter input box and the UI will show/hide events accordingly.
-- User can toggle the display of the event details by clicking the any event header.
-- There is a ToggleAll button next to the filter that will toggle the expand/collapse status of all events.
+- **Metrics Row**: Real-time event counters and rate statistics
+- **Streams/Timeline Tabs**: Switch between event list and visual timeline
+- **Search Box**: Filter events by any text in payload (persisted)
+- **Analytics Charts**: Top sources, types, subjects (click to filter)
+- **Storage Indicators**: IndexedDB usage visualization
 
-## Deployment
+### Event Stream
 
-The app backend validates and handles CloudEvents via the `POST /events/pub` endpoint and streams events to all currently connected clients/browsers via [SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
+The backend validates and handles CloudEvents via the `POST /events/pub` endpoint and streams events to all connected clients via [SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
 
-- The payload must have the `Content-Type` header set to `application/cloudevents+json`.
-- The event must be formatted as per the CloudEvents [Specifications v1.0.2](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md) in [JSON Format](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/formats/json-format.md).
+- Payload must have `Content-Type: application/cloudevents+json`
+- Event must follow CloudEvents [Specifications v1.0.2](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md) in [JSON Format](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/formats/json-format.md)
 
-When a valid event is received, a FastAPI background task simply pushes a copy of the event into the queue of each currently connected client/browser.
-
-The SSE stream can be accessed at `/stream` using a browser or any SSE client. The stream sends a JSON payload for each received event, with the event payload and a timestamp indicating when the event was received.
+When a valid event is received, it's pushed to all connected clients and stored in IndexedDB.
 
 ## Local Usage
 
 1. Pull and run the Docker image:
 
-   ```sh
-   docker run --rm -it -p 8080:80 ghcr.io/bvandewe/cloudevents-player:latest
+   ```bash
+   docker run --rm -p 8884:8080 ghcr.io/bvandewe/events-player:latest
    ```
 
-2. Browse to <http://localhost:8080>
+2. Browse to <http://localhost:8884>
 
-3. Emit Cloudevent to <http://localhost:8080/events/pub>
+3. Emit CloudEvent to <http://localhost:8884/events/pub>
 
 4. Enjoy!
+
+## SSE Stream Access
+
+The SSE stream can be accessed at `/stream/events` using a browser or any SSE client:
+
+```bash
+curl -N http://localhost:8884/stream/events
+```
+
+The stream sends JSON payloads for each received event.
 
 ## Development
 
