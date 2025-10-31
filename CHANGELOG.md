@@ -1,5 +1,64 @@
 # CHANGE LOG
 
+## 0.4.0 - 2025-10-31
+
+### Major UI Redesign
+
+#### Unified Dashboard
+
+- **Single-view architecture**: Consolidated Events, Timeline, and Dashboard into one unified dashboard
+  - Eliminates navigation between separate pages
+  - All features accessible from a single view
+  - Improved workflow and reduced cognitive load
+
+#### Layout Structure
+
+- **Row 1**: Page title with filter indicator and clear button
+- **Row 2**: Four real-time metric cards (Total Events, Avg Rate, Event Types, Event Sources)
+  - Auto-updates every 5 seconds
+  - Color-coded subtle backgrounds
+  - Shows contextual information (most common type/source)
+- **Row 3**: Tab navigation between Streams and Timeline
+  - Export button positioned on right side of tab bar
+  - Bootstrap tab component with smooth transitions
+- **Row 4**: Tab content area
+  - **Streams tab**: Full event list with SSE real-time updates
+  - **Timeline tab**: Event activity chart with configurable bucket size
+- **Row 5**: Analytics panels (three equal columns)
+  - Top Sources chart (click to filter)
+  - Top Event Types chart (click to filter)
+  - Top Subjects chart (click to filter)
+- **Row 6**: Storage utilization indicators
+  - Recent Events (Tier 1) progress bar
+  - Metadata (Tier 2) progress bar
+  - Color-coded based on usage (green/yellow/red)
+- **Row 7**: Additional metrics
+  - Hourly Distribution chart
+  - Events Per Minute chart
+
+#### Technical Implementation
+
+- **unifiedDashboard.js controller**: Coordinates all dashboard components
+  - Manages tab switching state
+  - Updates metrics cards automatically
+  - Lazy-loads charts when tabs become active
+  - Handles filter changes across all components
+- **Preserved functionality**: All existing features maintained
+  - SSE real-time event streaming
+  - Global filters with persistence
+  - Export functionality (restricted to admin/operator)
+  - Authorization and role-based access control
+  - Search and keyboard navigation
+  - Event generator and background tasks
+
+### Benefits
+
+- **Simplified navigation**: No page switching required
+- **Better performance**: Single page load, lazy-loaded charts
+- **Improved UX**: All information at a glance
+- **Faster workflow**: Quick tab switching vs page navigation
+- **More screen space**: Optimized layout for content density
+
 ## 0.3.9 - 2025-10-31
 
 ### New Features
