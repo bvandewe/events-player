@@ -1,5 +1,50 @@
 # CHANGE LOG
 
+## 0.3.9 - 2025-10-31
+
+### New Features
+
+#### Export Events Functionality
+
+- **Export button**: Added export button to Event Stream view header
+  - Positioned at top-right of the page header
+  - **Restricted to admin and operator roles only**
+- **Export modal**: Interactive modal for selecting export options
+  - **Filtered Events**: Export only events matching current filters (type, source, subject, time range)
+  - **All Events (Tier 1)**: Export all full events from recent storage
+  - Dynamic information showing number of events and active filters
+- **JSON file download**: Events exported as formatted JSON files
+  - Automatic filename generation with timestamp
+  - Filter information included in filename for filtered exports
+  - Internal storage attributes (storedAt, insertionOrder, sequenceNumber) removed from export
+- **User notifications**: Bootstrap alert notifications for export success/failure
+  - Success message shows number of events exported
+  - Auto-dismisses after 3 seconds
+  - Clean notification UI with icons
+
+### Improvements
+
+#### UI/UX Enhancements
+
+- **Enhanced filter clear buttons**: Made clear filter buttons more visible across all views
+  - Changed from subtle outline-secondary to bold btn-danger (dark red)
+  - Added "Clear" text label alongside the icon
+  - Increased font size from 0.75rem to 0.8rem
+  - Applied fw-bold class for better visibility
+  - Consistent styling across Events, Timeline, and Dashboard views
+
+### Bug Fixes
+
+- Fixed `appState.getFilters()` error - changed to use `appState.get('filters')`
+- Fixed export button not showing for admins/operators - moved initialization to run after authorization is ready
+  - Export controller now initializes inside `initAuth()` after `authorizationManager.init()`
+  - Added debug logging to help troubleshoot authorization issues
+- **Fixed tooltip overlapping and sticking issues**
+  - All tooltips now hide immediately when mouse leaves (0ms delay)
+  - Added 300ms delay before showing tooltips to prevent accidental triggers
+  - Tooltips automatically hide on document scroll or mouse leave
+  - Applied consistent behavior across all tooltip instances (events, filters, authorization, connection status)
+
 ## 0.3.8 - 2025-10-30
 
 ### Improvements
@@ -7,8 +52,8 @@
 #### UI/UX Enhancements
 
 - **Dashboard metrics cards**: Improved readability with better color contrast
-  - Changed from solid dark backgrounds to Bootstrap subtle colors (bg-*-subtle)
-  - Applied dark contrasting text colors (text-*-emphasis, text-*)
+  - Changed from solid dark backgrounds to Bootstrap subtle colors (bg-\*-subtle)
+  - Applied dark contrasting text colors (text-_-emphasis, text-_)
   - Primary card: dark blue text on light blue background
   - Success card: dark green text on light green background
   - Info card: dark blue text on light cyan background

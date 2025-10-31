@@ -130,7 +130,11 @@ class AuthorizationManager {
             iterationsInput.setAttribute('data-bs-toggle', 'tooltip');
             iterationsInput.setAttribute('data-bs-placement', 'top');
             iterationsInput.setAttribute('data-bs-title', 'Only administrators can change iterations');
-            new bootstrap.Tooltip(iterationsInput);
+            new bootstrap.Tooltip(iterationsInput, {
+                trigger: 'hover',
+                delay: { show: 300, hide: 0 },
+                animation: true
+            });
         }
 
         if (delayInput) {
@@ -142,7 +146,11 @@ class AuthorizationManager {
             delayInput.setAttribute('data-bs-toggle', 'tooltip');
             delayInput.setAttribute('data-bs-placement', 'top');
             delayInput.setAttribute('data-bs-title', 'Only administrators can change delay');
-            new bootstrap.Tooltip(delayInput);
+            new bootstrap.Tooltip(delayInput, {
+                trigger: 'hover',
+                delay: { show: 300, hide: 0 },
+                animation: true
+            });
         }
 
         // Also disable the labels

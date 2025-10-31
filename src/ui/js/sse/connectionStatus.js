@@ -26,10 +26,14 @@ class ConnectionStatusManager {
         if (!this.statusElement) {
             console.warn(`Connection status element '${elementId}' not found`);
         } else {
-            // Initialize Bootstrap tooltip
+            // Initialize Bootstrap tooltip with quick hide behavior
             this.statusElement.setAttribute('data-bs-toggle', 'tooltip');
             this.statusElement.setAttribute('data-bs-placement', 'bottom');
-            this.tooltipInstance = new bootstrap.Tooltip(this.statusElement);
+            this.tooltipInstance = new bootstrap.Tooltip(this.statusElement, {
+                trigger: 'hover',
+                delay: { show: 300, hide: 0 },
+                animation: true
+            });
         }
         return this;
     }

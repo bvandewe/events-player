@@ -117,10 +117,22 @@ export const sseEventsController = (() => {
         filterButtonsContainer.appendChild(sourceButton);
         filterButtonsContainer.appendChild(subjectButton);
 
-        // Initialize Bootstrap tooltips for the filter buttons
-        new bootstrap.Tooltip(typeButton);
-        new bootstrap.Tooltip(sourceButton);
-        new bootstrap.Tooltip(subjectButton);
+        // Initialize Bootstrap tooltips for the filter buttons with quick hide
+        new bootstrap.Tooltip(typeButton, {
+            trigger: 'hover',
+            delay: { show: 300, hide: 0 },
+            animation: true
+        });
+        new bootstrap.Tooltip(sourceButton, {
+            trigger: 'hover',
+            delay: { show: 300, hide: 0 },
+            animation: true
+        });
+        new bootstrap.Tooltip(subjectButton, {
+            trigger: 'hover',
+            delay: { show: 300, hide: 0 },
+            animation: true
+        });
 
         // append the span elements to the button element
         button.appendChild(span1);
