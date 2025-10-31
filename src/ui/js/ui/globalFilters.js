@@ -74,9 +74,13 @@ class GlobalFilterController {
             return;
         }
 
-        // Initialize Bootstrap tooltips for clear button
+        // Initialize Bootstrap tooltips for clear button with quick hide
         if (this.clearButton) {
-            new bootstrap.Tooltip(this.clearButton);
+            new bootstrap.Tooltip(this.clearButton, {
+                trigger: 'hover',
+                delay: { show: 300, hide: 0 },
+                animation: true
+            });
         }
 
         // Initialize Bootstrap tooltips for filter indicators
@@ -241,17 +245,25 @@ class GlobalFilterController {
         this.indicatorTooltips.forEach(tooltip => tooltip.dispose());
         this.indicatorTooltips = [];
 
-        // Initialize tooltips for all indicators and buttons
+        // Initialize tooltips for all indicators and buttons with quick hide
         Object.values(this.filterIndicators).forEach(indicator => {
             if (indicator) {
                 const badge = indicator.querySelector('.badge');
                 const button = indicator.querySelector('button');
 
                 if (badge) {
-                    this.indicatorTooltips.push(new bootstrap.Tooltip(badge));
+                    this.indicatorTooltips.push(new bootstrap.Tooltip(badge, {
+                        trigger: 'hover',
+                        delay: { show: 300, hide: 0 },
+                        animation: true
+                    }));
                 }
                 if (button) {
-                    this.indicatorTooltips.push(new bootstrap.Tooltip(button));
+                    this.indicatorTooltips.push(new bootstrap.Tooltip(button, {
+                        trigger: 'hover',
+                        delay: { show: 300, hide: 0 },
+                        animation: true
+                    }));
                 }
             }
         });

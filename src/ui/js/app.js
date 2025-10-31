@@ -50,6 +50,11 @@ function initAuth() {
 
         // Initialize authorization based on user roles
         authorizationManager.init(authManager);
+
+        // Initialize export controller AFTER authorization is ready
+        import('./ui/exportEvents').then(({ exportEventsController }) => {
+            exportEventsController.init(storageManager);
+        });
     }).catch(error => {
         console.error('[App] Failed to initialize authentication:', error);
     });
@@ -71,6 +76,8 @@ keyboardController.init(bootstrap);
 
 import { toastController } from "./ui/toast";
 toastController.init(bootstrap);
+// Make it globally available
+window.toastController = toastController;
 
 import { generatorForm } from "./ui/generatorForm"
 generatorForm.init();
@@ -85,8 +92,26 @@ clientsModalController.init();
 // Make it globally available for auth dropdown
 window.clientsModalController = clientsModalController;
 
+// Export controller will be initialized after auth - see initAuth() function
+
+// Initialize all tooltips with better behavior to prevent overlapping and sticking
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => {
+    return new bootstrap.Tooltip(tooltipTriggerEl, {
+        trigger: 'hover', // Only show on hover
+        delay: { show: 300, hide: 0 }, // Quick to hide, slight delay to show
+        animation: true
+    });
+});
+
+// Hide all tooltips when mouse leaves any element or on scroll
+document.addEventListener('mouseleave', () => {
+    tooltipList.forEach(tooltip => tooltip.hide());
+});
+
+document.addEventListener('scroll', () => {
+    tooltipList.forEach(tooltip => tooltip.hide());
+}, true); // Use capture to catch all scroll events
 
 // Cleanup SSE connection when navigating away to prevent connection leaks
 import { sseConnection } from "./sse/connection";
