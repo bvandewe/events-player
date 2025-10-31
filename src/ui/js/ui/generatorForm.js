@@ -6,6 +6,7 @@ import { apiPost } from "../utils/apiClient.js";
 export const generatorForm = (() => {
 
     const STORAGE_KEY = 'cloudevents-player-generator-state';
+    let initialized = false; // Track if already initialized
 
     /**
      * Save form state to localStorage
@@ -171,6 +172,14 @@ export const generatorForm = (() => {
     };
 
     const init = () => {
+        // Prevent double initialization
+        if (initialized) {
+            console.log('[GeneratorForm] Already initialized, skipping');
+            return;
+        }
+
+        console.log('[GeneratorForm] Initializing...');
+        initialized = true;
 
         // Restore saved state first
         restoreFormState();

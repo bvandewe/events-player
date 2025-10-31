@@ -1,7 +1,7 @@
 <header class="p-3">
-  <nav class="navbar navbar-expand-lg navbar-dark" aria-label="Third navbar example">
+  <nav class="navbar navbar-expand-lg navbar-dark" aria-label="CloudEvents Player Navigation">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">
+      <a class="navbar-brand" href="/">
         <img class="mb-2" src="../img/favicon-400x400.ico" alt="CloudEvents Player" width="32" height="32"/>
         <span class="fs-4 ms-2 title text-nowrap">CloudEvents Player (<span id="event-count">0</span>)</span>
       </a>      
@@ -10,21 +10,6 @@
       </button>
       <div class="collapse navbar-collapse" id="navbar">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link actionLink" data-nav="events">
-              <i class="bi bi-list-ul"></i> Events
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link actionLink" data-nav="timeline">
-              <i class="bi bi-activity"></i> Timeline
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link actionLink" data-nav="dashboard">
-              <i class="bi bi-speedometer2"></i> Metrics
-            </a>
-          </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="filtersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-funnel-fill"></i> Filters
@@ -86,33 +71,3 @@
     </div>
   </nav>
 </header>
-
-<script>
-  // Navigation handler
-  document.addEventListener('DOMContentLoaded', () => {
-    // Set active nav item based on current page
-    const path = window.location.pathname;
-    let currentPage = 'events'; // default
-    
-    if (path.includes('/timeline')) {
-      currentPage = 'timeline';
-    } else if (path.includes('/dashboard')) {
-      currentPage = 'dashboard';
-    }
-    
-    // Add active class to current page nav link
-    document.querySelectorAll('[data-nav]').forEach(link => {
-      if (link.getAttribute('data-nav') === currentPage) {
-        link.classList.add('active');
-      }
-      
-      // Handle navigation clicks
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const page = link.getAttribute('data-nav');
-        const targetPath = page === 'events' ? '/' : `/${page}`;
-        window.location.href = targetPath;
-      });
-    });
-  });
-</script>

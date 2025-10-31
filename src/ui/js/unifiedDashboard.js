@@ -5,6 +5,7 @@
 
 import * as bootstrap from 'bootstrap';
 import { appState } from './state/appState';
+import EventStorageManager from './storage/eventStorage';
 
 class UnifiedDashboardController {
     constructor() {
@@ -12,6 +13,11 @@ class UnifiedDashboardController {
         this.storageManager = null;
         this.charts = {};
         this.updateIntervals = {};
+
+        // Throttle settings for real-time updates
+        this.lastMetricsUpdate = 0;
+        this.metricsUpdateDelay = 2000; // Update metrics at most every 2 seconds
+        this.pendingMetricsUpdate = null;
     }
 
     /**
@@ -20,9 +26,14 @@ class UnifiedDashboardController {
     async init() {
         console.log('[UnifiedDashboard] Initializing...');
 
-        // Import storage manager
-        const { storageManager } = await import('./app');
-        this.storageManager = storageManager;
+        // Get singleton storage manager instance
+        this.storageManager = EventStorageManager.getInstance();
+
+        // Ensure it's initialized
+        if (!this.storageManager.initialized) {
+            console.log('[UnifiedDashboard] Waiting for storage manager to initialize...');
+            await this.storageManager.init();
+        }
 
         // Setup tab switching
         this.setupTabSwitching();
@@ -36,6 +47,10 @@ class UnifiedDashboardController {
         // Initialize storage indicators
         this.initStorageIndicators();
 
+        // Initialize analytics charts (Top Sources, Types, Subjects - always visible in rows 5 & 7)
+        // Do this on initial load regardless of active tab
+        await this.initAnalyticsCharts();
+
         // Initialize active tab content
         if (this.activeTab === 'streams') {
             this.initStreamsTab();
@@ -47,6 +62,9 @@ class UnifiedDashboardController {
         appState.subscribe('filters', () => this.onFiltersChanged());
         appState.subscribe('activeTab', (tab) => this.onTabChanged(tab));
 
+        // Subscribe to new events from SSE - this is critical for real-time updates
+        appState.subscribe('newEvent', () => this.onNewEventReceived());
+
         console.log('[UnifiedDashboard] Initialized');
     }
 
@@ -55,12 +73,12 @@ class UnifiedDashboardController {
      */
     setupTabSwitching() {
         const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
-        
+
         tabButtons.forEach(button => {
             button.addEventListener('shown.bs.tab', (event) => {
                 const target = event.target.getAttribute('data-bs-target');
                 const tabName = target.replace('#', '').replace('-pane', '');
-                
+
                 console.log(`[UnifiedDashboard] Switched to ${tabName} tab`);
                 this.activeTab = tabName;
                 appState.set('activeTab', tabName);
@@ -68,7 +86,7 @@ class UnifiedDashboardController {
                 // Initialize the tab content if needed
                 if (tabName === 'timeline') {
                     this.initTimelineTab();
-                    this.initAnalyticsCharts();
+                    // Analytics charts already initialized on page load
                 } else if (tabName === 'streams') {
                     this.initStreamsTab();
                 }
@@ -104,11 +122,11 @@ class UnifiedDashboardController {
     updateFilterIndicator() {
         const indicator = document.getElementById('dashboardFilterIndicator');
         const filters = appState.get('filters');
-        
+
         if (!indicator) return;
 
-        const hasFilters = filters.type || filters.source || filters.subject || 
-                          (filters.timeRange && filters.timeRange !== 'all');
+        const hasFilters = filters.type || filters.source || filters.subject ||
+            (filters.timeRange && filters.timeRange !== 'all');
 
         if (hasFilters) {
             indicator.classList.remove('d-none');
@@ -121,11 +139,13 @@ class UnifiedDashboardController {
      * Initialize metrics cards with real-time updates
      */
     initMetricsCards() {
-        // Start updating metrics every 5 seconds
+        // Initial update
         this.updateMetricsCards();
+
+        // Backup polling every 30 seconds (real-time updates via SSE are primary)
         this.updateIntervals.metrics = setInterval(() => {
             this.updateMetricsCards();
-        }, 5000);
+        }, 30000);
     }
 
     /**
@@ -139,12 +159,12 @@ class UnifiedDashboardController {
 
         // Get filtered events if filters are active
         let events = [];
-        if (filters.type || filters.source || filters.subject || 
+        if (filters.type || filters.source || filters.subject ||
             (filters.timeRange && filters.timeRange !== 'all')) {
             const filterOptions = this.buildFilterOptions(filters);
-            events = await this.storageManager.getMetadata(filterOptions);
+            events = await this.storageManager.getRecentEvents(filterOptions);
         } else {
-            events = await this.storageManager.getMetadata({ limit: 100000 });
+            events = await this.storageManager.getRecentEvents({ limit: 100000 });
         }
 
         // Total Events
@@ -195,11 +215,13 @@ class UnifiedDashboardController {
      * Initialize storage utilization indicators
      */
     initStorageIndicators() {
-        // Update every 10 seconds
+        // Initial update
         this.updateStorageIndicators();
+
+        // Backup polling every 30 seconds (real-time updates via SSE are primary)
         this.updateIntervals.storage = setInterval(() => {
             this.updateStorageIndicators();
-        }, 10000);
+        }, 30000);
     }
 
     /**
@@ -211,9 +233,10 @@ class UnifiedDashboardController {
         const stats = this.storageManager.getStats();
 
         // Recent Events
-        const recentPercent = Math.round((stats.recentCount / stats.recentMax) * 100);
+        const recentMax = this.storageManager.maxRecentEvents;
+        const recentPercent = Math.round((stats.recentCount / recentMax) * 100);
         document.getElementById('recentCount').textContent = stats.recentCount.toLocaleString();
-        document.getElementById('recentMax').textContent = stats.recentMax.toLocaleString();
+        document.getElementById('recentMax').textContent = recentMax.toLocaleString();
         document.getElementById('recentProgress').style.width = `${recentPercent}%`;
         document.getElementById('recentPercent').textContent = `${recentPercent}%`;
 
@@ -229,9 +252,10 @@ class UnifiedDashboardController {
         }
 
         // Metadata
-        const metadataPercent = Math.round((stats.metadataCount / stats.metadataMax) * 100);
+        const metadataMax = this.storageManager.maxMetadataEvents;
+        const metadataPercent = Math.round((stats.metadataCount / metadataMax) * 100);
         document.getElementById('metadataCount').textContent = stats.metadataCount.toLocaleString();
-        document.getElementById('metadataMax').textContent = stats.metadataMax.toLocaleString();
+        document.getElementById('metadataMax').textContent = metadataMax.toLocaleString();
         document.getElementById('metadataProgress').style.width = `${metadataPercent}%`;
         document.getElementById('metadataPercent').textContent = `${metadataPercent}%`;
 
@@ -259,34 +283,32 @@ class UnifiedDashboardController {
     /**
      * Initialize Timeline tab
      */
-    initTimelineTab() {
+    async initTimelineTab() {
         console.log('[UnifiedDashboard] Initializing Timeline tab...');
 
         // Import and initialize timeline chart controller
-        import('./timeline').then(({ timelineChartController }) => {
-            if (!this.charts.timeline) {
-                timelineChartController.init(this.storageManager);
-                this.charts.timeline = true;
-            }
-        });
+        if (!this.charts.timeline) {
+            const { timelineController } = await import('./timeline');
+            await timelineController.init();
+            this.charts.timeline = timelineController;
+        }
 
         // Also initialize the analytics charts (row 5 and 7)
-        this.initAnalyticsCharts();
+        await this.initAnalyticsCharts();
     }
 
     /**
      * Initialize analytics charts (top sources, types, subjects, hourly, etc.)
      */
-    initAnalyticsCharts() {
+    async initAnalyticsCharts() {
         console.log('[UnifiedDashboard] Initializing analytics charts...');
 
         // Import and initialize dashboard chart controllers
-        import('./dashboard').then(({ dashboardChartsController }) => {
-            if (!this.charts.analytics) {
-                dashboardChartsController.init(this.storageManager);
-                this.charts.analytics = true;
-            }
-        });
+        if (!this.charts.analytics) {
+            const { dashboardController } = await import('./dashboard');
+            await dashboardController.init();
+            this.charts.analytics = dashboardController;
+        }
     }
 
     /**
@@ -340,9 +362,66 @@ class UnifiedDashboardController {
     }
 
     /**
+     * Handle new events received via SSE
+     * This is called every time an event arrives, but we throttle updates
+     * to avoid performance issues during high-volume event streams
+     */
+    onNewEventReceived() {
+        const now = Date.now();
+
+        // Throttle metrics updates - update at most every 2 seconds
+        if (now - this.lastMetricsUpdate < this.metricsUpdateDelay) {
+            // Schedule an update after the delay if one isn't already pending
+            if (!this.pendingMetricsUpdate) {
+                const timeUntilNextUpdate = this.metricsUpdateDelay - (now - this.lastMetricsUpdate);
+                this.pendingMetricsUpdate = setTimeout(() => {
+                    this.performRealTimeUpdate();
+                    this.pendingMetricsUpdate = null;
+                }, timeUntilNextUpdate);
+            }
+            return;
+        }
+
+        // Perform immediate update
+        this.performRealTimeUpdate();
+        this.lastMetricsUpdate = now;
+    }
+
+    /**
+     * Perform the actual real-time update of metrics and charts
+     * This respects the current filter state but updates based on all stored data
+     */
+    async performRealTimeUpdate() {
+        console.log('[UnifiedDashboard] Performing real-time update...');
+
+        // Update metrics cards (these respect filters)
+        await this.updateMetricsCards();
+
+        // Update storage indicators (these show total counts, no filters)
+        this.updateStorageIndicators();
+
+        // Update timeline chart if it's initialized and the timeline tab is active
+        if (this.activeTab === 'timeline' && this.charts.timeline && this.charts.timeline.refresh) {
+            await this.charts.timeline.refresh();
+        }
+
+        // ALWAYS update analytics charts (they're always visible, just might be collapsed)
+        // These include Top Sources, Top Types, Top Subjects, etc.
+        if (this.charts.analytics && this.charts.analytics.refresh) {
+            await this.charts.analytics.refresh();
+        }
+    }
+
+    /**
      * Cleanup
      */
     destroy() {
+        // Clear pending metrics update
+        if (this.pendingMetricsUpdate) {
+            clearTimeout(this.pendingMetricsUpdate);
+            this.pendingMetricsUpdate = null;
+        }
+
         // Clear all update intervals
         Object.values(this.updateIntervals).forEach(interval => clearInterval(interval));
 
