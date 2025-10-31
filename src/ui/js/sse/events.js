@@ -4,6 +4,7 @@ import { sseConnection } from './connection';
 import { connectionStatus } from './connectionStatus';
 import { appState } from '../state/appState';
 import { globalFilterController } from '../ui/globalFilters';
+import { searchController } from '../ui/search';
 import * as bootstrap from 'bootstrap';
 
 export const sseEventsController = (() => {
@@ -250,6 +251,9 @@ export const sseEventsController = (() => {
                 globalFilterController.addEventValues(cloudEventData);
             }
 
+            // Notify appState that a new event was received (triggers metrics/chart updates)
+            appState.notifyEventReceived(cloudEventData);
+
             // Check if event matches active filters from global state
             if (!globalFilterController.matchesFilters(cloudEventData)) {
                 console.log('[Events] Event filtered out:', cloudEventData.type);
@@ -266,6 +270,11 @@ export const sseEventsController = (() => {
 
             const item = createAccordionItem(accordionData);
             eventsStack.prepend(item);
+
+            // Apply search filter to new event if search is active
+            if (searchController.getSearchTerm && searchController.getSearchTerm()) {
+                searchController.reapplySearch();
+            }
         }
     };
 
@@ -460,6 +469,11 @@ export const sseEventsController = (() => {
                 sseConnection.setCount(events.length);
 
                 console.log(`[Events] Displayed ${events.length} events`);
+
+                // Apply search filter if search is active
+                if (searchController.getSearchTerm && searchController.getSearchTerm()) {
+                    searchController.reapplySearch();
+                }
             } else {
                 console.log('[Events] No events found in storage (events array empty or null)');
                 // Set counter to 0 when no events
@@ -473,12 +487,6 @@ export const sseEventsController = (() => {
     const init = (queueSize, storageManager) => {
         maxQueueSize = parseInt(queueSize);
         eventStorageManager = storageManager; // Store reference to storage manager
-
-        // Subscribe to filter changes from state
-        appState.subscribe('filters', (filters) => {
-            console.log('[Events] Filters changed via state:', filters);
-            loadEventsFromStorage();
-        });
 
         // Wait for storage to initialize, then load events, then setup SSE
         const setupSequence = async () => {
@@ -496,7 +504,7 @@ export const sseEventsController = (() => {
                     await globalFilterController.init(eventStorageManager);
                 }
 
-                // Subscribe to filter changes to reload events
+                // Subscribe to filter changes to reload events (only once)
                 appState.subscribe('filters', (filters) => {
                     console.log('[Events] Global filters changed:', filters);
                     loadEventsFromStorage();

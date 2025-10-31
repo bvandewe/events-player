@@ -33,7 +33,11 @@ class AppState {
             stats: {
                 metadataCount: 0,
                 recentCount: 0
-            }
+            },
+
+            // Last event received (for triggering updates)
+            lastEvent: null,
+            lastEventTime: null
         };
 
         // Subscribers: Map<stateKey, Array<callback>>
@@ -230,6 +234,23 @@ class AppState {
         const oldStats = { ...this.state.stats };
         this.state.stats = { ...this.state.stats, ...stats };
         this.notify('stats', this.state.stats, oldStats);
+    }
+
+    /**
+     * Notify that a new event has been received via SSE
+     * This triggers UI updates without passing the full event data
+     * @param {Object} event - CloudEvent that was received
+     */
+    notifyEventReceived(event) {
+        this.state.lastEvent = event;
+        this.state.lastEventTime = Date.now();
+
+        if (this.debug) {
+            console.log('[AppState] New event received:', event.type);
+        }
+
+        // Notify subscribers that a new event arrived
+        this.notify('newEvent', this.state.lastEventTime, null);
     }
 
     /**

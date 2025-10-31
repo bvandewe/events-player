@@ -65,12 +65,36 @@ const storageManager = EventStorageManager.getInstance(storageOptions);
 // Timeline Controller
 const timelineController = (() => {
     let chart = null;
+    let initialized = false;
+
+    // Bucket size levels: values in seconds for sub-minute, minutes for >= 1 min
+    // Format: {value: number, unit: 'second'|'minute'}
+    const zoomLevels = [
+        { value: 1, unit: 'second' },   // 1 second
+        { value: 30, unit: 'second' },  // 30 seconds
+        { value: 1, unit: 'minute' },   // 1 minute
+        { value: 3, unit: 'minute' },   // 3 minutes
+        { value: 5, unit: 'minute' },   // 5 minutes
+        { value: 10, unit: 'minute' },  // 10 minutes
+        { value: 30, unit: 'minute' },  // 30 minutes
+        { value: 60, unit: 'minute' }   // 1 hour
+    ];
+
+    // Load saved bucket size from localStorage, default to 1 hour (index 7)
+    const savedZoomIndex = localStorage.getItem('timeline_bucket_size');
+    let currentZoomIndex = savedZoomIndex !== null ? parseInt(savedZoomIndex, 10) : 7;
+
+    // Validate loaded index
+    if (currentZoomIndex < 0 || currentZoomIndex >= zoomLevels.length) {
+        currentZoomIndex = 7; // Default to 1 hour
+    }
 
     // DOM elements (will be initialized in init())
     let bucketSizeSelect;
 
     // Stats elements
     let statTotalEvents;
+
     let statTotalEventsTime;
     let statPeakRate;
     let statPeakRateTime;
@@ -85,11 +109,17 @@ const timelineController = (() => {
     async function init() {
         console.log('[Timeline] Initializing...');
 
+        // Prevent double initialization
+        if (initialized) {
+            console.log('[Timeline] Already initialized, skipping...');
+            return;
+        }
+
         // Note: Authentication is initialized by app.js which loads first
         // authManager and authorizationManager are available as shared instances
 
         // Initialize DOM element references
-        bucketSizeSelect = document.getElementById('bucketSize');
+        bucketSizeSelect = document.getElementById('timelineBucketSize');
         statTotalEvents = document.getElementById('statTotalEvents');
         statTotalEventsTime = document.getElementById('statTotalEventsTime');
         statPeakRate = document.getElementById('statPeakRate');
@@ -109,49 +139,11 @@ const timelineController = (() => {
         // Initialize connection status manager
         connectionStatus.init();
 
-        // Initialize SSE connection with shared manager
-        sseConnection.init({
-            initialCount: initialCount,
-            onMessage: async (event) => {
-                // Event received - parse and update filter dropdowns
-                console.log('[Timeline] New event received via SSE');
-                connectionStatus.updateStatus("cleartimer");
-                connectionStatus.updateStatus("connect");
-                connectionStatus.updateStatus("newtimer");
-                try {
-                    const eventData = JSON.parse(event.data.replace(/'/g, '"'));
-                    const cloudEventData = eventData.cloudevent;
-                    if (cloudEventData) {
-                        // Store event in storage manager (both tiers)
-                        storageManager.addEvent(cloudEventData).catch(err => {
-                            console.error('[Timeline] Failed to store event:', err);
-                        });
-
-                        // Increment the event counter in the title
-                        sseConnection.incrementCount();
-
-                        // Add event values to global filter dropdowns
-                        if (globalFilterController.initialized) {
-                            globalFilterController.addEventValues(cloudEventData);
-                        }
-
-                        // Wait a bit for storage to complete, then refresh chart
-                        setTimeout(() => {
-                            refreshChart().catch(err => console.error('[Timeline] Refresh failed:', err));
-                        }, 500);
-                    }
-                } catch (error) {
-                    console.error('[Timeline] Failed to parse event for filters:', error);
-                }
-            },
-            onOpen: () => {
-                console.log('[Timeline] SSE connection established');
-                connectionStatus.updateStatus("open");
-            },
-            onError: (error) => {
-                console.error('[Timeline] SSE error:', error);
-                connectionStatus.updateStatus("error");
-            }
+        // Subscribe to new events via appState (unified dashboard handles SSE)
+        appState.subscribe('newEvent', () => {
+            console.log('[Timeline] New event received via appState');
+            // Refresh chart immediately (no setTimeout delay)
+            refreshChart().catch(err => console.error('[Timeline] Refresh failed:', err));
         });
 
         // Initialize global filters (already initialized in app.js, just ensure it has storage manager)
@@ -174,6 +166,9 @@ const timelineController = (() => {
         // Setup event listeners (only for chart-specific controls)
         setupEventListeners();
 
+        // Mark as initialized
+        initialized = true;
+
         console.log('[Timeline] Ready');
     }
 
@@ -186,20 +181,19 @@ const timelineController = (() => {
         chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                datasets: [{
-                    label: 'Events per period',
-                    data: [],
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
+                datasets: [] // Will be populated dynamically per source
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     x: {
                         type: 'time',
+                        stacked: true,
                         time: {
                             unit: 'minute',
                             displayFormats: {
@@ -215,6 +209,7 @@ const timelineController = (() => {
                     },
                     y: {
                         beginAtZero: true,
+                        stacked: true,
                         title: {
                             display: true,
                             text: 'Event Count'
@@ -226,7 +221,8 @@ const timelineController = (() => {
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'top'
                     },
                     tooltip: {
                         callbacks: {
@@ -235,7 +231,10 @@ const timelineController = (() => {
                                 return format(date, 'PPpp');
                             },
                             label: (context) => {
-                                return `Events: ${context.parsed.y}`;
+                                return `${context.dataset.label}: ${context.parsed.y}`;
+                            },
+                            afterLabel: () => {
+                                return 'Click to view events in this time period';
                             }
                         }
                     }
@@ -253,8 +252,16 @@ const timelineController = (() => {
     }
 
     /**
-     * Load filter options from storage
+     * Get current bucket size in milliseconds
      */
+    function getBucketSize() {
+        const level = zoomLevels[currentZoomIndex];
+        if (level.unit === 'second') {
+            return level.value * 1000; // Convert seconds to milliseconds
+        } else {
+            return level.value * 60000; // Convert minutes to milliseconds
+        }
+    }
 
     /**
      * Refresh the chart with current filters
@@ -265,7 +272,7 @@ const timelineController = (() => {
 
             // Get filter values from global state
             const filters = appState.get('filters');
-            const bucketSize = parseInt(bucketSizeSelect.value);
+            const bucketSize = getBucketSize(); // Use zoom level instead of dropdown
             const typeFilter = filters.type || '';
             const sourceFilter = filters.source || '';
             const subjectFilter = filters.subject !== null ? filters.subject : '';
@@ -275,7 +282,7 @@ const timelineController = (() => {
 
             // Calculate time range
             let startTime = null;
-            let endTime = Date.now();
+            const endTime = Date.now(); // Always use current time as end
 
             if (timeRange !== 'all') {
                 // Convert time range from global filter format to milliseconds
@@ -303,54 +310,59 @@ const timelineController = (() => {
                 timeRange: timeRange
             });
 
-            // Query aggregated data
-            console.log('[Timeline] Calling getAggregatedStats...');
-            const aggregatedData = await storageManager.getAggregatedStats(bucketSize, startTime, endTime);
-            console.log('[Timeline] Aggregated data:', aggregatedData ? aggregatedData.length : 'null', 'buckets');
+            // Build filter object for metadata query
+            const filterOptions = { startTime, endTime };
+            if (typeFilter) filterOptions.type = typeFilter;
+            if (sourceFilter) filterOptions.source = sourceFilter;
+            if (subjectFilter) filterOptions.subject = subjectFilter;
 
-            // Apply type/source/subject filters
-            let filteredData = aggregatedData;
-            if (typeFilter || sourceFilter || subjectFilter) {
-                filteredData = aggregatedData.map(bucket => {
-                    let count = 0;
+            console.log('[Timeline] Query filters:', filterOptions);
 
-                    if (typeFilter || sourceFilter || subjectFilter) {
-                        // Multiple filters: count only events matching all specified filters
-                        const filters = [];
-                        if (typeFilter) filters.push(bucket.types[typeFilter] || 0);
-                        if (sourceFilter) filters.push(bucket.sources[sourceFilter] || 0);
-                        if (subjectFilter) filters.push(bucket.subjects[subjectFilter] || 0);
+            // Query filtered metadata directly
+            const metadata = await storageManager.queryMetadata(filterOptions);
+            console.log('[Timeline] Filtered metadata:', metadata ? metadata.length : 'null', 'events');
 
-                        // Use minimum count as approximate intersection
-                        count = Math.min(...filters);
-                    }
-
-                    return {
-                        timestamp: bucket.timestamp,
-                        count: count
-                    };
-                });
-            } else {
-                filteredData = aggregatedData.map(bucket => ({
-                    timestamp: bucket.timestamp,
-                    count: bucket.count
-                }));
+            if (metadata.length === 0) {
+                console.log('[Timeline] No events to display');
+                updateChart([], []);
+                updateStatistics([], bucketSize, null);
+                return;
             }
 
-            console.log('[Timeline] Filtered data:', filteredData ? filteredData.length : 'null', 'buckets');
+            // Aggregate events into buckets with source tracking
+            const buckets = new Map();
+            const sources = new Set();
 
-            // Get events for additional statistics
-            const events = await storageManager.getRecentEvents(1); // Get most recent event
-            const lastEvent = events && events.length > 0 ? events[0] : null;
+            metadata.forEach(m => {
+                const bucketKey = Math.floor(m.timestamp / bucketSize) * bucketSize;
+                const source = m.source || 'unknown';
+                sources.add(source);
 
-            // Calculate and update statistics (using all data including zeros)
-            updateStatistics(filteredData, bucketSize, lastEvent);
+                if (!buckets.has(bucketKey)) {
+                    buckets.set(bucketKey, {
+                        timestamp: bucketKey,
+                        count: 0,
+                        sources: new Map()
+                    });
+                }
 
-            // Filter out zero buckets for display only
-            const displayData = filteredData.filter(bucket => bucket.count > 0);
+                const bucket = buckets.get(bucketKey);
+                bucket.count++;
+                bucket.sources.set(source, (bucket.sources.get(source) || 0) + 1);
+            });
 
-            // Update chart (display only non-zero buckets)
-            updateChart(displayData);
+            // Convert to array and sort by timestamp
+            const bucketsArray = Array.from(buckets.values())
+                .sort((a, b) => a.timestamp - b.timestamp);
+
+            console.log('[Timeline] Generated buckets:', bucketsArray.length, 'buckets with data from', sources.size, 'sources');
+
+            // Get most recent event for statistics
+            const lastEvent = metadata.length > 0 ? metadata[metadata.length - 1] : null;
+
+            // Update statistics and chart
+            updateStatistics(bucketsArray, bucketSize, lastEvent);
+            updateChart(bucketsArray, Array.from(sources));
 
             console.log('[Timeline] Chart refresh complete');
 
@@ -360,46 +372,142 @@ const timelineController = (() => {
     }
 
     /**
+     * Generate a consistent color for a source
+     */
+    function getSourceColor(source, index) {
+        const colors = [
+            'rgba(75, 192, 192, 0.8)',   // Teal
+            'rgba(255, 99, 132, 0.8)',   // Red
+            'rgba(54, 162, 235, 0.8)',   // Blue
+            'rgba(255, 206, 86, 0.8)',   // Yellow
+            'rgba(153, 102, 255, 0.8)',  // Purple
+            'rgba(255, 159, 64, 0.8)',   // Orange
+            'rgba(199, 199, 199, 0.8)',  // Gray
+            'rgba(83, 102, 255, 0.8)',   // Indigo
+            'rgba(255, 99, 255, 0.8)',   // Pink
+            'rgba(99, 255, 132, 0.8)'    // Green
+        ];
+
+        // Use a simple hash to get consistent color per source
+        let hash = 0;
+        for (let i = 0; i < source.length; i++) {
+            hash = source.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
+    }
+
+    /**
      * Update the chart with new data
      */
-    function updateChart(data) {
-        console.log('[Timeline] updateChart called with:', data ? data.length : 'null', 'data points');
+    function updateChart(data, sources = []) {
+        console.log('[Timeline] updateChart called with:', data ? data.length : 'null', 'data points and', sources.length, 'sources');
 
         if (!chart) {
             console.error('[Timeline] Chart not initialized!');
             return;
         }
 
-        // Transform data for Chart.js
-        const chartData = data.map(bucket => ({
-            x: bucket.timestamp,
-            y: bucket.count
+        const canvas = document.getElementById('timelineChart');
+        const container = canvas.parentElement;
+        const containerWidth = container.parentElement.offsetWidth; // Parent card-body width
+
+        // Use fixed bar width based on zoom level (more detail = wider bars)
+        // This ensures consistent UX across different zoom levels
+        // Map zoom index (0-7) to bar width (20px down to 5px)
+        const barWidth = Math.max(5, 20 - (currentZoomIndex * 2)); // 20px at level 0, down to 6px at level 7
+
+        // Calculate canvas width to fit all data points with the fixed bar width
+        const calculatedWidth = Math.max(containerWidth, data.length * barWidth);
+
+        // Set canvas container width to allow horizontal scrolling
+        container.style.minWidth = `${calculatedWidth}px`;
+
+        console.log('[Timeline] Canvas width:', calculatedWidth, 'px for', data.length, 'buckets (', barWidth, 'px per bar, zoom index:', currentZoomIndex, ')');
+
+        // Create dataset per source for stacked bar chart
+        const datasets = sources.map((source, index) => ({
+            label: source,
+            data: data.map(bucket => ({
+                x: bucket.timestamp,
+                y: bucket.sources.get(source) || 0
+            })),
+            backgroundColor: getSourceColor(source, index),
+            borderWidth: 0,
+            barPercentage: 1.0,
+            categoryPercentage: 1.0
         }));
 
-        console.log('[Timeline] Chart data transformed:', chartData.length, 'points');
+        // Update chart datasets
+        chart.data.datasets = datasets;
 
-        // Update chart data
-        chart.data.datasets[0].data = chartData;
-
-        // Determine appropriate time unit based on data range
-        if (chartData.length > 0) {
-            const firstTime = chartData[0].x;
-            const lastTime = chartData[chartData.length - 1].x;
+        // Determine appropriate time unit based on actual data range and zoom level
+        if (data.length > 0) {
+            const firstTime = data[0].timestamp;
+            const lastTime = data[data.length - 1].timestamp;
             const range = lastTime - firstTime;
+            const currentLevel = zoomLevels[currentZoomIndex];
+            const bucketSize = getBucketSize();
 
             let timeUnit = 'minute';
-            if (range > 86400000) { // > 24 hours
+            let stepSize = undefined;
+
+            // For second-level zoom, use second unit
+            if (currentLevel.unit === 'second') {
+                timeUnit = 'second';
+                if (currentLevel.value === 1) {
+                    stepSize = 10; // Show every 10 seconds at 1-second zoom
+                } else {
+                    stepSize = 30; // Show every 30 seconds at 30-second zoom
+                }
+            } else if (range > 7 * 86400000) { // > 7 days
                 timeUnit = 'day';
-            } else if (range > 3600000) { // > 1 hour
+            } else if (range > 86400000) { // > 24 hours
                 timeUnit = 'hour';
-            } else if (range < 600000) { // < 10 minutes
+                stepSize = 6; // Show every 6 hours
+            } else if (range > 3600000) { // > 1 hour
                 timeUnit = 'minute';
+                stepSize = 30; // Show every 30 minutes
+            } else {
+                timeUnit = 'minute';
+                stepSize = 5; // Show every 5 minutes
             }
 
             chart.options.scales.x.time.unit = timeUnit;
+            if (stepSize) {
+                chart.options.scales.x.time.stepSize = stepSize;
+            } else {
+                delete chart.options.scales.x.time.stepSize;
+            }
+
+            // Calculate visible window: show approximately container width worth of buckets
+            // This makes the x-axis show a fixed number of buckets at a time
+            const visibleBuckets = Math.floor(containerWidth / barWidth);
+            const visibleTimeRange = visibleBuckets * bucketSize;
+
+            // Set x-axis range to show only the most recent visible window
+            // This makes the timeline show buckets properly instead of the entire range
+            chart.options.scales.x.min = lastTime - visibleTimeRange;
+            chart.options.scales.x.max = lastTime + bucketSize; // Add one bucket padding
+
+            console.log('[Timeline] X-axis window:', {
+                visibleBuckets,
+                visibleTimeRange: `${visibleTimeRange / 1000}s`,
+                min: new Date(chart.options.scales.x.min).toISOString(),
+                max: new Date(chart.options.scales.x.max).toISOString()
+            });
         }
 
         chart.update();
+
+        // Auto-scroll to show most recent data (right side)
+        // Use requestAnimationFrame to ensure chart has finished rendering
+        requestAnimationFrame(() => {
+            const scrollContainer = container.parentElement; // The overflow-x container
+            if (scrollContainer && scrollContainer.scrollWidth > scrollContainer.clientWidth) {
+                scrollContainer.scrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                console.log('[Timeline] Auto-scrolled to show most recent data');
+            }
+        });
     }
 
     /**
@@ -407,59 +515,61 @@ const timelineController = (() => {
      */
     function updateStatistics(data, bucketSizeMs, lastEvent) {
         if (data.length === 0) {
-            statTotalEvents.textContent = '0';
-            statTotalEventsTime.textContent = '';
-            statPeakRate.textContent = '0/min';
-            statPeakRateTime.textContent = '';
-            statAvgRate.textContent = '0/min';
-            statAvgRateTime.textContent = '';
-            statQuietPeriods.textContent = '0';
-            statQuietPeriodsSize.textContent = '';
+            if (statTotalEvents) statTotalEvents.textContent = '0';
+            if (statTotalEventsTime) statTotalEventsTime.textContent = '';
+            if (statPeakRate) statPeakRate.textContent = '0/min';
+            if (statPeakRateTime) statPeakRateTime.textContent = '';
+            if (statAvgRate) statAvgRate.textContent = '0/min';
+            if (statAvgRateTime) statAvgRateTime.textContent = '';
+            if (statQuietPeriods) statQuietPeriods.textContent = '0';
+            if (statQuietPeriodsSize) statQuietPeriodsSize.textContent = '';
             return;
         }
 
         // Total events
         const total = data.reduce((sum, bucket) => sum + bucket.count, 0);
-        statTotalEvents.textContent = total.toLocaleString();
+        if (statTotalEvents) statTotalEvents.textContent = total.toLocaleString();
 
         // Last event received time
         if (lastEvent && lastEvent.timestamp) {
             const lastEventTime = new Date(lastEvent.timestamp);
-            statTotalEventsTime.textContent = `Last event: ${formatDistanceToNow(lastEventTime, { addSuffix: true })}`;
+            if (statTotalEventsTime) {
+                statTotalEventsTime.textContent = `Last event: ${formatDistanceToNow(lastEventTime, { addSuffix: true })}`;
+            }
         } else {
-            statTotalEventsTime.textContent = '';
+            if (statTotalEventsTime) statTotalEventsTime.textContent = '';
         }
 
         // Peak rate (normalize to events per minute)
         const peak = Math.max(...data.map(b => b.count));
         const peakPerMinute = Math.round((peak / bucketSizeMs) * 60000);
-        statPeakRate.textContent = `${peakPerMinute}/min`;
+        if (statPeakRate) statPeakRate.textContent = `${peakPerMinute}/min`;
 
         // Find the timestamp(s) of the peak bucket(s)
         const peakBuckets = data.filter(b => b.count === peak);
         if (peakBuckets.length > 0) {
             if (peakBuckets.length === 1) {
                 const peakTime = new Date(peakBuckets[0].timestamp);
-                statPeakRateTime.textContent = peakTime.toLocaleString();
+                if (statPeakRateTime) statPeakRateTime.textContent = peakTime.toLocaleString();
             } else {
                 // Multiple peaks - show count
-                statPeakRateTime.textContent = `${peakBuckets.length} occurrences`;
+                if (statPeakRateTime) statPeakRateTime.textContent = `${peakBuckets.length} occurrences`;
             }
         } else {
-            statPeakRateTime.textContent = '';
+            if (statPeakRateTime) statPeakRateTime.textContent = '';
         }
 
         // Average rate
         const avgPerBucket = total / data.length;
         const avgPerMinute = Math.round((avgPerBucket / bucketSizeMs) * 60000);
-        statAvgRate.textContent = `${avgPerMinute}/min`;
+        if (statAvgRate) statAvgRate.textContent = `${avgPerMinute}/min`;
 
         // Last updated (current time)
-        statAvgRateTime.textContent = `Updated: ${formatDistanceToNow(new Date(), { addSuffix: true })}`;
+        if (statAvgRateTime) statAvgRateTime.textContent = `Updated: ${formatDistanceToNow(new Date(), { addSuffix: true })}`;
 
         // Quiet periods (buckets with 0 events)
         const quietPeriods = data.filter(b => b.count === 0).length;
-        statQuietPeriods.textContent = quietPeriods.toLocaleString();
+        if (statQuietPeriods) statQuietPeriods.textContent = quietPeriods.toLocaleString();
 
         // Bucket size description
         const bucketSizeLabels = {
@@ -470,56 +580,161 @@ const timelineController = (() => {
             21600000: '6 hour buckets',
             86400000: '1 day buckets'
         };
-        statQuietPeriodsSize.textContent = bucketSizeLabels[bucketSizeMs] || `${bucketSizeMs}ms buckets`;
+        if (statQuietPeriodsSize) {
+            statQuietPeriodsSize.textContent = bucketSizeLabels[bucketSizeMs] || `${bucketSizeMs}ms buckets`;
+        }
     }
 
     /**
-     * Handle chart click to drill down into time period
-     * Navigate to Events view with time range and current filters applied
+     * Handle chart click to view events in time range
+     * Switches to Streams tab and highlights events in the clicked time bucket
+     * Does NOT change any filters - just provides a view into that time period
      */
     function handleChartClick(timestamp) {
         console.log('[Timeline] Clicked on timestamp:', new Date(timestamp));
 
-        // Get current filter values from global state
-        const bucketSize = parseInt(bucketSizeSelect.value);
-        const filters = appState.get('filters');
-        const typeFilter = filters.type || '';
-        const sourceFilter = filters.source || '';
-        const subjectFilter = filters.subject !== null ? filters.subject : '';
+        // Get current bucket size from zoom level
+        const bucketSize = getBucketSize();
 
         // Calculate time range for the clicked bucket
         const startTime = timestamp;
-        const endTime = timestamp + bucketSize;
+        const endTime = timestamp + bucketSize; console.log('[Timeline] Viewing events in time range:', {
+            startTime: new Date(startTime).toISOString(),
+            endTime: new Date(endTime).toISOString()
+        });
 
-        // Build URL with filter parameters
-        const params = new URLSearchParams();
-        params.set('startTime', startTime.toString());
-        params.set('endTime', endTime.toString());
-
-        if (typeFilter) {
-            params.set('type', typeFilter);
-        }
-        if (sourceFilter) {
-            params.set('source', sourceFilter);
-        }
-        if (subjectFilter) {
-            params.set('subject', subjectFilter);
+        // Switch to Streams tab to show the events
+        const streamsTab = document.querySelector('[data-bs-target="#streams"]');
+        if (streamsTab) {
+            const tab = new bootstrap.Tab(streamsTab);
+            tab.show();
         }
 
-        // Navigate to Events view with filters
-        console.log('[Timeline] Navigating to Events view with filters:', Object.fromEntries(params));
-        window.location.href = `/?${params.toString()}`;
+        // Highlight events in this time range (visual feedback without changing filters)
+        highlightEventsInTimeRange(startTime, endTime);
+    }
+
+    /**
+     * Highlight events in the streams list that fall within a time range
+     */
+    function highlightEventsInTimeRange(startTime, endTime) {
+        // Get all event items in the streams list
+        const eventItems = document.querySelectorAll('#eventsList .list-group-item');
+        let firstMatch = null;
+
+        eventItems.forEach(item => {
+            const timestampAttr = item.getAttribute('data-timestamp');
+            if (timestampAttr) {
+                const eventTime = parseInt(timestampAttr);
+
+                if (eventTime >= startTime && eventTime < endTime) {
+                    // Highlight matching events
+                    item.classList.add('table-info');
+                    if (!firstMatch) firstMatch = item;
+                } else {
+                    // Remove highlight from non-matching events
+                    item.classList.remove('table-info');
+                }
+            }
+        });
+
+        // Scroll to first matching event
+        if (firstMatch) {
+            firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Clear highlights after 3 seconds
+        setTimeout(() => {
+            eventItems.forEach(item => item.classList.remove('table-info'));
+        }, 3000);
     }
 
     /**
      * Setup event listeners
      */
     function setupEventListeners() {
-        // Bucket size changes
-        bucketSizeSelect.addEventListener('change', refreshChart);
+        // Bucket size dropdown
+        if (bucketSizeSelect) {
+            console.log('[Timeline] Setting up bucket size dropdown');
+
+            // Set initial value from loaded state
+            bucketSizeSelect.value = currentZoomIndex.toString();
+
+            bucketSizeSelect.addEventListener('change', (e) => {
+                const newIndex = parseInt(e.target.value, 10);
+                if (newIndex >= 0 && newIndex < zoomLevels.length) {
+                    currentZoomIndex = newIndex;
+                    const level = zoomLevels[currentZoomIndex];
+                    console.log('[Timeline] Bucket size changed to:', e.target.options[e.target.selectedIndex].text, level);
+
+                    // Save to localStorage
+                    localStorage.setItem('timeline_bucket_size', currentZoomIndex.toString());
+
+                    refreshChart();
+                }
+            });
+        } else {
+            console.warn('[Timeline] Bucket size dropdown not found');
+        }
+
+        // Setup mouse drag scrolling for timeline
+        setupDragScrolling();
 
         // Setup chart enlarge functionality
         setupChartEnlarge();
+    }
+
+    /**
+     * Setup drag scrolling for timeline chart
+     */
+    function setupDragScrolling() {
+        const canvas = document.getElementById('timelineChart');
+        const scrollContainer = canvas?.parentElement?.parentElement; // The card-body with overflow-x
+
+        if (!scrollContainer) {
+            console.warn('[Timeline] Scroll container not found for drag scrolling');
+            return;
+        }
+
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        scrollContainer.addEventListener('mousedown', (e) => {
+            // Only activate on primary mouse button (left click)
+            if (e.button !== 0) return;
+
+            isDown = true;
+            scrollContainer.style.cursor = 'grabbing';
+            scrollContainer.style.userSelect = 'none';
+            startX = e.pageX - scrollContainer.offsetLeft;
+            scrollLeft = scrollContainer.scrollLeft;
+        });
+
+        scrollContainer.addEventListener('mouseleave', () => {
+            isDown = false;
+            scrollContainer.style.cursor = 'grab';
+            scrollContainer.style.userSelect = '';
+        });
+
+        scrollContainer.addEventListener('mouseup', () => {
+            isDown = false;
+            scrollContainer.style.cursor = 'grab';
+            scrollContainer.style.userSelect = '';
+        });
+
+        scrollContainer.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - scrollContainer.offsetLeft;
+            const walk = (x - startX) * 2; // Scroll speed multiplier
+            scrollContainer.scrollLeft = scrollLeft - walk;
+        });
+
+        // Set initial cursor
+        scrollContainer.style.cursor = 'grab';
+
+        console.log('[Timeline] Drag scrolling enabled');
     }
 
     /**
@@ -608,45 +823,17 @@ const timelineController = (() => {
         sseConnection.close();
         if (chart) {
             chart.destroy();
+            chart = null;
         }
+        initialized = false;
     }
 
     return {
         init,
-        destroy
+        destroy,
+        refresh: refreshChart
     };
 })();
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => timelineController.init());
-} else {
-    timelineController.init();
-}
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', () => timelineController.destroy());
-
-// Initialize keyboard shortcuts
-import { keyboardController } from './ux/keyb-nav';
-keyboardController.init(bootstrap);
-
-// Initialize tasks modal controller
-import { tasksModalController } from './ui/tasksModal';
-tasksModalController.init();
-// Make it globally available for auth dropdown
-window.tasksModalController = tasksModalController;
-
-// Initialize clients modal controller
-import { clientsModalController } from './ui/clientsModal';
-clientsModalController.init();
-// Make it globally available for auth dropdown
-window.clientsModalController = clientsModalController;
-
-// Initialize generator form for offcanvas panel
-import { generatorForm } from './ui/generatorForm';
-generatorForm.init();
-
-// Initialize tooltips
-const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+// Export for use by unified dashboard
+export { timelineController };

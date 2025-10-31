@@ -10,7 +10,10 @@ import { toastController } from './toast.js';
 export const tasksModalController = (() => {
     let modal = null;
     let modalElement = null;
-    let refreshInterval = null;
+    let eventSource = null;
+    let badgeEventSource = null;
+    let isVisible = false;
+    let taskCountBadge = null;
 
     // DOM elements
     let tasksList = null;
@@ -48,21 +51,126 @@ export const tasksModalController = (() => {
         // Load tasks when modal is shown
         modalElement.addEventListener('show.bs.modal', () => {
             console.log('[TasksModal] Modal shown, loading tasks...');
-            loadActiveTasks();
-            // Auto-refresh every 2 seconds while modal is open
-            refreshInterval = setInterval(loadActiveTasks, 2000);
+            isVisible = true;
+            loadActiveTasks(); // Initial load
+            setupSSEConnection(); // Start SSE for real-time updates
         });
 
-        // Stop auto-refresh when modal is hidden
+        // Stop SSE when modal is hidden
         modalElement.addEventListener('hide.bs.modal', () => {
-            console.log('[TasksModal] Modal hidden, stopping auto-refresh');
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-                refreshInterval = null;
+            console.log('[TasksModal] Modal hidden');
+            isVisible = false;
+            closeSSEConnection();
+        });
+
+        // Setup background SSE connection for badge updates
+        setupBadgeSSEConnection();
+
+        console.log('[TasksModal] Initialized');
+    };
+
+    /**
+     * Setup background SSE connection for badge updates
+     * This runs constantly to keep the badge count updated
+     */
+    const setupBadgeSSEConnection = () => {
+        console.log('[TasksModal] Setting up badge SSE connection...');
+
+        // Close existing connection if any
+        if (badgeEventSource) {
+            console.log('[TasksModal] Closing existing badge SSE connection');
+            badgeEventSource.close();
+            badgeEventSource = null;
+        }
+
+        badgeEventSource = new EventSource('/stream/tasks');
+
+        badgeEventSource.addEventListener('open', () => {
+            console.log('[TasksModal] Badge SSE connection established');
+        });
+
+        badgeEventSource.addEventListener('message', (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                const tasks = data.active_tasks || [];
+
+                // Update badge with current task count
+                updateBadgeCount(tasks.length);
+
+                // If modal is open, also update the UI
+                if (isVisible) {
+                    // Convert array to object keyed by task_id for renderTasks
+                    const tasksObj = {};
+                    tasks.forEach(task => {
+                        tasksObj[task.task_id] = task;
+                    });
+                    renderTasks(tasksObj);
+                }
+            } catch (error) {
+                console.error('[TasksModal] Error parsing badge SSE message:', error);
             }
         });
 
-        console.log('[TasksModal] Initialized');
+        badgeEventSource.addEventListener('error', (error) => {
+            console.error('[TasksModal] Badge SSE connection error:', error);
+
+            // If connection fails, try to reconnect after delay
+            if (badgeEventSource.readyState === EventSource.CLOSED) {
+                console.log('[TasksModal] Badge SSE connection closed, will reconnect...');
+                setTimeout(() => {
+                    if (badgeEventSource && badgeEventSource.readyState === EventSource.CLOSED) {
+                        setupBadgeSSEConnection();
+                    }
+                }, 5000);
+            }
+        });
+    };
+
+    /**
+     * Setup SSE connection to listen for task changes when modal is open
+     */
+    const setupSSEConnection = () => {
+        console.log('[TasksModal] Setting up modal SSE connection...');
+        // We reuse the badge connection since it's already streaming
+        // The badge SSE connection will call renderTasks when modal is open
+        console.log('[TasksModal] Using shared SSE connection for modal updates');
+    };
+
+    /**
+     * Close SSE connection
+     */
+    const closeSSEConnection = () => {
+        // We don't close the badge SSE connection when modal closes
+        // It continues running in the background to keep badge updated
+        console.log('[TasksModal] Modal closed, SSE continues in background');
+    };
+
+    /**
+     * Update the badge count in the menu
+     */
+    const updateBadgeCount = (count) => {
+        // Find or create the badge element
+        if (!taskCountBadge) {
+            const menuItem = document.querySelector('[data-tasks-menu]');
+            if (menuItem) {
+                taskCountBadge = menuItem.querySelector('.badge');
+                if (!taskCountBadge) {
+                    taskCountBadge = document.createElement('span');
+                    taskCountBadge.className = 'badge bg-warning ms-2';
+                    menuItem.appendChild(taskCountBadge);
+                }
+            }
+        }
+
+        // Update badge
+        if (taskCountBadge) {
+            if (count > 0) {
+                taskCountBadge.textContent = count;
+                taskCountBadge.style.display = 'inline';
+            } else {
+                taskCountBadge.style.display = 'none';
+            }
+        }
     };
 
     /**
@@ -84,7 +192,7 @@ export const tasksModalController = (() => {
     };
 
     /**
-     * Load active tasks from backend
+     * Load active tasks from backend (used for manual refresh)
      */
     const loadActiveTasks = async () => {
         try {

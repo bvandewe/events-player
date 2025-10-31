@@ -266,3 +266,60 @@ async def stream_client_stats(request: Request):
         client_id = f"{request.client.host}:{request.client.port}"
     log.info("New SSE client for /stream/clients: %s", client_id)
     return EventSourceResponse(client_stats_generator(request))
+
+
+# Generator for task statistics
+async def task_stats_generator(request: Request):
+    """
+    Generator for streaming task statistics via SSE.
+    Emits updates whenever active tasks change.
+    """
+    try:
+        previous_state = None
+
+        while True:
+            # If client closes connection, stop
+            if await request.is_disconnected():
+                log.debug("Task stats client disconnected")
+                break
+
+            # Serialize current active tasks
+            current_state = json.dumps(
+                {"active_tasks": [task for task in active_tasks.values()]}, sort_keys=True
+            )
+
+            # Only emit if state has changed
+            if current_state != previous_state:
+                yield dict(
+                    event="message",
+                    data=json.dumps({"active_tasks": [task for task in active_tasks.values()]}),
+                )
+                previous_state = current_state
+
+            # Check for changes every 500ms
+            await asyncio.sleep(0.5)
+
+    except (asyncio.CancelledError, GeneratorExit):
+        log.debug("Task stats generator cancelled")
+    except Exception as e:
+        log.error("Error in task_stats_generator: %s", e)
+
+
+# Stream task statistics
+@router.get(
+    path="/stream/tasks",
+    tags=["Server Sent Event (SSE) Stream"],
+    operation_id="stream_task_stats",
+)
+async def stream_task_stats(request: Request):
+    """
+    SSE endpoint that streams real-time active task statistics.
+
+    Emits updates whenever tasks are created, updated, or completed.
+    Useful for monitoring background task status in admin interface.
+    """
+    client_id = "unknown"
+    if request.client:
+        client_id = f"{request.client.host}:{request.client.port}"
+    log.info("New SSE client for /stream/tasks: %s", client_id)
+    return EventSourceResponse(task_stats_generator(request))

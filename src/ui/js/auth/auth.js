@@ -849,6 +849,7 @@ class AuthManager {
                 const tasksLink = document.createElement('a');
                 tasksLink.className = 'dropdown-item';
                 tasksLink.href = '#';
+                tasksLink.setAttribute('data-tasks-menu', 'true');
                 tasksLink.onclick = (e) => {
                     e.preventDefault();
                     // Show tasks modal (will be defined in tasksModal.js)
@@ -861,6 +862,9 @@ class AuthManager {
                 tasksIcon.className = 'bi bi-list-task me-2';
                 tasksLink.appendChild(tasksIcon);
                 tasksLink.appendChild(document.createTextNode('Manage Tasks'));
+
+                // Badge will be added dynamically by tasksModalController
+
                 tasksItem.appendChild(tasksLink);
                 menu.appendChild(tasksItem);
             }
@@ -1051,6 +1055,7 @@ class AuthManager {
         const tasksLink = document.createElement('a');
         tasksLink.className = 'dropdown-item';
         tasksLink.href = '#';
+        tasksLink.setAttribute('data-tasks-menu', 'true');
         tasksLink.onclick = (e) => {
             e.preventDefault();
             if (window.tasksModalController) {
@@ -1062,6 +1067,9 @@ class AuthManager {
         tasksIcon.className = 'bi bi-list-task me-2';
         tasksLink.appendChild(tasksIcon);
         tasksLink.appendChild(document.createTextNode('Manage Tasks'));
+
+        // Badge will be added dynamically by tasksModalController
+
         tasksItem.appendChild(tasksLink);
         menu.appendChild(tasksItem);
 

@@ -90,106 +90,109 @@ async def get_ui(
     )
 
 
-# Timeline View Route
-@router.get(
-    path="/timeline", tags=["Frontend"], operation_id="get_timeline", response_class=HTMLResponse
-)
-async def get_timeline(
-    request: Request, current_user: Optional[dict] = Depends(get_current_user_optional)
-):
-    """Timeline visualization view"""
-    year = datetime.datetime.now().year
-    default_events_settings = settings.default_generator_event.model_dump()
-    # Convert event_data dict to JSON string to avoid Python True/False in template
-    default_events_settings["event_data"] = json.dumps(default_events_settings["event_data"])
-    default_events_gateways = settings.default_generator_gateways.model_dump()
-    log.debug("Received request on timeline: %s", request)
-
-    # Extract user roles for authorization
-    # When auth is not required, grant admin privileges to enable all features
-    if not settings.auth_required:
-        is_admin = True
-        is_operator = True
-    else:
-        user_roles = current_user.get("roles", []) if current_user else []
-        is_admin = settings.auth_role_admin in user_roles
-        is_operator = settings.auth_role_operator in user_roles or is_admin
-
-    return templates.TemplateResponse(
-        "html/timeline.html",
-        {
-            "request": request,
-            "tag": settings.tag,
-            "repo_url": settings.repository_url,
-            "year": year,
-            "default_events_settings": default_events_settings,
-            "default_events_gateways": default_events_gateways,
-            "browser_queue_size": settings.browser_queue_size,
-            # Storage configuration for frontend
-            "storage_max_recent_events": settings.storage_max_recent_events,
-            "storage_max_metadata_events": settings.storage_max_metadata_events,
-            # Auth configuration for frontend
-            "auth_required": settings.auth_required,
-            "oauth_url": settings.oauth_base_url,
-            "oauth_realm": settings.oauth_realm,
-            "oauth_client_id": settings.oauth_client_id,
-            # User authorization info
-            "user_authenticated": current_user is not None,
-            "user_is_admin": is_admin,
-            "user_is_operator": is_operator,
-        },
-    )
-
-
-# Dashboard View Route
-@router.get(
-    path="/dashboard", tags=["Frontend"], operation_id="get_dashboard", response_class=HTMLResponse
-)
-async def get_dashboard(
-    request: Request, current_user: Optional[dict] = Depends(get_current_user_optional)
-):
-    """Metrics dashboard view"""
-    year = datetime.datetime.now().year
-    default_events_settings = settings.default_generator_event.model_dump()
-    # Convert event_data dict to JSON string to avoid Python True/False in template
-    default_events_settings["event_data"] = json.dumps(default_events_settings["event_data"])
-    default_events_gateways = settings.default_generator_gateways.model_dump()
-    log.debug("Received request on dashboard: %s", request)
-
-    # Extract user roles for authorization
-    # When auth is not required, grant admin privileges to enable all features
-    if not settings.auth_required:
-        is_admin = True
-        is_operator = True
-    else:
-        user_roles = current_user.get("roles", []) if current_user else []
-        is_admin = settings.auth_role_admin in user_roles
-        is_operator = settings.auth_role_operator in user_roles or is_admin
-
-    return templates.TemplateResponse(
-        "html/dashboard.html",
-        {
-            "request": request,
-            "tag": settings.tag,
-            "repo_url": settings.repository_url,
-            "year": year,
-            "default_events_settings": default_events_settings,
-            "default_events_gateways": default_events_gateways,
-            "browser_queue_size": settings.browser_queue_size,
-            # Storage configuration for frontend
-            "storage_max_recent_events": settings.storage_max_recent_events,
-            "storage_max_metadata_events": settings.storage_max_metadata_events,
-            # Auth configuration for frontend
-            "auth_required": settings.auth_required,
-            "oauth_url": settings.oauth_base_url,
-            "oauth_realm": settings.oauth_realm,
-            "oauth_client_id": settings.oauth_client_id,
-            # User authorization info
-            "user_authenticated": current_user is not None,
-            "user_is_admin": is_admin,
-            "user_is_operator": is_operator,
-        },
-    )
+# Legacy Timeline and Dashboard routes - commented out, replaced by unified dashboard
+# Keeping for reference during transition
+#
+# # Timeline View Route
+# @router.get(
+#     path="/timeline", tags=["Frontend"], operation_id="get_timeline", response_class=HTMLResponse
+# )
+# async def get_timeline(
+#     request: Request, current_user: Optional[dict] = Depends(get_current_user_optional)
+# ):
+#     """Timeline visualization view"""
+#     year = datetime.datetime.now().year
+#     default_events_settings = settings.default_generator_event.model_dump()
+#     # Convert event_data dict to JSON string to avoid Python True/False in template
+#     default_events_settings["event_data"] = json.dumps(default_events_settings["event_data"])
+#     default_events_gateways = settings.default_generator_gateways.model_dump()
+#     log.debug("Received request on timeline: %s", request)
+#
+#     # Extract user roles for authorization
+#     # When auth is not required, grant admin privileges to enable all features
+#     if not settings.auth_required:
+#         is_admin = True
+#         is_operator = True
+#     else:
+#         user_roles = current_user.get("roles", []) if current_user else []
+#         is_admin = settings.auth_role_admin in user_roles
+#         is_operator = settings.auth_role_operator in user_roles or is_admin
+#
+#     return templates.TemplateResponse(
+#         "html/timeline.html",
+#         {
+#             "request": request,
+#             "tag": settings.tag,
+#             "repo_url": settings.repository_url,
+#             "year": year,
+#             "default_events_settings": default_events_settings,
+#             "default_events_gateways": default_events_gateways,
+#             "browser_queue_size": settings.browser_queue_size,
+#             # Storage configuration for frontend
+#             "storage_max_recent_events": settings.storage_max_recent_events,
+#             "storage_max_metadata_events": settings.storage_max_metadata_events,
+#             # Auth configuration for frontend
+#             "auth_required": settings.auth_required,
+#             "oauth_url": settings.oauth_base_url,
+#             "oauth_realm": settings.oauth_realm,
+#             "oauth_client_id": settings.oauth_client_id,
+#             # User authorization info
+#             "user_authenticated": current_user is not None,
+#             "user_is_admin": is_admin,
+#             "user_is_operator": is_operator,
+#         },
+#     )
+#
+#
+# # Dashboard View Route
+# @router.get(
+#     path="/dashboard", tags=["Frontend"], operation_id="get_dashboard", response_class=HTMLResponse
+# )
+# async def get_dashboard(
+#     request: Request, current_user: Optional[dict] = Depends(get_current_user_optional)
+# ):
+#     """Metrics dashboard view"""
+#     year = datetime.datetime.now().year
+#     default_events_settings = settings.default_generator_event.model_dump()
+#     # Convert event_data dict to JSON string to avoid Python True/False in template
+#     default_events_settings["event_data"] = json.dumps(default_events_settings["event_data"])
+#     default_events_gateways = settings.default_generator_gateways.model_dump()
+#     log.debug("Received request on dashboard: %s", request)
+#
+#     # Extract user roles for authorization
+#     # When auth is not required, grant admin privileges to enable all features
+#     if not settings.auth_required:
+#         is_admin = True
+#         is_operator = True
+#     else:
+#         user_roles = current_user.get("roles", []) if current_user else []
+#         is_admin = settings.auth_role_admin in user_roles
+#         is_operator = settings.auth_role_operator in user_roles or is_admin
+#
+#     return templates.TemplateResponse(
+#         "html/dashboard.html",
+#         {
+#             "request": request,
+#             "tag": settings.tag,
+#             "repo_url": settings.repository_url,
+#             "year": year,
+#             "default_events_settings": default_events_settings,
+#             "default_events_gateways": default_events_gateways,
+#             "browser_queue_size": settings.browser_queue_size,
+#             # Storage configuration for frontend
+#             "storage_max_recent_events": settings.storage_max_recent_events,
+#             "storage_max_metadata_events": settings.storage_max_metadata_events,
+#             # Auth configuration for frontend
+#             "auth_required": settings.auth_required,
+#             "oauth_url": settings.oauth_base_url,
+#             "oauth_realm": settings.oauth_realm,
+#             "oauth_client_id": settings.oauth_client_id,
+#             # User authorization info
+#             "user_authenticated": current_user is not None,
+#             "user_is_admin": is_admin,
+#             "user_is_operator": is_operator,
+#         },
+#     )
 
 
 # Authentication Endpoints

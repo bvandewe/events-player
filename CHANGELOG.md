@@ -2,6 +2,24 @@
 
 ## 0.4.0 - 2025-10-31
 
+### Fixed
+
+- **Duplicate event submissions**: Fixed form being initialized multiple times causing duplicate events
+  - Added idempotent initialization guard to generatorForm controller
+  - Removed module-level initialization code from dashboard.js and timeline.js
+  - Now properly follows single-page application pattern
+- **Duplicate SSE subscriptions**: Fixed events appearing twice in streams
+  - Removed duplicate 'filters' event subscription in events controller
+  - Ensured loadEventsFromStorage only called once per filter change
+- **Search functionality**: Restored and enhanced event search
+  - Added search input in dashboard tabs header
+  - Deep search through entire event payload (CloudEvent attributes + data)
+  - localStorage persistence for search term
+  - Debounced search (300ms) for better performance
+  - Auto-filters new events as they arrive via SSE
+  - Keyboard shortcut (Ctrl/Cmd + F) to focus search
+  - Clear button to reset search
+
 ### Major UI Redesign
 
 #### Unified Dashboard

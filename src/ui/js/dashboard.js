@@ -68,10 +68,13 @@ const storageManager = EventStorageManager.getInstance(storageOptions);
 
 // Dashboard Controller
 const dashboardController = (() => {
+    let initialized = false;
+
     let charts = {
         eventsPerMinute: null,
         topTypes: null,
         topSources: null,
+        topSubjects: null,
         hourlyDistribution: null
     };
 
@@ -90,6 +93,15 @@ const dashboardController = (() => {
      */
     async function init() {
         console.log('[Dashboard] Initializing...');
+
+        // Prevent double initialization
+        if (initialized) {
+            console.log('[Dashboard] Already initialized, skipping...');
+            return;
+        }
+
+        // Set flag immediately to prevent race conditions
+        initialized = true;
 
         // Note: Authentication is initialized by app.js which loads first
         // authManager and authorizationManager are available as shared instances
@@ -114,48 +126,11 @@ const dashboardController = (() => {
         // Initialize connection status manager
         connectionStatus.init();
 
-        // Initialize SSE connection with shared manager
-        sseConnection.init({
-            initialCount: initialCount,
-            onMessage: async (event) => {
-                console.log('[Dashboard] New event received via SSE');
-                connectionStatus.updateStatus("cleartimer");
-                connectionStatus.updateStatus("connect");
-                connectionStatus.updateStatus("newtimer");
-                try {
-                    const eventData = JSON.parse(event.data.replace(/'/g, '"'));
-                    const cloudEventData = eventData.cloudevent;
-                    if (cloudEventData) {
-                        // Store event in storage manager (both tiers)
-                        storageManager.addEvent(cloudEventData).catch(err => {
-                            console.error('[Dashboard] Failed to store event:', err);
-                        });
-
-                        // Increment the event counter in the title
-                        sseConnection.incrementCount();
-
-                        // Add event values to global filter dropdowns
-                        if (globalFilterController.initialized) {
-                            globalFilterController.addEventValues(cloudEventData);
-                        }
-
-                        // Wait a bit for storage to complete, then refresh dashboard
-                        setTimeout(() => {
-                            refreshDashboard().catch(err => console.error('[Dashboard] Refresh failed:', err));
-                        }, 500);
-                    }
-                } catch (error) {
-                    console.error('[Dashboard] Failed to parse event for filters:', error);
-                }
-            },
-            onOpen: () => {
-                console.log('[Dashboard] SSE connection established');
-                connectionStatus.updateStatus("open");
-            },
-            onError: (error) => {
-                console.error('[Dashboard] SSE error:', error);
-                connectionStatus.updateStatus("error");
-            }
+        // Subscribe to new events via appState (unified dashboard handles SSE)
+        appState.subscribe('newEvent', () => {
+            console.log('[Dashboard] New event received via appState');
+            // Refresh dashboard immediately (no setTimeout delay)
+            refreshDashboard().catch(err => console.error('[Dashboard] Refresh failed:', err));
         });
 
         // Initialize global filters (already initialized in app.js, just ensure it has storage manager)
@@ -189,73 +164,76 @@ const dashboardController = (() => {
      * Initialize all Chart.js charts
      */
     function initCharts() {
-        // Events Per Minute Chart (Line Chart)
-        const eventsPerMinuteCtx = document.getElementById('eventsPerMinuteChart').getContext('2d');
-        charts.eventsPerMinute = new Chart(eventsPerMinuteCtx, {
-            type: 'line',
-            data: {
-                datasets: [{
-                    label: 'Events per minute',
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    data: []
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                onClick: (event, activeElements) => {
-                    if (activeElements.length > 0) {
-                        const dataIndex = activeElements[0].index;
-                        const timestamp = charts.eventsPerMinute.data.datasets[0].data[dataIndex].x;
-                        handleTimeRangeClick(timestamp, 60000); // 1 minute bucket
-                    }
+        // Events Per Minute Chart (Line Chart) - optional, only if element exists
+        const eventsPerMinuteCanvas = document.getElementById('eventsPerMinuteChart');
+        if (eventsPerMinuteCanvas) {
+            const eventsPerMinuteCtx = eventsPerMinuteCanvas.getContext('2d');
+            charts.eventsPerMinute = new Chart(eventsPerMinuteCtx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Events per minute',
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        data: []
+                    }]
                 },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'minute',
-                            displayFormats: {
-                                minute: 'HH:mm',
-                                hour: 'HH:mm'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const dataIndex = activeElements[0].index;
+                            const timestamp = charts.eventsPerMinute.data.datasets[0].data[dataIndex].x;
+                            handleTimeRangeClick(timestamp, 60000); // 1 minute bucket
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                displayFormats: {
+                                    minute: 'HH:mm',
+                                    hour: 'HH:mm'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Time'
                             }
                         },
-                        title: {
-                            display: true,
-                            text: 'Time'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Events'
-                        },
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            title: (context) => {
-                                return dateFns.format(new Date(context[0].parsed.x), 'PPpp');
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Events'
                             },
-                            afterTitle: () => {
-                                return 'Click to filter events';
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => {
+                                    return dateFns.format(new Date(context[0].parsed.x), 'PPpp');
+                                },
+                                afterTitle: () => {
+                                    return 'Click to filter events';
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Top Event Types Chart (Horizontal Bar Chart)
         const topTypesCtx = document.getElementById('topTypesChart').getContext('2d');
@@ -361,25 +339,33 @@ const dashboardController = (() => {
             }
         });
 
-        // Hourly Distribution Chart (Bar Chart)
-        const hourlyDistributionCtx = document.getElementById('hourlyDistributionChart').getContext('2d');
-        charts.hourlyDistribution = new Chart(hourlyDistributionCtx, {
+        // Top Subjects Chart (Horizontal Bar Chart)
+        const topSubjectsCtx = document.getElementById('topSubjectsChart').getContext('2d');
+        charts.topSubjects = new Chart(topSubjectsCtx, {
             type: 'bar',
             data: {
-                labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                labels: [],
                 datasets: [{
-                    label: 'Events',
-                    backgroundColor: 'rgba(153, 102, 255, 0.8)',
-                    data: new Array(24).fill(0)
+                    label: 'Count',
+                    backgroundColor: [
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(54, 162, 235, 0.8)'
+                    ],
+                    data: []
                 }]
             },
             options: {
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 onClick: (event, activeElements) => {
                     if (activeElements.length > 0) {
                         const dataIndex = activeElements[0].index;
-                        handleHourClick(dataIndex);
+                        const eventSubject = charts.topSubjects.data.labels[dataIndex];
+                        handleSubjectClick(eventSubject);
                     }
                 },
                 plugins: {
@@ -389,27 +375,74 @@ const dashboardController = (() => {
                     tooltip: {
                         callbacks: {
                             afterLabel: () => {
-                                return 'Click to filter by hour';
+                                return 'Click to filter by subject';
                             }
                         }
                     }
                 },
                 scales: {
-                    y: {
+                    x: {
                         beginAtZero: true,
                         ticks: {
                             precision: 0
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Hour of Day'
                         }
                     }
                 }
             }
         });
+
+        // Hourly Distribution Chart (Bar Chart) - optional, only if element exists
+        const hourlyDistributionCanvas = document.getElementById('hourlyDistributionChart');
+        if (hourlyDistributionCanvas) {
+            const hourlyDistributionCtx = hourlyDistributionCanvas.getContext('2d');
+            charts.hourlyDistribution = new Chart(hourlyDistributionCtx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Events',
+                        backgroundColor: 'rgba(153, 102, 255, 0.8)',
+                        data: new Array(24).fill(0)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const dataIndex = activeElements[0].index;
+                            handleHourClick(dataIndex);
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: () => {
+                                    return 'Click to filter by hour';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Hour of Day'
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -490,6 +523,28 @@ const dashboardController = (() => {
 
         // Navigate to Events view
         console.log('[Dashboard] Navigating to Events view with source filter');
+        window.location.href = '/';
+    }
+
+    /**
+     * Handle click on event subject chart
+     * Navigate to Events view filtered by subject
+     */
+    function handleSubjectClick(eventSubject) {
+        console.log('[Dashboard] Clicked on event subject:', eventSubject);
+
+        // Update filters to include the clicked subject
+        const filters = {
+            type: '',
+            source: '',
+            subject: eventSubject,
+            timeRange: appState.get('filters').timeRange || 'all'
+        };
+
+        appState.updateFilters(filters);
+
+        // Navigate to Events view
+        console.log('[Dashboard] Navigating to Events view with subject filter');
         window.location.href = '/';
     }
 
@@ -588,6 +643,7 @@ const dashboardController = (() => {
             updateEventsPerMinuteChart(filteredEvents);
             updateTopTypesChart(filteredEvents);
             updateTopSourcesChart(filteredEvents);
+            updateTopSubjectsChart(filteredEvents);
             updateHourlyDistributionChart(filteredEvents);
 
             console.log('[Dashboard] Refresh complete');
@@ -601,19 +657,21 @@ const dashboardController = (() => {
      */
     function updateStatistics(events, startTime) {
         const total = events.length;
-        statTotalEvents.textContent = total.toLocaleString();
+        if (statTotalEvents) statTotalEvents.textContent = total.toLocaleString();
 
         // Last event received time
         if (total > 0) {
             const lastEvent = events[events.length - 1]; // Events are sorted by timestamp
             if (lastEvent && lastEvent.timestamp) {
                 const lastEventTime = new Date(lastEvent.timestamp);
-                statTotalEventsTime.textContent = `Last event: ${dateFns.formatDistanceToNow(lastEventTime, { addSuffix: true })}`;
+                if (statTotalEventsTime) {
+                    statTotalEventsTime.textContent = `Last event: ${dateFns.formatDistanceToNow(lastEventTime, { addSuffix: true })}`;
+                }
             } else {
-                statTotalEventsTime.textContent = '';
+                if (statTotalEventsTime) statTotalEventsTime.textContent = '';
             }
         } else {
-            statTotalEventsTime.textContent = '';
+            if (statTotalEventsTime) statTotalEventsTime.textContent = '';
         }
 
         // Calculate average rate
@@ -630,14 +688,16 @@ const dashboardController = (() => {
             const durationMinutes = (lastTime - firstTime) / 60000;
             avgRate = durationMinutes > 0 ? (total / durationMinutes).toFixed(1) : 0;
         }
-        statAvgRate.textContent = avgRate;
+        if (statAvgRate) statAvgRate.textContent = avgRate;
 
         // Last updated time
-        statAvgRateTime.textContent = `Updated: ${dateFns.formatDistanceToNow(new Date(), { addSuffix: true })}`;
+        if (statAvgRateTime) {
+            statAvgRateTime.textContent = `Updated: ${dateFns.formatDistanceToNow(new Date(), { addSuffix: true })}`;
+        }
 
         // Count unique types
         const uniqueTypes = new Set(events.map(e => e.type));
-        statUniqueTypes.textContent = uniqueTypes.size;
+        if (statUniqueTypes) statUniqueTypes.textContent = uniqueTypes.size;
 
         // Most common type info
         if (uniqueTypes.size > 0) {
@@ -647,14 +707,16 @@ const dashboardController = (() => {
             });
             const sortedTypes = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]);
             const topType = sortedTypes[0];
-            statUniqueTypesInfo.textContent = `Most common: ${topType[0].split('.').pop()}`;
+            if (statUniqueTypesInfo) {
+                statUniqueTypesInfo.textContent = `Most common: ${topType[0].split('.').pop()}`;
+            }
         } else {
-            statUniqueTypesInfo.textContent = '';
+            if (statUniqueTypesInfo) statUniqueTypesInfo.textContent = '';
         }
 
         // Count unique sources
         const uniqueSources = new Set(events.map(e => e.source));
-        statUniqueSources.textContent = uniqueSources.size;
+        if (statUniqueSources) statUniqueSources.textContent = uniqueSources.size;
 
         // Most common source info
         if (uniqueSources.size > 0) {
@@ -668,9 +730,11 @@ const dashboardController = (() => {
             const sourceLabel = topSource[0].includes('://')
                 ? new URL(topSource[0]).hostname
                 : topSource[0].split('/').pop();
-            statUniqueSourcesInfo.textContent = `Most common: ${sourceLabel}`;
+            if (statUniqueSourcesInfo) {
+                statUniqueSourcesInfo.textContent = `Most common: ${sourceLabel}`;
+            }
         } else {
-            statUniqueSourcesInfo.textContent = '';
+            if (statUniqueSourcesInfo) statUniqueSourcesInfo.textContent = '';
         }
     }
 
@@ -756,6 +820,8 @@ const dashboardController = (() => {
      * Update Events Per Minute chart
      */
     function updateEventsPerMinuteChart(events) {
+        if (!charts.eventsPerMinute) return; // Chart doesn't exist in unified dashboard
+
         if (events.length === 0) {
             charts.eventsPerMinute.data.datasets[0].data = [];
             charts.eventsPerMinute.update();
@@ -838,9 +904,39 @@ const dashboardController = (() => {
     }
 
     /**
+     * Update Top Subjects chart
+     */
+    function updateTopSubjectsChart(events) {
+        if (events.length === 0) {
+            charts.topSubjects.data.labels = [];
+            charts.topSubjects.data.datasets[0].data = [];
+            charts.topSubjects.update();
+            return;
+        }
+
+        // Count occurrences of each subject
+        const subjectCounts = new Map();
+        events.forEach(event => {
+            const subject = event.subject || 'none';
+            subjectCounts.set(subject, (subjectCounts.get(subject) || 0) + 1);
+        });
+
+        // Sort by count and take top 5
+        const topSubjects = Array.from(subjectCounts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        charts.topSubjects.data.labels = topSubjects.map(([subject]) => subject);
+        charts.topSubjects.data.datasets[0].data = topSubjects.map(([, count]) => count);
+        charts.topSubjects.update();
+    }
+
+    /**
      * Update Hourly Distribution chart
      */
     function updateHourlyDistributionChart(events) {
+        if (!charts.hourlyDistribution) return; // Chart doesn't exist in unified dashboard
+
         // Initialize all hours to 0
         const hourCounts = new Array(24).fill(0);
 
@@ -1002,44 +1098,26 @@ const dashboardController = (() => {
                 chart.destroy();
             }
         });
+
+        // Reset charts object
+        charts = {
+            eventsPerMinute: null,
+            topTypes: null,
+            topSources: null,
+            topSubjects: null,
+            hourlyDistribution: null
+        };
+
+        // Reset initialized flag
+        initialized = false;
     }
 
     return {
         init,
-        destroy
+        destroy,
+        refresh: refreshDashboard
     };
 })();
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => dashboardController.init());
-} else {
-    dashboardController.init();
-}
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', () => dashboardController.destroy());
-
-// Initialize keyboard shortcuts
-import { keyboardController } from './ux/keyb-nav';
-keyboardController.init(bootstrap);
-
-// Initialize tasks modal controller
-import { tasksModalController } from './ui/tasksModal';
-tasksModalController.init();
-// Make it globally available for auth dropdown
-window.tasksModalController = tasksModalController;
-
-// Initialize clients modal controller
-import { clientsModalController } from './ui/clientsModal';
-clientsModalController.init();
-// Make it globally available for auth dropdown
-window.clientsModalController = clientsModalController;
-
-// Initialize generator form for offcanvas panel
-import { generatorForm } from './ui/generatorForm';
-generatorForm.init();
-
-// Initialize tooltips
-const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+// Export for use by unified dashboard
+export { dashboardController };
