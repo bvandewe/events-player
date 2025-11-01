@@ -217,7 +217,7 @@ The user interface adapts automatically based on the authenticated user's role.
 
 - Admin dropdown in navigation bar
 - Additional menu item:
-  - **Manage Tasks** - Opens Task Manager modal
+    - **Manage Tasks** - Opens Task Manager modal
 - Plus the "Clear Storage" option available to all users
 
 ### Task Manager Modal
