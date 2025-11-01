@@ -7,7 +7,7 @@ class DefaultGateways(BaseModel):
     """Default gateway URLs for event generation"""
 
     urls: typing.List[HttpUrl] = [
-        HttpUrl("http://host.docker.internal:8080/events/pub"),
+        HttpUrl("http://localhost:8888/events/pub"),
         HttpUrl("http://event-player:8080/events/pub"),
     ]
 

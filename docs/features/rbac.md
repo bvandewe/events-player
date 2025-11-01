@@ -126,6 +126,7 @@ Comprehensive table of permissions by role:
 | Submit generation task      | ❌   | ✅       | ✅    |
 | Generate single event       | ❌   | ✅       | ✅    |
 | Generate bulk events        | ❌   | ✅       | ✅    |
+| Use custom gateway URL      | ❌   | ❌       | ✅    |
 | **Task Management**         |      |          |       |
 | View own tasks              | ❌   | ❌       | ✅    |
 | View all tasks              | ❌   | ❌       | ✅    |
@@ -184,11 +185,25 @@ The user interface adapts automatically based on the authenticated user's role.
 - Cannot access generator via keyboard shortcut
 - Form not accessible even via direct URL
 
-**Operator & Admin**:
+**Operator**:
 
 - "Generate Events" button visible
 - Accessible via `Ctrl/Cmd + G` shortcut
 - Full form functionality
+- Can select from pre-configured gateway URLs
+- Cannot use custom gateway URLs
+
+**Admin**:
+
+- "Generate Events" button visible
+- Accessible via `Ctrl/Cmd + G` shortcut
+- Full form functionality
+- Can select from pre-configured gateway URLs
+- **Can use custom gateway URLs**:
+    - Select "Custom URL..." from gateway dropdown
+    - Enter any custom gateway endpoint (e.g., `http://dev-gateway:8080/events`)
+    - Custom URL is saved to localStorage for convenience
+    - Useful for testing with development/staging environments
 
 ### Admin Menu
 

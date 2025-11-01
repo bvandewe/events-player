@@ -24,30 +24,34 @@ The CloudEvent Player web interface provides multiple views for monitoring and a
 ### Main Components
 
 1. **Navigation Bar**
-    - View switcher (Events/Timeline)
-    - Event counter showing filtered results
-    - Connection status indicator (SSE)
-    - User menu with role-based options
+
+   - View switcher (Events/Timeline)
+   - Event counter showing filtered results
+   - Connection status indicator (SSE)
+   - User menu with role-based options
 
 2. **Filter Controls**
-    - **Search Box**: Quick text search across all event properties
-    - **Type Filter**: Filter by specific event types
-    - **Source Filter**: Filter by event sources
-    - **Subject Filter**: Filter by event subjects
-    - **Time Range Filter**: Filter events by time period (last hour, 6 hours, 24 hours, all)
+
+   - **Search Box**: Quick text search across all event properties
+   - **Type Filter**: Filter by specific event types
+   - **Source Filter**: Filter by event sources
+   - **Subject Filter**: Filter by event subjects
+   - **Time Range Filter**: Filter events by time period (last hour, 6 hours, 24 hours, all)
 
 3. **Event Generator Form** (Offcanvas panel)
-    - Configure and generate CloudEvents
-    - Background task support for bulk generation
-    - Form validation and error handling
+
+   - Configure and generate CloudEvents
+   - Background task support for bulk generation
+   - Form validation and error handling
 
 4. **Admin Controls** (Admin role only)
-    - **Manage Tasks**: View and cancel running event generation tasks
-    - **Clear Storage**: Remove all stored events from browser
+
+   - **Manage Tasks**: View and cancel running event generation tasks
+   - **Clear Storage**: Remove all stored events from browser
 
 5. **Event Display**
-    - **Events View**: Expandable accordion items with event details
-    - **Timeline View**: Chart-based visualization of event timeline
+   - **Events View**: Expandable accordion items with event details
+   - **Timeline View**: Chart-based visualization of event timeline
 
 ## Generating CloudEvents
 
@@ -65,9 +69,19 @@ The endpoint where events will be sent:
 http://localhost:8884/events/pub
 ```
 
+**Standard Options:**
+
 - Use the local subscriber for testing
-- Change to your microservice endpoint
+- Select from pre-configured gateway endpoints
 - Supports any HTTP endpoint accepting CloudEvents
+
+**Custom Gateway URL** (Admin only):
+
+- Select "Custom URL..." from the dropdown to enter a custom gateway endpoint
+- Useful for testing with development environments or external gateways
+- Custom URL is saved in browser localStorage for convenience
+- Format: `http://your-gateway:8080/events`
+- Only available to users with admin role (or when authentication is disabled)
 
 #### Event Source
 
@@ -249,33 +263,33 @@ Use the comprehensive filtering system to find specific events:
 #### Quick Search
 
 - **Search Box** (Ctrl/Cmd + K): Filter events by any text
-  - Searches across type, source, subject, and data content
-  - Real-time filtering as you type
-  - Case-insensitive matching
+    - Searches across type, source, subject, and data content
+    - Real-time filtering as you type
+    - Case-insensitive matching
 
 #### Filter Dropdowns
 
 - **Type Filter**: Select from available event types
 
-  - Auto-populates with types from received events
-  - Multi-select capability
-  - Clear individual or all selections
+    - Auto-populates with types from received events
+    - Multi-select capability
+    - Clear individual or all selections
 
 - **Source Filter**: Filter by event source
 
-  - Shows all unique sources
-  - Same multi-select functionality
+    - Shows all unique sources
+    - Same multi-select functionality
 
 - **Subject Filter**: Filter by event subject
 
-  - Filters events with matching subjects
-  - Supports null/empty subject filtering
+    - Filters events with matching subjects
+    - Supports null/empty subject filtering
 
 - **Time Range Filter**: Filter by time period
-  - Last Hour
-  - Last 6 Hours
-  - Last 24 Hours
-  - All Time (default)
+    - Last Hour
+    - Last 6 Hours
+    - Last 24 Hours
+    - All Time (default)
 
 #### Click-to-Filter
 
@@ -392,10 +406,10 @@ Administrators can manage background event generation tasks in real-time.
 - **Task Status**: View status of all running tasks
 - **Progress Tracking**: See progress bars for each task
 - **Task Details**:
-  - Task ID
-  - Status (Pending, Running, Completed, Failed, Cancelled)
-  - Progress percentage
-  - Created timestamp
+    - Task ID
+    - Status (Pending, Running, Completed, Failed, Cancelled)
+    - Progress percentage
+    - Created timestamp
 
 #### Task Control
 
