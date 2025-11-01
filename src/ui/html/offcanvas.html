@@ -15,7 +15,13 @@
                         {% for gateway_url in default_events_gateways.urls %}
                         <option value="{{ gateway_url }}">{{ gateway_url }}</option>
                         {% endfor %}
+                        <option value="__custom__">Custom URL...</option>
                     </select>
+                </div>
+                <div class="row mb-3 d-none" id="custom_gateway_container">
+                    <label for="custom_gateway_url" class="col-1 col-form-label text-end">Custom</label>
+                    <input type="url" class="col-10 form-control" id="custom_gateway_url" name="custom_gateway_url" 
+                    placeholder="http://your-gateway:8080/events" onkeydown="return event.key !== ' '">
                 </div>
                 <div class="row mb-3">
                     <label for="event_source" class="col-1 col-form-label text-end">Source</label>
