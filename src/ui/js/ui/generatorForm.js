@@ -6,6 +6,7 @@ import { apiPost } from "../utils/apiClient.js";
 export const generatorForm = (() => {
 
     const STORAGE_KEY = 'cloudevents-player-generator-state';
+    const CUSTOM_GATEWAY_KEY = 'cloudevents-player-custom-gateway';
     let initialized = false; // Track if already initialized
 
     /**
@@ -15,6 +16,7 @@ export const generatorForm = (() => {
         try {
             const state = {
                 event_gateway: document.getElementById('event_gateway')?.value || '',
+                custom_gateway_url: document.getElementById('custom_gateway_url')?.value || '',
                 event_source: document.getElementById('event_source')?.value || '',
                 event_type: document.getElementById('event_type')?.value || '',
                 event_subject: document.getElementById('event_subject')?.value || '',
@@ -24,6 +26,12 @@ export const generatorForm = (() => {
             };
 
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            
+            // Save custom gateway separately for persistence
+            if (state.custom_gateway_url) {
+                localStorage.setItem(CUSTOM_GATEWAY_KEY, state.custom_gateway_url);
+            }
+            
             console.log('[GeneratorForm] State saved:', state);
         } catch (error) {
             console.error('[GeneratorForm] Error saving state:', error);
@@ -46,6 +54,7 @@ export const generatorForm = (() => {
 
             // Restore form fields
             const gatewaySelect = document.getElementById('event_gateway');
+            const customGatewayInput = document.getElementById('custom_gateway_url');
             const sourceInput = document.getElementById('event_source');
             const typeInput = document.getElementById('event_type');
             const subjectInput = document.getElementById('event_subject');
@@ -55,6 +64,13 @@ export const generatorForm = (() => {
 
             if (gatewaySelect && state.event_gateway) {
                 gatewaySelect.value = state.event_gateway;
+                // Show custom gateway input if custom was selected
+                if (state.event_gateway === '__custom__') {
+                    toggleCustomGateway(true);
+                }
+            }
+            if (customGatewayInput && state.custom_gateway_url) {
+                customGatewayInput.value = state.custom_gateway_url;
             }
             if (sourceInput && state.event_source) {
                 sourceInput.value = state.event_source;
@@ -111,10 +127,86 @@ export const generatorForm = (() => {
         }
     };
 
+    /**
+     * Toggle custom gateway input visibility
+     */
+    const toggleCustomGateway = (show) => {
+        const customContainer = document.getElementById('custom_gateway_container');
+        if (customContainer) {
+            if (show) {
+                customContainer.classList.remove('d-none');
+            } else {
+                customContainer.classList.add('d-none');
+            }
+        }
+    };
+
+    /**
+     * Setup gateway select handler
+     */
+    const setupGatewayHandler = () => {
+        const gatewaySelect = document.getElementById('event_gateway');
+        const customGatewayInput = document.getElementById('custom_gateway_url');
+        
+        if (!gatewaySelect) return;
+
+        // Check if user is admin or auth is disabled
+        const isAdminOrNoAuth = !authManager.isAuthEnabled() || authorizationManager.isAdmin();
+        
+        // If not admin and auth is enabled, remove custom option
+        if (!isAdminOrNoAuth) {
+            const customOption = Array.from(gatewaySelect.options).find(opt => opt.value === '__custom__');
+            if (customOption) {
+                customOption.remove();
+            }
+            return;
+        }
+
+        // Handle gateway selection change
+        gatewaySelect.addEventListener('change', (e) => {
+            if (e.target.value === '__custom__') {
+                toggleCustomGateway(true);
+                if (customGatewayInput) {
+                    customGatewayInput.focus();
+                }
+            } else {
+                toggleCustomGateway(false);
+            }
+            saveFormState();
+        });
+
+        // Handle custom gateway input
+        if (customGatewayInput) {
+            customGatewayInput.addEventListener('change', saveFormState);
+            customGatewayInput.addEventListener('input', () => {
+                let timeoutId;
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(saveFormState, 500);
+            });
+        }
+    };
+
     const handleSubmit = (event) => {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
+        
+        // Use custom gateway URL if selected
+        if (data.event_gateway === '__custom__') {
+            const customGatewayUrl = document.getElementById('custom_gateway_url')?.value?.trim();
+            if (!customGatewayUrl) {
+                toastController.showToast({
+                    detail: [{
+                        loc: ['form', 'custom_gateway_url'],
+                        msg: 'Please enter a custom gateway URL',
+                        type: 'error'
+                    }]
+                });
+                return;
+            }
+            data.event_gateway = customGatewayUrl;
+        }
+        
         console.log('Form data:', data);
         console.log('Iterations:', data.iterations, 'type:', typeof data.iterations);
         console.log('Delay:', data.delay, 'type:', typeof data.delay);
@@ -187,6 +279,9 @@ export const generatorForm = (() => {
         // Initialize sliders
         initSliders();
 
+        // Setup gateway selection handler
+        setupGatewayHandler();
+
         // Setup form submit handler
         const form = document.getElementById('generatorForm');
         if (form) {
@@ -207,6 +302,9 @@ export const generatorForm = (() => {
         inputs.forEach(inputId => {
             const element = document.getElementById(inputId);
             if (element) {
+                // Skip gateway select as it's handled by setupGatewayHandler
+                if (inputId === 'event_gateway') return;
+                
                 element.addEventListener('change', saveFormState);
                 // For textarea, also save on input (debounced would be better but keeping it simple)
                 if (element.tagName === 'TEXTAREA') {
