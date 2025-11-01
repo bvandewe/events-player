@@ -79,6 +79,58 @@ export const actionsController = (() => {
         }
     };
 
+    /**
+     * Show a confirmation modal with custom message and callback
+     * @param {Object} options - Configuration object
+     * @param {string} options.title - Modal title
+     * @param {string} options.message - Modal message
+     * @param {string} options.confirmText - Confirm button text (default: "Confirm")
+     * @param {string} options.confirmClass - Confirm button class (default: "btn-primary")
+     * @param {Function} options.onConfirm - Callback function on confirm
+     */
+    const showConfirm = (options) => {
+        const {
+            title = 'Confirm Action',
+            message = 'Are you sure you want to proceed?',
+            confirmText = 'Confirm',
+            confirmClass = 'btn-primary',
+            onConfirm = () => { }
+        } = options;
+
+        // Get modal elements
+        const modalEl = document.getElementById('confirmModal');
+        const titleEl = document.getElementById('confirmModalLabel');
+        const messageEl = document.getElementById('confirmModalMessage');
+        const actionBtn = document.getElementById('confirmModalActionBtn');
+
+        if (!modalEl || !titleEl || !messageEl || !actionBtn) {
+            console.error('[Actions] Confirm modal elements not found');
+            return;
+        }
+
+        // Set content
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        actionBtn.textContent = confirmText;
+
+        // Update button class
+        actionBtn.className = `btn ${confirmClass}`;
+
+        // Remove old listeners and add new one
+        const newActionBtn = actionBtn.cloneNode(true);
+        actionBtn.parentNode.replaceChild(newActionBtn, actionBtn);
+
+        newActionBtn.addEventListener('click', () => {
+            onConfirm();
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        });
+
+        // Show modal
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    };
+
     const init = (bs) => {
         bootstrap = bs;
 
@@ -92,6 +144,13 @@ export const actionsController = (() => {
             deleteAllEventsBtn.addEventListener('click', deleteAllEvents);
         }
 
+        // Also update the new generic confirm button
+        var confirmModalActionBtn = document.getElementById('confirmModalActionBtn');
+        if (confirmModalActionBtn) {
+            // Default handler for legacy usage
+            confirmModalActionBtn.addEventListener('click', deleteAllEvents);
+        }
+
         var toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
         if (toggleFiltersBtn) {
             toggleFiltersBtn.addEventListener('click', toggleFiltersPanel);
@@ -99,7 +158,8 @@ export const actionsController = (() => {
     };
 
     return {
-        init
+        init,
+        showConfirm
     }
 
 })();

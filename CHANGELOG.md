@@ -1,5 +1,35 @@
 # CHANGE LOG
 
+## 0.4.2 - 2025-11-01
+
+### Added
+
+#### Features
+
+- **Filtered Event Count Display**
+    - H1 title counter now shows "X/Y" format when filters are active (filtered count / total count)
+    - Metrics panel label dynamically changes to "Total Filtered Events" when filters are applied
+    - Info icon with tooltip displays full total count when viewing filtered results
+    - Automatically reverts to standard display when filters are cleared
+    - Real-time updates as filters change through appState integration
+
+### Changed
+
+#### State Management
+
+- **Enhanced Event Count Tracking**
+    - Added `filteredEventCount` to appState for tracking filtered vs total events
+    - Added `setFilteredEventCount()` method to update filtered count
+    - Modified `resetEventCount()` to reset both total and filtered counts
+    - Connection module now subscribes to both `eventCount` and `filteredEventCount` changes
+
+#### UI Updates
+
+- **Unified Dashboard Metrics**
+    - Metrics panel now detects active filters and updates label accordingly
+    - Bootstrap tooltip integration for displaying full count information
+    - Dynamic subtitle updates based on filter state
+
 ## 0.4.1 - 2025-11-01
 
 ### Added

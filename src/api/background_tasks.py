@@ -2,6 +2,8 @@ import asyncio
 import datetime
 import json
 import logging
+import random
+import string
 import uuid
 from typing import Set
 
@@ -15,6 +17,45 @@ from .settings import settings
 
 
 log = logging.getLogger(__name__)
+
+
+def _generate_random_source() -> str:
+    """Generate a random event source URL"""
+    domains = ["example.com", "myapp.io", "service.net", "platform.cloud", "api.dev"]
+    services = ["payment", "order", "user", "inventory", "notification", "analytics"]
+    domain = random.choice(domains)
+    service = random.choice(services)
+    return f"https://{service}.{domain}/events"
+
+
+def _generate_random_type() -> str:
+    """Generate a random event type"""
+    companies = ["com", "io", "net", "org"]
+    domains = ["acme", "contoso", "fabrikam", "northwind", "adventure"]
+    services = ["order", "payment", "shipping", "inventory", "user", "notification"]
+    actions = ["created", "updated", "deleted", "completed", "failed", "cancelled"]
+    versions = ["v1", "v2", "v3"]
+
+    company = random.choice(companies)
+    domain = random.choice(domains)
+    service = random.choice(services)
+    action = random.choice(actions)
+    version = random.choice(versions)
+
+    return f"{company}.{domain}.{service}.{action}.{version}"
+
+
+def _generate_random_subject() -> str:
+    """Generate a random subject (UUID, numeric, or alphanumeric)"""
+    subject_type = random.choice(["uuid", "numeric", "alphanumeric"])
+
+    if subject_type == "uuid":
+        return str(uuid.uuid4())
+    elif subject_type == "numeric":
+        return str(random.randint(0, 999999))
+    else:  # alphanumeric
+        chars = string.ascii_letters + string.digits
+        return "".join(random.choices(chars, k=12))
 
 
 async def _send_to_client(client_id: str, queue: asyncio.Queue, payload: dict):
@@ -86,11 +127,24 @@ async def handle_generator_request(
                 active_tasks.pop(task.id, None)
                 return
 
+            # Apply randomization if enabled for iterations > 1
+            event_source = generator_request.event_source
+            event_type = generator_request.event_type
+            event_subject = generator_request.event_subject
+
+            if iterations > 1:
+                if generator_request.randomize_source:
+                    event_source = _generate_random_source()
+                if generator_request.randomize_type:
+                    event_type = _generate_random_type()
+                if generator_request.randomize_subject:
+                    event_subject = _generate_random_subject()
+
             log.debug(
                 "POST event #%s/%s with type %s",
                 i + 1,
                 iterations,
-                generator_request.event_type,
+                event_type,
             )
             try:
                 data = json.loads(generator_request.event_data)
@@ -105,9 +159,9 @@ async def handle_generator_request(
             event = CloudEvent(
                 id=str(uuid.uuid4()),
                 time=datetime.datetime.now(),
-                type=generator_request.event_type,
-                source=generator_request.event_source,
-                subject=generator_request.event_subject,
+                type=event_type,
+                source=event_source,
+                subject=event_subject,
                 data=data,
             )
             log.debug("Event payload: %s", event.model_dump())

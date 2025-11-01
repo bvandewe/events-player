@@ -144,9 +144,24 @@ const dashboardController = (() => {
             refreshDashboard();
         });
 
-        // Initialize Bootstrap tooltips
+        // Initialize Bootstrap tooltips with quick hide behavior
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+            trigger: 'hover',
+            delay: { show: 300, hide: 0 },
+            animation: true
+        }));
+
+        // Hide all tooltips when mouse leaves or on scroll
+        document.addEventListener('mouseleave', () => {
+            tooltipList.forEach(tooltip => tooltip.hide());
+        });
+        document.addEventListener('scroll', () => {
+            tooltipList.forEach(tooltip => tooltip.hide());
+        }, true); // Use capture to catch all scroll events
+        document.addEventListener('click', () => {
+            tooltipList.forEach(tooltip => tooltip.hide());
+        }, true); // Use capture to catch all click events
 
         // Initialize charts
         initCharts();

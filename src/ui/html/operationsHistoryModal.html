@@ -1,0 +1,29 @@
+<!-- Operations History Modal -->
+<div class="modal fade" id="operationsHistoryModal" tabindex="-1" aria-labelledby="operationsHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="operationsHistoryModalLabel">
+                    <i class="bi bi-clock-history"></i> Generator Operations History
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Last 5 generator operations (most recent first)</p>
+                <div class="accordion" id="operationsHistoryAccordion">
+                    <!-- Operations will be dynamically inserted here -->
+                    <div class="text-center text-muted py-5" id="noOperationsMessage">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">No operations yet</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-danger" id="clearOperationsHistory">
+                    <i class="bi bi-trash"></i> Clear History
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

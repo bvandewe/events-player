@@ -57,6 +57,9 @@ class GlobalFilterController {
         this.sourceSelect = document.getElementById('globalEventSourceFilter');
         this.subjectSelect = document.getElementById('globalEventSubjectFilter');
         this.timeRangeSelect = document.getElementById('globalEventTimeRange');
+        this.customStartTimeInput = document.getElementById('customStartTime');
+        this.customEndTimeInput = document.getElementById('customEndTime');
+        this.customTimeRangeInputs = document.getElementById('customTimeRangeInputs');
         this.clearButton = document.getElementById('globalClearFiltersBtn');
         this.activeFiltersCount = document.getElementById('activeFiltersCount');
 
@@ -103,6 +106,14 @@ class GlobalFilterController {
 
         // Setup event listeners
         this.setupEventListeners();
+
+        // Subscribe to filter state changes to keep UI in sync
+        appState.subscribe('filters', () => {
+            console.log('[GlobalFilters] Filter state changed, updating UI');
+            this.restoreFilterValues();
+            this.updateActiveFiltersCount();
+            this.updateFilterIndicators();
+        });
 
         // Update active filter count badge
         this.updateActiveFiltersCount();
@@ -204,6 +215,21 @@ class GlobalFilterController {
 
         if (this.timeRangeSelect && filters.timeRange) {
             this.timeRangeSelect.value = filters.timeRange;
+
+            // Show custom date inputs if custom range is selected
+            if (filters.timeRange === 'custom' && this.customTimeRangeInputs) {
+                this.customTimeRangeInputs.classList.remove('d-none');
+
+                // Restore custom date values
+                if (filters.customStartTime && this.customStartTimeInput) {
+                    const startDate = new Date(filters.customStartTime);
+                    this.customStartTimeInput.value = startDate.toISOString().slice(0, 19);
+                }
+                if (filters.customEndTime && this.customEndTimeInput) {
+                    const endDate = new Date(filters.customEndTime);
+                    this.customEndTimeInput.value = endDate.toISOString().slice(0, 19);
+                }
+            }
         }
 
         console.log('[GlobalFilters] Restored filter values:', filters);
@@ -313,6 +339,21 @@ class GlobalFilterController {
                 timeRange: this.timeRangeSelect.value
             };
 
+            // Add custom date range if selected
+            if (filters.timeRange === 'custom') {
+                if (this.customStartTimeInput && this.customEndTimeInput) {
+                    const startValue = this.customStartTimeInput.value;
+                    const endValue = this.customEndTimeInput.value;
+
+                    if (startValue) {
+                        filters.customStartTime = new Date(startValue).getTime();
+                    }
+                    if (endValue) {
+                        filters.customEndTime = new Date(endValue).getTime();
+                    }
+                }
+            }
+
             console.log('[GlobalFilters] Filters changed:', filters);
 
             // Update state - this will notify all subscribers and persist to localStorage
@@ -324,6 +365,26 @@ class GlobalFilterController {
             // Update filter indicators on all views
             this.updateFilterIndicators();
         };
+
+        // Toggle custom date inputs visibility
+        if (this.timeRangeSelect && this.customTimeRangeInputs) {
+            this.timeRangeSelect.addEventListener('change', () => {
+                if (this.timeRangeSelect.value === 'custom') {
+                    this.customTimeRangeInputs.classList.remove('d-none');
+                } else {
+                    this.customTimeRangeInputs.classList.add('d-none');
+                }
+                handleChange();
+            });
+        }
+
+        // Setup listeners for custom date inputs
+        if (this.customStartTimeInput) {
+            this.customStartTimeInput.addEventListener('change', handleChange);
+        }
+        if (this.customEndTimeInput) {
+            this.customEndTimeInput.addEventListener('change', handleChange);
+        }
 
         if (this.typeSelect) {
             this.typeSelect.addEventListener('change', handleChange);
@@ -365,6 +426,9 @@ class GlobalFilterController {
         if (this.sourceSelect) this.sourceSelect.value = '';
         if (this.subjectSelect) this.subjectSelect.value = '';
         if (this.timeRangeSelect) this.timeRangeSelect.value = 'all';
+        if (this.customStartTimeInput) this.customStartTimeInput.value = '';
+        if (this.customEndTimeInput) this.customEndTimeInput.value = '';
+        if (this.customTimeRangeInputs) this.customTimeRangeInputs.classList.add('d-none');
 
         // Update state - this will notify all subscribers and persist
         appState.clearFilters();
@@ -423,27 +487,39 @@ class GlobalFilterController {
 
         // Time range filtering
         if (filters.timeRange && filters.timeRange !== 'all') {
-            const now = Date.now();
             const eventTime = new Date(event.time).getTime();
-            let rangeMs = 0;
 
-            switch (filters.timeRange) {
-                case '1h':
-                    rangeMs = 60 * 60 * 1000;
-                    break;
-                case '6h':
-                    rangeMs = 6 * 60 * 60 * 1000;
-                    break;
-                case '24h':
-                    rangeMs = 24 * 60 * 60 * 1000;
-                    break;
-                case '7d':
-                    rangeMs = 7 * 24 * 60 * 60 * 1000;
-                    break;
-            }
+            if (filters.timeRange === 'custom') {
+                // Use custom date range
+                if (filters.customStartTime && eventTime < filters.customStartTime) {
+                    return false;
+                }
+                if (filters.customEndTime && eventTime > filters.customEndTime) {
+                    return false;
+                }
+            } else {
+                // Use predefined ranges
+                const now = Date.now();
+                let rangeMs = 0;
 
-            if (rangeMs > 0 && (now - eventTime) > rangeMs) {
-                return false;
+                switch (filters.timeRange) {
+                    case '1h':
+                        rangeMs = 60 * 60 * 1000;
+                        break;
+                    case '6h':
+                        rangeMs = 6 * 60 * 60 * 1000;
+                        break;
+                    case '24h':
+                        rangeMs = 24 * 60 * 60 * 1000;
+                        break;
+                    case '7d':
+                        rangeMs = 7 * 24 * 60 * 60 * 1000;
+                        break;
+                }
+
+                if (rangeMs > 0 && (now - eventTime) > rangeMs) {
+                    return false;
+                }
             }
         }
 

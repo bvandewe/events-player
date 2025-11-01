@@ -119,6 +119,11 @@ document.addEventListener('scroll', () => {
     tooltipList.forEach(tooltip => tooltip.hide());
 }, true); // Use capture to catch all scroll events
 
+// Hide all tooltips on any click
+document.addEventListener('click', () => {
+    tooltipList.forEach(tooltip => tooltip.hide());
+}, true); // Use capture to catch all click events
+
 // Cleanup SSE connection when navigating away to prevent connection leaks
 import { sseConnection } from "./sse/connection";
 

@@ -156,18 +156,41 @@ class UnifiedDashboardController {
 
         const stats = this.storageManager.getStats();
         const filters = appState.get('filters');
+        const totalCount = appState.get('eventCount');
+
+        // Check if filters are active
+        const hasActiveFilters = filters.type || filters.source || filters.subject ||
+            (filters.timeRange && filters.timeRange !== 'all');
 
         // Get filtered events if filters are active
         let events = [];
-        if (filters.type || filters.source || filters.subject ||
-            (filters.timeRange && filters.timeRange !== 'all')) {
+        if (hasActiveFilters) {
             const filterOptions = this.buildFilterOptions(filters);
             events = await this.storageManager.getRecentEvents(filterOptions);
+            // Update filtered count in state
+            appState.setFilteredEventCount(events.length);
         } else {
             events = await this.storageManager.getRecentEvents({ limit: 100000 });
+            // No filters active
+            appState.setFilteredEventCount(null);
         }
 
-        // Total Events
+        // Update Total Events card label and value
+        const totalEventsLabel = document.querySelector('#statTotalEvents').closest('.card').querySelector('.card-subtitle');
+        if (totalEventsLabel) {
+            if (hasActiveFilters) {
+                totalEventsLabel.innerHTML = `Total Filtered Events <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="top" title="Full total: ${totalCount.toLocaleString()} events"></i>`;
+                // Initialize Bootstrap tooltip
+                const tooltipEl = totalEventsLabel.querySelector('[data-bs-toggle="tooltip"]');
+                if (tooltipEl) {
+                    new bootstrap.Tooltip(tooltipEl);
+                }
+            } else {
+                totalEventsLabel.textContent = 'Total Events';
+            }
+        }
+
+        // Total Events count
         document.getElementById('statTotalEvents').textContent = events.length.toLocaleString();
         const totalTimeEl = document.getElementById('statTotalEventsTime');
         if (totalTimeEl && events.length > 0) {
@@ -323,16 +346,25 @@ class UnifiedDashboardController {
 
         // Handle time range
         if (filters.timeRange && filters.timeRange !== 'all') {
-            const now = Date.now();
-            const ranges = {
-                '1h': 3600000,
-                '6h': 21600000,
-                '24h': 86400000,
-                '7d': 604800000
-            };
-            const timeMs = ranges[filters.timeRange];
-            if (timeMs) {
-                options.startTime = now - timeMs;
+            if (filters.timeRange === 'custom') {
+                // Use custom time range from timeline click
+                if (filters.customStartTime && filters.customEndTime) {
+                    options.startTime = filters.customStartTime;
+                    options.endTime = filters.customEndTime;
+                }
+            } else {
+                // Use predefined time range
+                const now = Date.now();
+                const ranges = {
+                    '1h': 3600000,
+                    '6h': 21600000,
+                    '24h': 86400000,
+                    '7d': 604800000
+                };
+                const timeMs = ranges[filters.timeRange];
+                if (timeMs) {
+                    options.startTime = now - timeMs;
+                }
             }
         }
 

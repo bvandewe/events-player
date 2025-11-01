@@ -22,6 +22,7 @@ class AppState {
 
             // Event counter state
             eventCount: 0,
+            filteredEventCount: null, // null when no filters, number when filtered
 
             // Connection state
             connectionStatus: 'disconnected', // 'connected', 'disconnected', 'error', 'receiving'
@@ -224,6 +225,17 @@ class AppState {
      */
     resetEventCount() {
         this.setEventCount(0);
+        this.setFilteredEventCount(null);
+    }
+
+    /**
+     * Set filtered event counter
+     * @param {number|null} count - Filtered count (null when no filters active)
+     */
+    setFilteredEventCount(count) {
+        const oldCount = this.state.filteredEventCount;
+        this.state.filteredEventCount = count;
+        this.notify('filteredEventCount', this.state.filteredEventCount, oldCount);
     }
 
     /**
