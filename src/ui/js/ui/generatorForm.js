@@ -26,12 +26,12 @@ export const generatorForm = (() => {
             };
 
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            
+
             // Save custom gateway separately for persistence
             if (state.custom_gateway_url) {
                 localStorage.setItem(CUSTOM_GATEWAY_KEY, state.custom_gateway_url);
             }
-            
+
             console.log('[GeneratorForm] State saved:', state);
         } catch (error) {
             console.error('[GeneratorForm] Error saving state:', error);
@@ -45,12 +45,10 @@ export const generatorForm = (() => {
         try {
             const savedState = localStorage.getItem(STORAGE_KEY);
             if (!savedState) {
-                console.log('[GeneratorForm] No saved state found');
                 return;
             }
 
             const state = JSON.parse(savedState);
-            console.log('[GeneratorForm] Restoring state:', state);
 
             // Restore form fields
             const gatewaySelect = document.getElementById('event_gateway');
@@ -98,8 +96,6 @@ export const generatorForm = (() => {
                     delayValueSpan.innerHTML = state.delay;
                 }
             }
-
-            console.log('[GeneratorForm] State restored successfully');
         } catch (error) {
             console.error('[GeneratorForm] Error restoring state:', error);
         }
@@ -147,12 +143,12 @@ export const generatorForm = (() => {
     const setupGatewayHandler = () => {
         const gatewaySelect = document.getElementById('event_gateway');
         const customGatewayInput = document.getElementById('custom_gateway_url');
-        
+
         if (!gatewaySelect) return;
 
         // Check if user is admin or auth is disabled
-        const isAdminOrNoAuth = !authManager.isAuthEnabled() || authorizationManager.isAdmin();
-        
+        const isAdminOrNoAuth = !authManager.authRequired || authorizationManager.isAdmin();
+
         // If not admin and auth is enabled, remove custom option
         if (!isAdminOrNoAuth) {
             const customOption = Array.from(gatewaySelect.options).find(opt => opt.value === '__custom__');
@@ -190,7 +186,7 @@ export const generatorForm = (() => {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
-        
+
         // Use custom gateway URL if selected
         if (data.event_gateway === '__custom__') {
             const customGatewayUrl = document.getElementById('custom_gateway_url')?.value?.trim();
@@ -206,7 +202,7 @@ export const generatorForm = (() => {
             }
             data.event_gateway = customGatewayUrl;
         }
-        
+
         console.log('Form data:', data);
         console.log('Iterations:', data.iterations, 'type:', typeof data.iterations);
         console.log('Delay:', data.delay, 'type:', typeof data.delay);
@@ -266,11 +262,9 @@ export const generatorForm = (() => {
     const init = () => {
         // Prevent double initialization
         if (initialized) {
-            console.log('[GeneratorForm] Already initialized, skipping');
             return;
         }
 
-        console.log('[GeneratorForm] Initializing...');
         initialized = true;
 
         // Restore saved state first
@@ -304,7 +298,7 @@ export const generatorForm = (() => {
             if (element) {
                 // Skip gateway select as it's handled by setupGatewayHandler
                 if (inputId === 'event_gateway') return;
-                
+
                 element.addEventListener('change', saveFormState);
                 // For textarea, also save on input (debounced would be better but keeping it simple)
                 if (element.tagName === 'TEXTAREA') {
@@ -316,8 +310,6 @@ export const generatorForm = (() => {
                 }
             }
         });
-
-        console.log('[GeneratorForm] Initialized with state persistence');
     };
 
     return {

@@ -103,7 +103,7 @@ Both tiers use capacity-based cleanup (FIFO) - oldest events removed when limit 
 #### `api_storage_max_recent_events`
 
 - **Description**: Maximum number of complete event objects stored (Tier 1)
-- **Type**: Integer  
+- **Type**: Integer
 - **Default**: `5000`
 - **Recommended**: 5000-10000 for normal use, 20000+ for high-volume analysis
 - **Example**: `api_storage_max_recent_events=10000`
@@ -204,7 +204,7 @@ For detailed authentication setup, see the [Authentication & Authorization](auth
 
 - **Description**: Master switch to enable/disable authentication
 - **Type**: Boolean (string)
-- **Default**: `"false"` *(authentication disabled)*
+- **Default**: `"false"` _(authentication disabled)_
 - **Example**: `api_auth_required=true`
 
 **When `api_auth_required=false` (default):**
@@ -537,17 +537,17 @@ services:
 
 ## Environment Variable Reference Summary
 
-| Variable | Default | Required | Description |
-|----------|---------|----------|-------------|
-| `api_tag` | `"0.4.0"` | No | Application version |
-| `api_log_level` | `"INFO"` | No | Logging level |
-| `api_browser_queue_size` | `1000` | No | Max events in DOM |
-| `api_storage_max_recent_events` | `5000` | No | Max full events (Tier 1) |
-| `api_storage_max_metadata_events` | `100000` | No | Max metadata (Tier 2) |
-| `api_auth_required` | `"false"` | No | Enable authentication |
-| `api_oauth_server_url` | `""` | If auth enabled | OAuth server URL |
-| `api_oauth_realm` | `"events-player"` | If auth enabled | OAuth realm name |
-| `api_oauth_client_id` | `"events-player-web"` | If auth enabled | OAuth client ID |
+| Variable                          | Default               | Required        | Description              |
+| --------------------------------- | --------------------- | --------------- | ------------------------ |
+| `api_tag`                         | `"0.4.0"`             | No              | Application version      |
+| `api_log_level`                   | `"INFO"`              | No              | Logging level            |
+| `api_browser_queue_size`          | `1000`                | No              | Max events in DOM        |
+| `api_storage_max_recent_events`   | `5000`                | No              | Max full events (Tier 1) |
+| `api_storage_max_metadata_events` | `100000`              | No              | Max metadata (Tier 2)    |
+| `api_auth_required`               | `"false"`             | No              | Enable authentication    |
+| `api_oauth_server_url`            | `""`                  | If auth enabled | OAuth server URL         |
+| `api_oauth_realm`                 | `"events-player"`     | If auth enabled | OAuth realm name         |
+| `api_oauth_client_id`             | `"events-player-web"` | If auth enabled | OAuth client ID          |
 
 ## Troubleshooting Configuration
 

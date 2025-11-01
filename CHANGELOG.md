@@ -36,6 +36,12 @@
 
 ### Fixed
 
+- **Custom Gateway URL Feature**
+    - Fixed JavaScript error preventing custom gateway feature from working
+    - Corrected authentication check to use `authManager.authRequired` property instead of non-existent `isAuthEnabled()` method
+    - Feature now properly shows custom input field when admin selects "Custom URL..."
+    - Added comprehensive debug logging for troubleshooting
+
 - **Network Error Handling**
     - Enhanced HTTP error handling when posting events to gateway
     - Now gracefully handles connection failures (`httpx.ConnectError`)
