@@ -71,15 +71,18 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[markdown]": {
-        "editor.formatOnSave": true,
-        "editor.formatOnPaste": true,
+        "editor.formatOnSave": false,
+        "editor.formatOnPaste": false,
         "editor.formatOnType": false,
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.defaultFormatter": null,
         "editor.codeActionsOnSave": {
             "source.fixAll.markdownlint": "explicit"
         }
     },
     "markdownlint.config": {
+        "MD007": {
+            "indent": 4
+        },
         "MD022": true,
         "MD031": true,
         "MD032": true,
