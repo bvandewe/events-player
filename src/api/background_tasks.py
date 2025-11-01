@@ -122,9 +122,48 @@ async def handle_generator_request(
             except httpx.HTTPStatusError as exc:
                 active_tasks.pop(task.id, None)
                 log.error("HTTP error occurred when posting to gateway: %s", exc)
+                task.status = "Failed"
+                task.progress = -1
                 raise HTTPException(
                     status_code=502,
-                    detail=f"Bad Gateway: Failed to post event to {generator_request.event_gateway}",
+                    detail=f"Bad Gateway: Failed to post event to {generator_request.event_gateway} - HTTP {exc.response.status_code}",
+                ) from exc
+            except httpx.ConnectError as exc:
+                active_tasks.pop(task.id, None)
+                log.error(
+                    "Connection error when posting to gateway %s: %s",
+                    generator_request.event_gateway,
+                    exc,
+                )
+                task.status = "Failed"
+                task.progress = -1
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Service Unavailable: Could not connect to {generator_request.event_gateway}",
+                ) from exc
+            except httpx.TimeoutException as exc:
+                active_tasks.pop(task.id, None)
+                log.error(
+                    "Timeout when posting to gateway %s: %s", generator_request.event_gateway, exc
+                )
+                task.status = "Failed"
+                task.progress = -1
+                raise HTTPException(
+                    status_code=504,
+                    detail=f"Gateway Timeout: Request to {generator_request.event_gateway} timed out",
+                ) from exc
+            except httpx.RequestError as exc:
+                active_tasks.pop(task.id, None)
+                log.error(
+                    "Request error when posting to gateway %s: %s",
+                    generator_request.event_gateway,
+                    exc,
+                )
+                task.status = "Failed"
+                task.progress = -1
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Bad Gateway: Error sending request to {generator_request.event_gateway} - {type(exc).__name__}",
                 ) from exc
 
             progress = round((i + 1) / iterations * 100)
