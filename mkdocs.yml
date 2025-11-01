@@ -35,6 +35,7 @@ nav:
     - Performance: features/performance.md
   - Security:
     - Authentication & Authorization: authentication.md
+    - RBAC Configuration Guide: rbac-guide.md
   - Deployment:
     - Deployment Guide: deployment.md
 
