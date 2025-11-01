@@ -95,10 +95,9 @@ export const sseEventsController = (() => {
                 appState.updateFilters(filters);
 
                 // Show a subtle toast notification
-                toastController.addToast({
-                    message: `Filtering by ${filterType}: ${value || '(none)'}`,
-                    type: 'info',
-                    duration: 2000
+                toastController.showToast({
+                    status: 'info',
+                    message: `Filtering by ${filterType}: ${value || '(none)'}`
                 });
             });
 

@@ -41,6 +41,11 @@ class SSEConnectionManager {
             this.updateCounter();
         });
 
+        // Subscribe to filtered event count changes from state
+        appState.subscribe('filteredEventCount', (count) => {
+            this.updateCounter();
+        });
+
         // Setup SSE connection
         try {
             this.eventSource = new EventSource(this.sseEventPath);
@@ -85,14 +90,24 @@ class SSEConnectionManager {
      * Update the event counter in the UI
      */
     updateCounter() {
-        const count = appState.get('eventCount');
+        const totalCount = appState.get('eventCount');
+        const filteredCount = appState.get('filteredEventCount');
 
         if (this.eventCountSpan) {
-            this.eventCountSpan.textContent = count;
+            // Show X/Y format when filters are active, otherwise just Y
+            if (filteredCount !== null && filteredCount !== totalCount) {
+                this.eventCountSpan.textContent = `${filteredCount}/${totalCount}`;
+            } else {
+                this.eventCountSpan.textContent = totalCount;
+            }
 
             // Update page title with counter
             const baseTitle = document.title.split('(')[0].trim();
-            document.title = `${baseTitle} (${count})`;
+            if (filteredCount !== null && filteredCount !== totalCount) {
+                document.title = `${baseTitle} (${filteredCount}/${totalCount})`;
+            } else {
+                document.title = `${baseTitle} (${totalCount})`;
+            }
         }
     }
 

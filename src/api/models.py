@@ -43,6 +43,9 @@ class EventGeneratorRequest(BaseModel):
     event_data: str
     iterations: int = 1
     delay: int = 100
+    randomize_source: bool = False
+    randomize_type: bool = False
+    randomize_subject: bool = False
 
     @field_validator("iterations")
     @classmethod
@@ -72,3 +75,4 @@ class EventGeneratorTask(BaseModel):
 
     def __setitem__(self, key: str, value: typing.Any) -> None:
         setattr(self, key, value)
+    

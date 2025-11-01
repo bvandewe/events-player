@@ -67,6 +67,10 @@ const timelineController = (() => {
     let chart = null;
     let initialized = false;
 
+    // Throttling for timeline updates
+    let refreshTimer = null;
+    let pendingRefresh = false;
+
     // Bucket size levels: values in seconds for sub-minute, minutes for >= 1 min
     // Format: {value: number, unit: 'second'|'minute'}
     const zoomLevels = [
@@ -142,8 +146,8 @@ const timelineController = (() => {
         // Subscribe to new events via appState (unified dashboard handles SSE)
         appState.subscribe('newEvent', () => {
             console.log('[Timeline] New event received via appState');
-            // Refresh chart immediately (no setTimeout delay)
-            refreshChart().catch(err => console.error('[Timeline] Refresh failed:', err));
+            // Use throttled refresh to avoid updating on every single event
+            scheduleRefresh(false);
         });
 
         // Initialize global filters (already initialized in app.js, just ensure it has storage manager)
@@ -154,7 +158,8 @@ const timelineController = (() => {
         // Subscribe to filter changes to refresh chart
         appState.subscribe('filters', (filters) => {
             console.log('[Timeline] Global filters changed:', filters);
-            refreshChart();
+            // Immediate refresh on filter changes
+            scheduleRefresh(true);
         });
 
         // Initialize chart
@@ -178,6 +183,25 @@ const timelineController = (() => {
     function initChart() {
         const ctx = document.getElementById('timelineChart').getContext('2d');
 
+        // Plugin to sync left and right y-axes
+        const syncYAxesPlugin = {
+            id: 'syncYAxes',
+            beforeUpdate: (chart) => {
+                // Sync happens before update
+            },
+            afterUpdate: (chart) => {
+                // After chart updates, sync right axis to match left axis
+                const leftAxis = chart.scales.y;
+                const rightAxis = chart.scales.yRight;
+
+                if (leftAxis && rightAxis) {
+                    rightAxis.min = leftAxis.min;
+                    rightAxis.max = leftAxis.max;
+                    rightAxis.ticks = leftAxis.ticks.map(tick => ({ ...tick }));
+                }
+            }
+        };
+
         chart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -194,6 +218,7 @@ const timelineController = (() => {
                     x: {
                         type: 'time',
                         stacked: true,
+                        offset: false, // Don't add offset - bars should align with time values
                         time: {
                             unit: 'minute',
                             displayFormats: {
@@ -205,17 +230,36 @@ const timelineController = (() => {
                         title: {
                             display: true,
                             text: 'Time'
+                        },
+                        ticks: {
+                            source: 'data' // Use data points for tick generation
                         }
                     },
                     y: {
                         beginAtZero: true,
                         stacked: true,
+                        position: 'left',
                         title: {
                             display: true,
                             text: 'Event Count'
                         },
                         ticks: {
                             precision: 0
+                        }
+                    },
+                    yRight: {
+                        beginAtZero: true,
+                        stacked: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Event Count'
+                        },
+                        ticks: {
+                            precision: 0
+                        },
+                        grid: {
+                            drawOnChartArea: false // Don't draw grid lines from right axis
                         }
                     }
                 },
@@ -228,13 +272,14 @@ const timelineController = (() => {
                         callbacks: {
                             title: (context) => {
                                 const date = new Date(context[0].parsed.x);
-                                return format(date, 'PPpp');
+                                return format(date, 'MMM d, HH:mm:ss');
                             },
                             label: (context) => {
-                                return `${context.dataset.label}: ${context.parsed.y}`;
+                                const total = context.parsed.y;
+                                return `${context.dataset.label}: ${total} event${total !== 1 ? 's' : ''}`;
                             },
-                            afterLabel: () => {
-                                return 'Click to view events in this time period';
+                            footer: () => {
+                                return 'Click to filter this period';
                             }
                         }
                     }
@@ -243,11 +288,19 @@ const timelineController = (() => {
                     if (elements.length > 0) {
                         const element = elements[0];
                         const dataIndex = element.index;
-                        const timestamp = chart.data.datasets[0].data[dataIndex].x;
-                        handleChartClick(timestamp);
+                        const dataset = chart.data.datasets[element.datasetIndex];
+                        const dataPoint = dataset.data[dataIndex];
+                        const timestamp = dataPoint.x;
+                        const count = dataPoint.y;
+
+                        // Only handle click if there's data in this bucket
+                        if (count > 0) {
+                            handleChartClick(timestamp);
+                        }
                     }
                 }
-            }
+            },
+            plugins: [syncYAxesPlugin]
         });
     }
 
@@ -261,6 +314,62 @@ const timelineController = (() => {
         } else {
             return level.value * 60000; // Convert minutes to milliseconds
         }
+    }
+
+    /**
+     * Calculate refresh interval based on bucket size
+     * Smaller buckets = more frequent updates
+     * Larger buckets = less frequent updates
+     */
+    function getRefreshInterval() {
+        const bucketSize = getBucketSize();
+
+        // Refresh interval is a fraction of the bucket size
+        // For smaller buckets (< 5 min), refresh every 1-3 buckets
+        // For larger buckets (>= 5 min), refresh every 30-60 seconds
+        if (bucketSize < 300000) { // Less than 5 minutes
+            // Refresh every 2-3 bucket periods, minimum 2 seconds
+            return Math.max(2000, bucketSize * 2);
+        } else {
+            // For larger buckets, refresh every 30-60 seconds
+            return Math.min(60000, bucketSize * 0.1);
+        }
+    }
+
+    /**
+     * Schedule a throttled refresh of the timeline chart
+     */
+    function scheduleRefresh(immediate = false) {
+        // If immediate refresh requested (e.g., filter change), cancel timer and refresh now
+        if (immediate) {
+            if (refreshTimer) {
+                clearTimeout(refreshTimer);
+                refreshTimer = null;
+            }
+            pendingRefresh = false;
+            refreshChart().catch(err => console.error('[Timeline] Refresh failed:', err));
+            return;
+        }
+
+        // Mark that we have a pending refresh
+        pendingRefresh = true;
+
+        // If timer already running, let it complete
+        if (refreshTimer) {
+            return;
+        }
+
+        // Start new timer
+        const interval = getRefreshInterval();
+        console.log(`[Timeline] Scheduling refresh in ${interval}ms`);
+
+        refreshTimer = setTimeout(() => {
+            refreshTimer = null;
+            if (pendingRefresh) {
+                pendingRefresh = false;
+                refreshChart().catch(err => console.error('[Timeline] Refresh failed:', err));
+            }
+        }, interval);
     }
 
     /**
@@ -322,34 +431,66 @@ const timelineController = (() => {
             const metadata = await storageManager.queryMetadata(filterOptions);
             console.log('[Timeline] Filtered metadata:', metadata ? metadata.length : 'null', 'events');
 
-            if (metadata.length === 0) {
-                console.log('[Timeline] No events to display');
-                updateChart([], []);
-                updateStatistics([], bucketSize, null);
-                return;
-            }
-
             // Aggregate events into buckets with source tracking
             const buckets = new Map();
             const sources = new Set();
 
-            metadata.forEach(m => {
-                const bucketKey = Math.floor(m.timestamp / bucketSize) * bucketSize;
-                const source = m.source || 'unknown';
-                sources.add(source);
+            if (metadata.length > 0) {
+                metadata.forEach(m => {
+                    const bucketKey = Math.floor(m.timestamp / bucketSize) * bucketSize;
+                    const source = m.source || 'unknown';
+                    sources.add(source);
 
-                if (!buckets.has(bucketKey)) {
-                    buckets.set(bucketKey, {
-                        timestamp: bucketKey,
+                    if (!buckets.has(bucketKey)) {
+                        buckets.set(bucketKey, {
+                            timestamp: bucketKey,
+                            count: 0,
+                            sources: new Map()
+                        });
+                    }
+
+                    const bucket = buckets.get(bucketKey);
+                    bucket.count++;
+                    bucket.sources.set(source, (bucket.sources.get(source) || 0) + 1);
+                });
+            }
+
+            // Fill gaps: ensure all buckets from min to current time exist (including empty ones)
+            const currentTime = Date.now();
+            const currentBucket = Math.floor(currentTime / bucketSize) * bucketSize;
+
+            if (buckets.size > 0) {
+                const timestamps = Array.from(buckets.keys()).sort((a, b) => a - b);
+                const minTime = timestamps[0];
+                // Always extend to current bucket to keep timeline in real-time
+                const maxTime = Math.max(timestamps[timestamps.length - 1], currentBucket);
+
+                // Generate all bucket timestamps from min to current time
+                for (let time = minTime; time <= maxTime; time += bucketSize) {
+                    if (!buckets.has(time)) {
+                        buckets.set(time, {
+                            timestamp: time,
+                            count: 0,
+                            sources: new Map()
+                        });
+                    }
+                }
+
+                console.log('[Timeline] Filled gaps: now have', buckets.size, 'total buckets (including empty ones) up to current time');
+            } else {
+                // No events yet - create empty buckets for recent time based on time range filter
+                const minTime = startTime || (currentBucket - (bucketSize * 30)); // Show last 30 buckets if no filter
+
+                for (let time = minTime; time <= currentBucket; time += bucketSize) {
+                    buckets.set(time, {
+                        timestamp: time,
                         count: 0,
                         sources: new Map()
                     });
                 }
 
-                const bucket = buckets.get(bucketKey);
-                bucket.count++;
-                bucket.sources.set(source, (bucket.sources.get(source) || 0) + 1);
-            });
+                console.log('[Timeline] No events - created', buckets.size, 'empty buckets up to current time');
+            }
 
             // Convert to array and sort by timestamp
             const bucketsArray = Array.from(buckets.values())
@@ -409,20 +550,36 @@ const timelineController = (() => {
 
         const canvas = document.getElementById('timelineChart');
         const container = canvas.parentElement;
-        const containerWidth = container.parentElement.offsetWidth; // Parent card-body width
+        const scrollableContainer = container.parentElement; // The card-body with overflow-x: auto
+        const containerWidth = scrollableContainer.offsetWidth; // Visible width
 
-        // Use fixed bar width based on zoom level (more detail = wider bars)
-        // This ensures consistent UX across different zoom levels
-        // Map zoom index (0-7) to bar width (20px down to 5px)
-        const barWidth = Math.max(5, 20 - (currentZoomIndex * 2)); // 20px at level 0, down to 6px at level 7
+        // Calculate width based on time range rather than fixed bar width
+        // This allows bars to scale with bucket size
+        const bucketSize = getBucketSize();
 
-        // Calculate canvas width to fit all data points with the fixed bar width
-        const calculatedWidth = Math.max(containerWidth, data.length * barWidth);
+        // Target: approximately 40-50px per bucket for good visibility
+        const pixelsPerBucket = 45;
+
+        // Number of buckets to show in viewport at once
+        const visibleBuckets = 30;
+
+        // Calculate minimum width needed to show visible buckets
+        const minVisibleWidth = visibleBuckets * pixelsPerBucket;
+
+        // Calculate total width needed for all buckets
+        const totalWidth = Math.max(minVisibleWidth, data.length * pixelsPerBucket);
 
         // Set canvas container width to allow horizontal scrolling
-        container.style.minWidth = `${calculatedWidth}px`;
+        container.style.minWidth = `${totalWidth}px`;
 
-        console.log('[Timeline] Canvas width:', calculatedWidth, 'px for', data.length, 'buckets (', barWidth, 'px per bar, zoom index:', currentZoomIndex, ')');
+        console.log('[Timeline] Canvas sizing:', {
+            totalBuckets: data.length,
+            pixelsPerBucket: pixelsPerBucket + 'px',
+            totalWidth: totalWidth + 'px',
+            containerWidth: containerWidth + 'px',
+            visibleBuckets: visibleBuckets,
+            bucketSize: `${bucketSize / 1000}s`
+        });
 
         // Create dataset per source for stacked bar chart
         const datasets = sources.map((source, index) => ({
@@ -433,8 +590,8 @@ const timelineController = (() => {
             })),
             backgroundColor: getSourceColor(source, index),
             borderWidth: 0,
-            barPercentage: 1.0,
-            categoryPercentage: 1.0
+            barPercentage: 0.95, // Use 95% of available space - small gap for visual separation
+            categoryPercentage: 1.0 // Use full category width
         }));
 
         // Update chart datasets
@@ -479,35 +636,27 @@ const timelineController = (() => {
                 delete chart.options.scales.x.time.stepSize;
             }
 
-            // Calculate visible window: show approximately container width worth of buckets
-            // This makes the x-axis show a fixed number of buckets at a time
-            const visibleBuckets = Math.floor(containerWidth / barWidth);
-            const visibleTimeRange = visibleBuckets * bucketSize;
+            // Remove x-axis min/max constraints to show all data
+            // The horizontal scroll will handle showing the visible portion
+            delete chart.options.scales.x.min;
+            delete chart.options.scales.x.max;
 
-            // Set x-axis range to show only the most recent visible window
-            // This makes the timeline show buckets properly instead of the entire range
-            chart.options.scales.x.min = lastTime - visibleTimeRange;
-            chart.options.scales.x.max = lastTime + bucketSize; // Add one bucket padding
-
-            console.log('[Timeline] X-axis window:', {
-                visibleBuckets,
-                visibleTimeRange: `${visibleTimeRange / 1000}s`,
-                min: new Date(chart.options.scales.x.min).toISOString(),
-                max: new Date(chart.options.scales.x.max).toISOString()
+            console.log('[Timeline] X-axis config:', {
+                timeUnit,
+                stepSize,
+                dataRange: `${(range / 1000).toFixed(0)}s`,
+                totalBuckets: data.length
             });
         }
 
         chart.update();
 
-        // Auto-scroll to show most recent data (right side)
-        // Use requestAnimationFrame to ensure chart has finished rendering
-        requestAnimationFrame(() => {
-            const scrollContainer = container.parentElement; // The overflow-x container
-            if (scrollContainer && scrollContainer.scrollWidth > scrollContainer.clientWidth) {
-                scrollContainer.scrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-                console.log('[Timeline] Auto-scrolled to show most recent data');
-            }
-        });
+        // Auto-scroll to the far-right (most recent data) after chart renders
+        // Use setTimeout to ensure DOM has updated
+        setTimeout(() => {
+            scrollableContainer.scrollLeft = scrollableContainer.scrollWidth - scrollableContainer.clientWidth;
+            console.log('[Timeline] Auto-scrolled to right:', scrollableContainer.scrollLeft, 'px');
+        }, 100);
     }
 
     /**
@@ -586,9 +735,8 @@ const timelineController = (() => {
     }
 
     /**
-     * Handle chart click to view events in time range
-     * Switches to Streams tab and highlights events in the clicked time bucket
-     * Does NOT change any filters - just provides a view into that time period
+     * Handle click on a chart bar to filter events by time range
+     * Switches to Streams tab and applies time-range filter
      */
     function handleChartClick(timestamp) {
         console.log('[Timeline] Clicked on timestamp:', new Date(timestamp));
@@ -598,23 +746,34 @@ const timelineController = (() => {
 
         // Calculate time range for the clicked bucket
         const startTime = timestamp;
-        const endTime = timestamp + bucketSize; console.log('[Timeline] Viewing events in time range:', {
+        const endTime = timestamp + bucketSize;
+
+        console.log('[Timeline] Filtering events in time range:', {
             startTime: new Date(startTime).toISOString(),
-            endTime: new Date(endTime).toISOString()
+            endTime: new Date(endTime).toISOString(),
+            bucketSize: `${bucketSize / 1000}s`
         });
 
-        // Switch to Streams tab to show the events
+        // Update global filters to show custom time range
+        // This will sync the UI and apply the filter properly
+        const currentFilters = appState.get('filters') || {};
+        appState.updateFilters({
+            ...currentFilters,
+            timeRange: 'custom',
+            customStartTime: startTime,
+            customEndTime: endTime
+        });
+
+        // Switch to Streams tab
+        appState.set('activeTab', 'streams');
+
+        // Trigger Bootstrap tab switch
         const streamsTab = document.querySelector('[data-bs-target="#streams"]');
         if (streamsTab) {
             const tab = new bootstrap.Tab(streamsTab);
             tab.show();
         }
-
-        // Highlight events in this time range (visual feedback without changing filters)
-        highlightEventsInTimeRange(startTime, endTime);
-    }
-
-    /**
+    }    /**
      * Highlight events in the streams list that fall within a time range
      */
     function highlightEventsInTimeRange(startTime, endTime) {
@@ -670,7 +829,8 @@ const timelineController = (() => {
                     // Save to localStorage
                     localStorage.setItem('timeline_bucket_size', currentZoomIndex.toString());
 
-                    refreshChart();
+                    // Immediate refresh when zoom level changes
+                    scheduleRefresh(true);
                 }
             });
         } else {
@@ -825,6 +985,12 @@ const timelineController = (() => {
             chart.destroy();
             chart = null;
         }
+        // Clear any pending refresh timers
+        if (refreshTimer) {
+            clearTimeout(refreshTimer);
+            refreshTimer = null;
+        }
+        pendingRefresh = false;
         initialized = false;
     }
 

@@ -4,7 +4,13 @@
       <a class="navbar-brand" href="/">
         <img class="mb-2" src="../img/favicon-400x400.ico" alt="CloudEvents Player" width="32" height="32"/>
         <span class="fs-4 ms-2 title text-nowrap">CloudEvents Player (<span id="event-count">0</span>)</span>
-      </a>      
+      </a>
+      <span id="dashboardFilterIndicator" class="d-none align-middle ms-3">
+        <span class="badge rounded-circle bg-danger p-2" style="width: 10px; height: 10px;" data-bs-toggle="tooltip" data-bs-title="Filters active"></span>
+        <button id="dashboardFilterClearBtn" class="btn btn-sm btn-danger fw-bold py-0 px-2 ms-1" data-bs-toggle="tooltip" data-bs-title="Clear all filters" style="font-size: 0.8rem;">
+          <i class="bi bi-x-circle"></i> Clear
+        </button>
+      </span>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -42,7 +48,19 @@
                   <option value="6h">Last 6 Hours</option>
                   <option value="24h">Last 24 Hours</option>
                   <option value="7d">Last 7 Days</option>
+                  <option value="custom">Custom Range</option>
                 </select>
+              </div>
+              <div class="mb-3 d-none" id="customTimeRangeInputs">
+                <label class="form-label small">Custom Time Range</label>
+                <div class="input-group input-group-sm mb-2">
+                  <span class="input-group-text">From</span>
+                  <input type="datetime-local" class="form-control form-control-sm" id="customStartTime" step="1">
+                </div>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">To</span>
+                  <input type="datetime-local" class="form-control form-control-sm" id="customEndTime" step="1">
+                </div>
               </div>
               <div class="d-grid">
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="globalClearFiltersBtn">
