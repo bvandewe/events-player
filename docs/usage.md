@@ -24,34 +24,30 @@ The CloudEvent Player web interface provides multiple views for monitoring and a
 ### Main Components
 
 1. **Navigation Bar**
-
-   - View switcher (Events/Timeline)
-   - Event counter showing filtered results
-   - Connection status indicator (SSE)
-   - User menu with role-based options
+    - View switcher (Events/Timeline)
+    - Event counter showing filtered results
+    - Connection status indicator (SSE)
+    - User menu with role-based options
 
 2. **Filter Controls**
-
-   - **Search Box**: Quick text search across all event properties
-   - **Type Filter**: Filter by specific event types
-   - **Source Filter**: Filter by event sources
-   - **Subject Filter**: Filter by event subjects
-   - **Time Range Filter**: Filter events by time period (last hour, 6 hours, 24 hours, all)
+    - **Search Box**: Quick text search across all event properties
+    - **Type Filter**: Filter by specific event types
+    - **Source Filter**: Filter by event sources
+    - **Subject Filter**: Filter by event subjects
+    - **Time Range Filter**: Filter events by time period (last hour, 6 hours, 24 hours, all)
 
 3. **Event Generator Form** (Offcanvas panel)
-
-   - Configure and generate CloudEvents
-   - Background task support for bulk generation
-   - Form validation and error handling
+    - Configure and generate CloudEvents
+    - Background task support for bulk generation
+    - Form validation and error handling
 
 4. **Admin Controls** (Admin role only)
-
-   - **Manage Tasks**: View and cancel running event generation tasks
-   - **Clear Storage**: Remove all stored events from browser
+    - **Manage Tasks**: View and cancel running event generation tasks
+    - **Clear Storage**: Remove all stored events from browser
 
 5. **Event Display**
-   - **Events View**: Expandable accordion items with event details
-   - **Timeline View**: Chart-based visualization of event timeline
+    - **Events View**: Expandable accordion items with event details
+    - **Timeline View**: Chart-based visualization of event timeline
 
 ## Generating CloudEvents
 
