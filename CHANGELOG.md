@@ -1,73 +1,141 @@
 # CHANGE LOG
 
+## 0.4.1 - 2025-11-01
+
+### Added
+
+#### Documentation
+
+- **Comprehensive RBAC Configuration Guide** (`docs/rbac-guide.md`)
+    - Complete step-by-step guide for setting up Keycloak with CloudEvents Player
+    - Quick start with docker-compose including pre-configured test users
+    - Detailed Keycloak realm configuration explanation
+    - CloudEvents Player environment variable reference
+    - User management instructions (creating users, assigning roles, setting passwords)
+    - Role permissions matrix table showing all feature access by role
+    - Advanced configuration for custom realms and external Keycloak
+    - Integration examples for other OIDC providers (Auth0, Okta, Azure AD)
+    - Comprehensive troubleshooting section for common authentication issues
+    - Security best practices for production deployments
+- **Documentation Integration**
+    - Added RBAC guide to MkDocs navigation under Security section
+    - Added prominent link in authentication.md directing to RBAC guide
+    - Added RBAC guide to index.md alongside authentication guide
+    - Added RBAC guide to quick-start.md "Next Steps" section
+
+#### Features
+
+- **Custom Gateway URL for Admins**
+    - Added "Custom URL..." option to event gateway dropdown (admin-only)
+    - Custom gateway input field appears when selected
+    - Custom gateway URL persists in localStorage across browser reloads
+    - Validation prevents empty custom gateway submissions
+    - Auto-focus on custom input when selected
+    - Hidden from non-admin users (operators and regular users)
+    - Seamless integration with existing form state persistence
+
+### Fixed
+
+- **Network Error Handling**
+    - Enhanced HTTP error handling when posting events to gateway
+    - Now gracefully handles connection failures (`httpx.ConnectError`)
+    - Added timeout exception handling (`httpx.TimeoutException`)
+    - Added generic request error handling (`httpx.RequestError`)
+    - Task status properly set to "Failed" on network errors
+    - Descriptive error messages with appropriate HTTP status codes:
+        - 503 Service Unavailable for connection failures
+        - 504 Gateway Timeout for timeout errors
+        - 502 Bad Gateway for other request errors
+    - Prevents unhandled exceptions from crashing the ASGI application
+
+- **Markdown Formatting**
+    - Fixed nested list indentation in usage.md to render correctly in MkDocs
+    - Changed from 3-space to 4-space indentation for nested lists
+    - Lists now properly nest under numbered items instead of flattening
+    - Applied fix to "Views" and "Main Components" sections
+- **VS Code Markdown Formatting**
+    - Disabled Prettier for markdown files to prevent automatic reformatting
+    - Configured markdownlint with correct 4-space indentation rule (MD007)
+    - Markdown files no longer auto-formatted on save to preserve correct indentation
+    - Markdownlint auto-fix still active with proper indentation rules
+
+### Improved
+
+- **Documentation Quality**
+    - Fixed markdown formatting issues throughout documentation
+    - Improved table formatting in configuration.md
+    - Corrected code block formatting
+    - Enhanced readability of nested lists
+    - All documentation now follows MkDocs best practices
+
 ## 0.4.0 - 2025-10-31
 
 ### Fixed
 
 - **Duplicate event submissions**: Fixed form being initialized multiple times causing duplicate events
-  - Added idempotent initialization guard to generatorForm controller
-  - Removed module-level initialization code from dashboard.js and timeline.js
-  - Now properly follows single-page application pattern
+    - Added idempotent initialization guard to generatorForm controller
+    - Removed module-level initialization code from dashboard.js and timeline.js
+    - Now properly follows single-page application pattern
 - **Duplicate SSE subscriptions**: Fixed events appearing twice in streams
-  - Removed duplicate 'filters' event subscription in events controller
-  - Ensured loadEventsFromStorage only called once per filter change
+    - Removed duplicate 'filters' event subscription in events controller
+    - Ensured loadEventsFromStorage only called once per filter change
 - **Search functionality**: Restored and enhanced event search
-  - Added search input in dashboard tabs header
-  - Deep search through entire event payload (CloudEvent attributes + data)
-  - localStorage persistence for search term
-  - Debounced search (300ms) for better performance
-  - Auto-filters new events as they arrive via SSE
-  - Keyboard shortcut (Ctrl/Cmd + F) to focus search
-  - Clear button to reset search
+    - Added search input in dashboard tabs header
+    - Deep search through entire event payload (CloudEvent attributes + data)
+    - localStorage persistence for search term
+    - Debounced search (300ms) for better performance
+    - Auto-filters new events as they arrive via SSE
+    - Keyboard shortcut (Ctrl/Cmd + F) to focus search
+    - Clear button to reset search
 
 ### Major UI Redesign
 
 #### Unified Dashboard
 
 - **Single-view architecture**: Consolidated Events, Timeline, and Dashboard into one unified dashboard
-  - Eliminates navigation between separate pages
-  - All features accessible from a single view
-  - Improved workflow and reduced cognitive load
+    - Eliminates navigation between separate pages
+    - All features accessible from a single view
+    - Improved workflow and reduced cognitive load
 
 #### Layout Structure
 
 - **Row 1**: Page title with filter indicator and clear button
 - **Row 2**: Four real-time metric cards (Total Events, Avg Rate, Event Types, Event Sources)
-  - Auto-updates every 5 seconds
-  - Color-coded subtle backgrounds
-  - Shows contextual information (most common type/source)
+    - Auto-updates every 5 seconds
+    - Color-coded subtle backgrounds
+    - Shows contextual information (most common type/source)
 - **Row 3**: Tab navigation between Streams and Timeline
-  - Export button positioned on right side of tab bar
-  - Bootstrap tab component with smooth transitions
+    - Export button positioned on right side of tab bar
+    - Bootstrap tab component with smooth transitions
 - **Row 4**: Tab content area
-  - **Streams tab**: Full event list with SSE real-time updates
-  - **Timeline tab**: Event activity chart with configurable bucket size
+    - **Streams tab**: Full event list with SSE real-time updates
+    - **Timeline tab**: Event activity chart with configurable bucket size
 - **Row 5**: Analytics panels (three equal columns)
-  - Top Sources chart (click to filter)
-  - Top Event Types chart (click to filter)
-  - Top Subjects chart (click to filter)
+    - Top Sources chart (click to filter)
+    - Top Event Types chart (click to filter)
+    - Top Subjects chart (click to filter)
 - **Row 6**: Storage utilization indicators
-  - Recent Events (Tier 1) progress bar
-  - Metadata (Tier 2) progress bar
-  - Color-coded based on usage (green/yellow/red)
+    - Recent Events (Tier 1) progress bar
+    - Metadata (Tier 2) progress bar
+    - Color-coded based on usage (green/yellow/red)
 - **Row 7**: Additional metrics
-  - Hourly Distribution chart
-  - Events Per Minute chart
+    - Hourly Distribution chart
+    - Events Per Minute chart
 
 #### Technical Implementation
 
 - **unifiedDashboard.js controller**: Coordinates all dashboard components
-  - Manages tab switching state
-  - Updates metrics cards automatically
-  - Lazy-loads charts when tabs become active
-  - Handles filter changes across all components
+    - Manages tab switching state
+    - Updates metrics cards automatically
+    - Lazy-loads charts when tabs become active
+    - Handles filter changes across all components
 - **Preserved functionality**: All existing features maintained
-  - SSE real-time event streaming
-  - Global filters with persistence
-  - Export functionality (restricted to admin/operator)
-  - Authorization and role-based access control
-  - Search and keyboard navigation
-  - Event generator and background tasks
+    - SSE real-time event streaming
+    - Global filters with persistence
+    - Export functionality (restricted to admin/operator)
+    - Authorization and role-based access control
+    - Search and keyboard navigation
+    - Event generator and background tasks
 
 ### Benefits
 
@@ -84,43 +152,43 @@
 #### Export Events Functionality
 
 - **Export button**: Added export button to Event Stream view header
-  - Positioned at top-right of the page header
-  - **Restricted to admin and operator roles only**
+    - Positioned at top-right of the page header
+    - **Restricted to admin and operator roles only**
 - **Export modal**: Interactive modal for selecting export options
-  - **Filtered Events**: Export only events matching current filters (type, source, subject, time range)
-  - **All Events (Tier 1)**: Export all full events from recent storage
-  - Dynamic information showing number of events and active filters
+    - **Filtered Events**: Export only events matching current filters (type, source, subject, time range)
+    - **All Events (Tier 1)**: Export all full events from recent storage
+    - Dynamic information showing number of events and active filters
 - **JSON file download**: Events exported as formatted JSON files
-  - Automatic filename generation with timestamp
-  - Filter information included in filename for filtered exports
-  - Internal storage attributes (storedAt, insertionOrder, sequenceNumber) removed from export
+    - Automatic filename generation with timestamp
+    - Filter information included in filename for filtered exports
+    - Internal storage attributes (storedAt, insertionOrder, sequenceNumber) removed from export
 - **User notifications**: Bootstrap alert notifications for export success/failure
-  - Success message shows number of events exported
-  - Auto-dismisses after 3 seconds
-  - Clean notification UI with icons
+    - Success message shows number of events exported
+    - Auto-dismisses after 3 seconds
+    - Clean notification UI with icons
 
 ### Improvements
 
 #### UI/UX Enhancements
 
 - **Enhanced filter clear buttons**: Made clear filter buttons more visible across all views
-  - Changed from subtle outline-secondary to bold btn-danger (dark red)
-  - Added "Clear" text label alongside the icon
-  - Increased font size from 0.75rem to 0.8rem
-  - Applied fw-bold class for better visibility
-  - Consistent styling across Events, Timeline, and Dashboard views
+    - Changed from subtle outline-secondary to bold btn-danger (dark red)
+    - Added "Clear" text label alongside the icon
+    - Increased font size from 0.75rem to 0.8rem
+    - Applied fw-bold class for better visibility
+    - Consistent styling across Events, Timeline, and Dashboard views
 
 ### Bug Fixes
 
 - Fixed `appState.getFilters()` error - changed to use `appState.get('filters')`
 - Fixed export button not showing for admins/operators - moved initialization to run after authorization is ready
-  - Export controller now initializes inside `initAuth()` after `authorizationManager.init()`
-  - Added debug logging to help troubleshoot authorization issues
+    - Export controller now initializes inside `initAuth()` after `authorizationManager.init()`
+    - Added debug logging to help troubleshoot authorization issues
 - **Fixed tooltip overlapping and sticking issues**
-  - All tooltips now hide immediately when mouse leaves (0ms delay)
-  - Added 300ms delay before showing tooltips to prevent accidental triggers
-  - Tooltips automatically hide on document scroll or mouse leave
-  - Applied consistent behavior across all tooltip instances (events, filters, authorization, connection status)
+    - All tooltips now hide immediately when mouse leaves (0ms delay)
+    - Added 300ms delay before showing tooltips to prevent accidental triggers
+    - Tooltips automatically hide on document scroll or mouse leave
+    - Applied consistent behavior across all tooltip instances (events, filters, authorization, connection status)
 
 ## 0.3.8 - 2025-10-30
 
@@ -129,25 +197,25 @@
 #### UI/UX Enhancements
 
 - **Dashboard metrics cards**: Improved readability with better color contrast
-  - Changed from solid dark backgrounds to Bootstrap subtle colors (bg-\*-subtle)
-  - Applied dark contrasting text colors (text-_-emphasis, text-_)
-  - Primary card: dark blue text on light blue background
-  - Success card: dark green text on light green background
-  - Info card: dark blue text on light cyan background
-  - Warning card: dark orange text on light yellow background
+    - Changed from solid dark backgrounds to Bootstrap subtle colors (bg-\*-subtle)
+    - Applied dark contrasting text colors (text-_-emphasis, text-_)
+    - Primary card: dark blue text on light blue background
+    - Success card: dark green text on light green background
+    - Info card: dark blue text on light cyan background
+    - Warning card: dark orange text on light yellow background
 - **Filters in dropdown menu**: Moved filters from offcanvas panel to Bootstrap navbar dropdown
-  - Filters now accessible via dropdown menu under "Filters" nav item
-  - Compact 400px wide dropdown with proper labels for all controls
-  - Active filter count badge visible next to "Filters" text
-  - Clear All Filters button at bottom of dropdown
-  - Removed Alt/Option keyboard shortcut
-  - Removed offcanvas panel completely
+    - Filters now accessible via dropdown menu under "Filters" nav item
+    - Compact 400px wide dropdown with proper labels for all controls
+    - Active filter count badge visible next to "Filters" text
+    - Clear All Filters button at bottom of dropdown
+    - Removed Alt/Option keyboard shortcut
+    - Removed offcanvas panel completely
 - **Responsive event stream**: Page header hidden on viewports < 1400px for better space usage
 - **Enhanced chart modals**: Added click-to-filter functionality to all enlarged chart modals
-  - Events Per Minute: click to filter by time range
-  - Top Types: click to filter by event type
-  - Top Sources: click to filter by source
-  - Hourly Distribution: click to filter by hour
+    - Events Per Minute: click to filter by time range
+    - Top Types: click to filter by event type
+    - Top Sources: click to filter by source
+    - Hourly Distribution: click to filter by hour
 - **Filter indicators on view titles**: Added red dot indicator with clear button to all view titles when filters are active
 - **Contextual information on timeline cards**: Added last event time, update time, peak timestamps, and bucket size info
 - **Contextual information on dashboard cards**: Added last event time, update time, most common type/source info
@@ -161,16 +229,16 @@
 
 - **Badge alignment**: Event type badge now aligned left, source badge centered, and subject badge aligned right in event list
 - **Quick filter buttons**: Added discreet filter buttons (type, source, subject) to each event header for quick filtering
-  - Buttons visible to all users regardless of authorization level
-  - One-click filtering with toast notification feedback
+    - Buttons visible to all users regardless of authorization level
+    - One-click filtering with toast notification feedback
 - **Bootstrap tooltips**: Replaced all native browser tooltips with Bootstrap tooltips for better styling and UX
-  - Smoother animations and consistent look across the application
-  - Applied to filter buttons, connection status, admin controls, and more
+    - Smoother animations and consistent look across the application
+    - Applied to filter buttons, connection status, admin controls, and more
 - **Filter indicator improvement**: Removed intrusive filter banner, replaced with enhanced tooltip on Filters nav item
-  - Displays detailed list of active filters on hover
-  - Cleaner interface without blocking content
+    - Displays detailed list of active filters on hover
+    - Cleaner interface without blocking content
 - **Authorization UX**: Removed distracting tooltip from restricted event headers for unauthorized users
-  - Cursor change to "not-allowed" provides sufficient visual feedback
+    - Cursor change to "not-allowed" provides sufficient visual feedback
 
 ## 0.3.6 - 2025-10-30
 
@@ -219,9 +287,9 @@
 
 - Fixed toast error "Cannot read properties of undefined (reading 'join')"
 - Toast now handles three error message formats:
-  - FastAPI validation errors: `{detail: [{type, msg, loc}]}`
-  - String error messages: `{detail: "Authentication required"}`
-  - Unknown formats: JSON stringified as fallback
+    - FastAPI validation errors: `{detail: [{type, msg, loc}]}`
+    - String error messages: `{detail: "Authentication required"}`
+    - Unknown formats: JSON stringified as fallback
 - Prevents JavaScript errors when displaying simple error messages
 
 #### Code Quality
@@ -378,32 +446,32 @@
 #### Feature Documentation Reorganization
 
 - Split monolithic `features.md` (567 lines) into 10 focused documents in `docs/features/` folder:
-  - `index.md`: Features overview with navigation guide
-  - `views.md`: Multiple Views (Events List, Timeline Chart)
-  - `filtering.md`: Comprehensive filtering system
-  - `storage.md`: Two-tier storage architecture
-  - `sse.md`: Server-Sent Events real-time streaming
-  - `tasks.md`: Background task management
-  - `rbac.md`: Role-Based Access Control
-  - `keyboard-shortcuts.md`: Complete keyboard shortcuts reference
-  - `state-management.md`: Reactive state system
-  - `performance.md`: Performance optimization techniques
+    - `index.md`: Features overview with navigation guide
+    - `views.md`: Multiple Views (Events List, Timeline Chart)
+    - `filtering.md`: Comprehensive filtering system
+    - `storage.md`: Two-tier storage architecture
+    - `sse.md`: Server-Sent Events real-time streaming
+    - `tasks.md`: Background task management
+    - `rbac.md`: Role-Based Access Control
+    - `keyboard-shortcuts.md`: Complete keyboard shortcuts reference
+    - `state-management.md`: Reactive state system
+    - `performance.md`: Performance optimization techniques
 - Updated `mkdocs.yml` with hierarchical navigation structure
 - Total: 3,665 lines of comprehensive, focused documentation
 
 #### Documentation Corrections
 
 - Fixed RBAC documentation inconsistencies:
-  - Clarified that ALL authenticated users can clear their own browser's local storage
-  - Updated permission matrix to reflect client-side storage model
-  - Removed admin-only references for storage clearing
-  - Added notes explaining browser-specific, per-user storage architecture
+    - Clarified that ALL authenticated users can clear their own browser's local storage
+    - Updated permission matrix to reflect client-side storage model
+    - Removed admin-only references for storage clearing
+    - Added notes explaining browser-specific, per-user storage architecture
 - Each document now includes:
-  - Overview and key features
-  - Detailed implementation explanations
-  - Usage examples and best practices
-  - Troubleshooting guides
-  - Cross-links to related features
+    - Overview and key features
+    - Detailed implementation explanations
+    - Usage examples and best practices
+    - Troubleshooting guides
+    - Cross-links to related features
 
 ### Features
 
@@ -519,9 +587,9 @@
 ### Backend Enhancements
 
 - Admin-only task management endpoints
-  - `GET /api/tasks` - List all tasks
-  - `POST /api/task/{task_id}/cancel` - Cancel specific task
-  - `POST /api/tasks/cancel-all` - Cancel all tasks
+    - `GET /api/tasks` - List all tasks
+    - `POST /api/task/{task_id}/cancel` - Cancel specific task
+    - `POST /api/tasks/cancel-all` - Cancel all tasks
 - Token refresh endpoint: `POST /api/auth/refresh`
 - Enhanced background task system with cancellation support
 - Improved error handling and validation
@@ -563,11 +631,11 @@
 
 - Complete MkDocs documentation site with Material theme
 - Added comprehensive documentation pages:
-  - Quick Start guide with tabbed installation options (Pull vs Build)
-  - Installation guide with Docker, local, and Kubernetes deployment
-  - Usage guide with code examples (curl, Python, JavaScript)
-  - Configuration reference with all environment variables
-  - Deployment guide for Docker, Kubernetes, and cloud platforms
+    - Quick Start guide with tabbed installation options (Pull vs Build)
+    - Installation guide with Docker, local, and Kubernetes deployment
+    - Usage guide with code examples (curl, Python, JavaScript)
+    - Configuration reference with all environment variables
+    - Deployment guide for Docker, Kubernetes, and cloud platforms
 - Added demo GIF to homepage
 - Added Mermaid diagrams for architecture and demo setup
 - Custom styling with Montserrat font and teal/black color scheme
