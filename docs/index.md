@@ -47,12 +47,13 @@ Generate CloudEvents with customizable properties, data payloads, and delivery o
 Watch events flow through your system with Server-Sent Events (SSE) streaming. See events as they arrive with syntax-highlighted JSON in a **unified dashboard**:
 
 - **Unified Dashboard**: Single-page view combining all features
-  - **Streams Tab**: Real-time event list with accordion expansion
-  - **Timeline Tab**: Visual Chart.js timeline showing event activity over time
-  - **Search**: Filter events by any text in payload (with persistence)
-  - **Real-time Metrics**: Total events, avg rate, top types/sources
-  - **Analytics Charts**: Top sources, types, subjects (click to filter)
-  - **Storage Indicators**: Two-tier IndexedDB usage visualization
+
+    - **Streams Tab**: Real-time event list with accordion expansion
+    - **Timeline Tab**: Visual Chart.js timeline showing event activity over time
+    - **Search**: Filter events by any text in payload (with persistence)
+    - **Real-time Metrics**: Total events, avg rate, top types/sources
+    - **Analytics Charts**: Top sources, types, subjects (click to filter)
+    - **Storage Indicators**: Two-tier IndexedDB usage visualization
 
 - **Synchronized Filtering**: Global filters affect streams, timeline, metrics, and charts
 - **Click-to-Filter**: Click any source/type/subject in charts to filter all views
@@ -90,7 +91,7 @@ When authentication is disabled (`auth_required=false`, default):
 - No login or configuration required
 - Admin features available via gear icon in navigation
 
-See the [Authentication Guide](authentication.md) for OAuth/OIDC setup details.
+See the [Authentication Guide](authentication.md) for OAuth/OIDC setup details and the [RBAC Configuration Guide](rbac-guide.md) for a complete step-by-step setup with Keycloak.
 
 ### 💾 **Client-Side Storage**
 
@@ -209,27 +210,27 @@ Choose your deployment method:
 
 - **Getting Started**
 
-  - [Installation](installation.md)
-  - [Quick Start](quick-start.md)
-  - [Configuration](configuration.md)
+    - [Installation](installation.md)
+    - [Quick Start](quick-start.md)
+    - [Configuration](configuration.md)
 
 - **Usage**
 
-  - [Using the Web UI](usage.md)
-  - [API Reference](api-reference.md)
-  - [Event Generation](event-generation.md)
-  - [Event Monitoring](event-monitoring.md)
+    - [Using the Web UI](usage.md)
+    - [API Reference](api-reference.md)
+    - [Event Generation](event-generation.md)
+    - [Event Monitoring](event-monitoring.md)
 
 - **Deployment**
 
-  - [Docker Deployment](deployment.md#docker)
-  - [Kubernetes Deployment](deployment.md#kubernetes)
-  - [Development Mode](deployment.md#development)
+    - [Docker Deployment](deployment.md#docker)
+    - [Kubernetes Deployment](deployment.md#kubernetes)
+    - [Development Mode](deployment.md#development)
 
 - **Advanced**
-  - [Request ID Tracing](advanced/request-tracing.md)
-  - [Testing](advanced/testing.md)
-  - [Troubleshooting](advanced/troubleshooting.md)
+    - [Request ID Tracing](advanced/request-tracing.md)
+    - [Testing](advanced/testing.md)
+    - [Troubleshooting](advanced/troubleshooting.md)
 
 ## Community & Support
 

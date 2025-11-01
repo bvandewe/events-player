@@ -120,6 +120,7 @@ You should see the **Unified Dashboard** with:
 4. Watch your event appear in the **Streams** tab in real-time!
 
    The metrics at the top will update automatically showing:
+
    - Total Events: 1
    - Event rate
    - Top event type and source
@@ -356,4 +357,9 @@ You now know how to:
 ✅ Access API documentation  
 ✅ Monitor application health
 
-Ready to learn more? Check out the [Usage Guide](usage.md) for advanced features!
+## Next Steps
+
+- **Advanced Features**: Read the [Usage Guide](usage.md) for filtering, search, and analytics
+- **Configuration**: See [Configuration Reference](configuration.md) for all available settings
+- **Security**: Set up authentication and RBAC with the [RBAC Configuration Guide](rbac-guide.md)
+- **Deployment**: Check the [Deployment Guide](deployment.md) for production patterns

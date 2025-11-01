@@ -2,6 +2,8 @@
 
 CloudEvent Player supports OAuth 2.0 authentication with Keycloak and role-based access control (RBAC) to secure your event generation and monitoring capabilities.
 
+> **🚀 Quick Start**: For a complete step-by-step guide to set up RBAC with Keycloak, see the [RBAC Configuration Guide](rbac-guide.md).
+
 ## Overview
 
 The authentication system provides:
