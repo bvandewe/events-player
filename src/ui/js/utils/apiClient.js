@@ -69,7 +69,7 @@ export async function apiFetch(url, options = {}, isRetry = false) {
  */
 export async function apiPost(url, data, timeout = 30000) {
     console.log(`[API] POST ${url} with timeout ${timeout}ms`);
-    
+
     // Create an AbortController for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
@@ -86,7 +86,7 @@ export async function apiPost(url, data, timeout = 30000) {
             body: JSON.stringify(data),
             signal: controller.signal
         });
-        
+
         clearTimeout(timeoutId);
         console.log(`[API] POST ${url} completed with status ${response.status}`);
         return response;
