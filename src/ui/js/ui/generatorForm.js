@@ -1080,98 +1080,115 @@ export const generatorForm = (() => {
     const init = () => {
         // Prevent double initialization
         if (initialized) {
+            console.log('[GeneratorForm] Already initialized, skipping...');
             return;
         }
 
-        initialized = true;
+        console.log('[GeneratorForm] Initializing...');
 
-        // Restore saved state first
-        restoreFormState();
+        // Wait for DOM to be ready before initializing
+        const doInit = () => {
+            initialized = true;
 
-        // Initialize sliders
-        initSliders();
+            // Restore saved state first
+            restoreFormState();
 
-        // Setup gateway selection handler
-        setupGatewayHandler();
+            // Initialize sliders
+            initSliders();
 
-        // Setup random value generators (admin only)
-        setupRandomGenerators();
+            // Setup gateway selection handler
+            setupGatewayHandler();
 
-        // Setup repeater
-        setupRepeater();
+            // Setup random value generators (admin only)
+            setupRandomGenerators();
 
-        // Update history dropdown and modal
-        updateHistoryDropdown();
-        updateHistoryModal();
+            // Setup repeater
+            setupRepeater();
 
-        // Setup history dropdown handler
-        const historyDropdown = document.getElementById('operationHistory');
-        if (historyDropdown) {
-            historyDropdown.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    loadOperationFromHistory(e.target.value);
-                }
-            });
-        }
+            // Update history dropdown and modal
+            updateHistoryDropdown();
+            updateHistoryModal();
 
-        // Setup clear history button in modal
-        const clearHistoryBtn = document.getElementById('clearOperationsHistory');
-        if (clearHistoryBtn) {
-            clearHistoryBtn.addEventListener('click', () => {
-                actionsController.showConfirm({
-                    title: 'Clear Operations History?',
-                    message: 'Are you sure you want to clear all operations history? This action cannot be undone.',
-                    confirmText: 'Yes, clear history',
-                    confirmClass: 'btn-danger',
-                    onConfirm: clearOperationsHistory
+            // Setup history dropdown handler
+            const historyDropdown = document.getElementById('operationHistory');
+            if (historyDropdown) {
+                historyDropdown.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        loadOperationFromHistory(e.target.value);
+                    }
                 });
-            });
-        }
-
-        // Setup reset button
-        const resetBtn = document.getElementById('resetFormBtn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', resetForm);
-        }
-
-        // Setup form submit handler
-        const form = document.getElementById('generatorForm');
-        if (form) {
-            console.log('[GeneratorForm] Attaching submit handler to form');
-            form.addEventListener('submit', (event) => {
-                console.log('[GeneratorForm] Form submit event triggered');
-                handleSubmit(event);
-            }, { capture: false, once: false });
-        } else {
-            console.error('[GeneratorForm] Form element not found!');
-        }
-
-        // Add input listeners to save state on change
-        const inputs = [
-            'event_gateway',
-            'event_source',
-            'event_type',
-            'event_subject',
-            'event_data'
-        ];
-
-        inputs.forEach(inputId => {
-            const element = document.getElementById(inputId);
-            if (element) {
-                // Skip gateway select as it's handled by setupGatewayHandler
-                if (inputId === 'event_gateway') return;
-
-                element.addEventListener('change', saveFormState);
-                // For textarea, also save on input (debounced would be better but keeping it simple)
-                if (element.tagName === 'TEXTAREA') {
-                    let timeoutId;
-                    element.addEventListener('input', () => {
-                        clearTimeout(timeoutId);
-                        timeoutId = setTimeout(saveFormState, 500); // Debounce 500ms
-                    });
-                }
             }
-        });
+
+            // Setup clear history button in modal
+            const clearHistoryBtn = document.getElementById('clearOperationsHistory');
+            if (clearHistoryBtn) {
+                clearHistoryBtn.addEventListener('click', () => {
+                    actionsController.showConfirm({
+                        title: 'Clear Operations History?',
+                        message: 'Are you sure you want to clear all operations history? This action cannot be undone.',
+                        confirmText: 'Yes, clear history',
+                        confirmClass: 'btn-danger',
+                        onConfirm: clearOperationsHistory
+                    });
+                });
+            }
+
+            // Setup reset button
+            const resetBtn = document.getElementById('resetFormBtn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', resetForm);
+            }
+
+            // Setup form submit handler
+            const form = document.getElementById('generatorForm');
+            if (form) {
+                console.log('[GeneratorForm] Attaching submit handler to form');
+                form.addEventListener('submit', (event) => {
+                    console.log('[GeneratorForm] Form submit event triggered');
+                    handleSubmit(event);
+                }, { capture: false, once: false });
+            } else {
+                console.error('[GeneratorForm] Form element not found!');
+            }
+
+            // Add input listeners to save state on change
+            const inputs = [
+                'event_gateway',
+                'event_source',
+                'event_type',
+                'event_subject',
+                'event_data'
+            ];
+
+            inputs.forEach(inputId => {
+                const element = document.getElementById(inputId);
+                if (element) {
+                    // Skip gateway select as it's handled by setupGatewayHandler
+                    if (inputId === 'event_gateway') return;
+
+                    element.addEventListener('change', saveFormState);
+                    // For textarea, also save on input (debounced would be better but keeping it simple)
+                    if (element.tagName === 'TEXTAREA') {
+                        let timeoutId;
+                        element.addEventListener('input', () => {
+                            clearTimeout(timeoutId);
+                            timeoutId = setTimeout(saveFormState, 500); // Debounce 500ms
+                        });
+                    }
+                }
+            });
+
+            console.log('[GeneratorForm] Initialization complete');
+        };
+
+        // Check if DOM is ready
+        if (document.readyState === 'loading') {
+            console.log('[GeneratorForm] Waiting for DOM to be ready...');
+            document.addEventListener('DOMContentLoaded', doInit);
+        } else {
+            console.log('[GeneratorForm] DOM already ready, initializing now');
+            doInit();
+        }
     };
 
     // Expose functions for global access (e.g., from modal buttons)
