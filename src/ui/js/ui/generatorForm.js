@@ -574,25 +574,25 @@ export const generatorForm = (() => {
                 }
             }
 
-        console.log('[GeneratorForm] Making API call to /api/generate with data:', data);
+            console.log('[GeneratorForm] Making API call to /api/generate with data:', data);
 
-        // Use apiPost which handles automatic token refresh on 401
-        const apiPromise = apiPost('/api/generate', data);
-        console.log('[GeneratorForm] apiPost returned:', apiPromise);
+            // Use apiPost which handles automatic token refresh on 401
+            const apiPromise = apiPost('/api/generate', data);
+            console.log('[GeneratorForm] apiPost returned:', apiPromise);
 
-        apiPromise
-            .then(response => {
-                console.log('[GeneratorForm] Received response:', response);
-                if (response.status === 403) {
-                    return response.json().then(error => {
-                        throw new Error(error.detail || 'Forbidden: Insufficient permissions');
-                    });
-                }
-                console.log('[GeneratorForm] Parsing response as JSON...');
-                return response.json();
-            })
-            .then(result => {
-                console.log('[GeneratorForm] Form submitted successfully:', result);                    // Save operation to history
+            apiPromise
+                .then(response => {
+                    console.log('[GeneratorForm] Received response:', response);
+                    if (response.status === 403) {
+                        return response.json().then(error => {
+                            throw new Error(error.detail || 'Forbidden: Insufficient permissions');
+                        });
+                    }
+                    console.log('[GeneratorForm] Parsing response as JSON...');
+                    return response.json();
+                })
+                .then(result => {
+                    console.log('[GeneratorForm] Form submitted successfully:', result);                    // Save operation to history
                     saveOperationToHistory({
                         event_gateway: data.event_gateway,
                         custom_gateway_url: document.getElementById('custom_gateway_url')?.value || '',
