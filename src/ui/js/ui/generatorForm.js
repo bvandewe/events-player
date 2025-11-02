@@ -3,6 +3,7 @@ import { taskController } from "../sse/task";
 import { authManager, authorizationManager } from "../app";
 import { apiPost } from "../utils/apiClient.js";
 import { actionsController } from "./actions";
+import { tasksModalController } from "./tasksModal";
 import * as bootstrap from 'bootstrap';
 
 export const generatorForm = (() => {
@@ -15,6 +16,7 @@ export const generatorForm = (() => {
     let repeaterInterval = null;
     let repeaterRunCount = 0;
     let nextExecutionTimer = null;
+    let repeaterStartFunction = null; // Store reference to start function to call after form submission
 
     /**
      * Save form state to localStorage
@@ -496,9 +498,14 @@ export const generatorForm = (() => {
     };
 
     const handleSubmit = (event) => {
+        console.log('[GeneratorForm] handleSubmit called', event);
         event.preventDefault();
+        event.stopPropagation();
+
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
+
+        console.log('[GeneratorForm] Form data collected:', data);
 
         // Convert numeric fields to integers
         data.iterations = parseInt(data.iterations, 10);
@@ -593,6 +600,13 @@ export const generatorForm = (() => {
                         toastController.showToast(result)
                     ]
                 );
+
+                // Start auto-repeat if enabled and not already running
+                const repeaterEnabledCheckbox = document.getElementById('repeaterEnabled');
+                if (repeaterEnabledCheckbox?.checked && !repeaterInterval && repeaterStartFunction) {
+                    console.log('[GeneratorForm] Starting auto-repeat after successful submission');
+                    repeaterStartFunction();
+                }
             })
             .catch(error => {
                 console.error('Error submitting form:', error);
@@ -846,7 +860,9 @@ export const generatorForm = (() => {
         repeaterEnabledCheckbox.addEventListener('change', () => {
             if (repeaterEnabledCheckbox.checked) {
                 repeaterControls?.classList.remove('d-none');
-                startRepeater();
+                // Don't start repeater immediately - wait for user to submit the form
+                // The repeater will start after the first manual submission
+                console.log('[GeneratorForm] Auto-repeat enabled - will start after next form submission');
             } else {
                 repeaterControls?.classList.add('d-none');
                 stopRepeater();
@@ -856,8 +872,9 @@ export const generatorForm = (() => {
         // Update interval when changed
         if (repeaterIntervalSelect) {
             repeaterIntervalSelect.addEventListener('change', () => {
-                if (repeaterEnabledCheckbox.checked) {
-                    // Restart with new interval
+                if (repeaterEnabledCheckbox.checked && repeaterInterval) {
+                    // Only restart if repeater is already running
+                    // (i.e., form has been submitted at least once)
                     stopRepeater();
                     startRepeater();
                 }
@@ -886,6 +903,20 @@ export const generatorForm = (() => {
 
             // Update title to indicate auto-repeat is active
             updateTitleIndicator(true);
+
+            // Register browser task with the task manager
+            const taskId = 'auto-repeat-generator';
+            tasksModalController.registerBrowserTask(taskId, {
+                name: 'Auto-Repeat Event Generator',
+                onCancel: () => {
+                    // This will be called when user cancels from task manager
+                    const repeaterCheckbox = document.getElementById('repeaterEnabled');
+                    if (repeaterCheckbox) {
+                        repeaterCheckbox.checked = false;
+                        repeaterCheckbox.dispatchEvent(new Event('change'));
+                    }
+                }
+            });
 
             // Update next execution time
             updateNextExecutionTime();
@@ -937,6 +968,9 @@ export const generatorForm = (() => {
             // Remove title indicator
             updateTitleIndicator(false);
 
+            // Unregister browser task from task manager
+            tasksModalController.unregisterBrowserTask('auto-repeat-generator');
+
             console.log('[GeneratorForm] Repeater stopped');
         }
 
@@ -962,6 +996,9 @@ export const generatorForm = (() => {
                 repeaterNextExecution.textContent = `in ${minutes}m ${secs}s`;
             }
         }
+
+        // Store reference to startRepeater so it can be called from handleSubmit
+        repeaterStartFunction = startRepeater;
     };
 
     /**
@@ -1100,9 +1137,13 @@ export const generatorForm = (() => {
         // Setup form submit handler
         const form = document.getElementById('generatorForm');
         if (form) {
+            console.log('[GeneratorForm] Attaching submit handler to form');
             form.addEventListener('submit', (event) => {
+                console.log('[GeneratorForm] Form submit event triggered');
                 handleSubmit(event);
-            });
+            }, { capture: false, once: false });
+        } else {
+            console.error('[GeneratorForm] Form element not found!');
         }
 
         // Add input listeners to save state on change

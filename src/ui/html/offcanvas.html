@@ -19,35 +19,31 @@
 
 <div class="offcanvas offcanvas-bottom p-4 shadow-lg" data-bs-scroll="true" data-bs-backdrop="true" data-bs-keyboard="true" tabindex="-1"
     id="generatorPanel" aria-labelledby="staticBackdropLabel">
-    <div class="offcanvas-header justify-content-center">
+    <div class="offcanvas-header justify-content-center position-relative">
+        <div class="position-absolute start-0 ms-3 d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                    id="resetFormBtn" 
+                    data-bs-toggle="tooltip" 
+                    data-bs-title="Reset form to default values"
+                    title="Reset to defaults">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-info" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#operationsHistoryModal"
+                    data-bs-title="View operations history"
+                    title="View history">
+                <i class="bi bi-clock-history"></i> History
+            </button>
+            <select class="form-select form-select-sm" id="operationHistory" aria-label="Select previous operation" style="width: auto; min-width: 200px;">
+                <option value="" selected>New Operation</option>
+            </select>
+        </div>
         <h4 class="offcanvas-title text-primary title" id="generatorPanelLabel">Generate CloudEvents</h4>
-        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute start-0 ms-3" 
-                id="resetFormBtn" 
-                data-bs-toggle="tooltip" 
-                data-bs-title="Reset form to default values"
-                title="Reset to defaults">
-            <i class="bi bi-arrow-counterclockwise"></i> Reset
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-info position-absolute start-0 ms-5" 
-                style="margin-left: 6rem !important;"
-                data-bs-toggle="modal" 
-                data-bs-target="#operationsHistoryModal"
-                data-bs-title="View operations history"
-                title="View history">
-            <i class="bi bi-clock-history"></i> History
-        </button>
         <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">        
         <div>
-            <!-- Operation History Selector -->
-            <div class="row mb-3">
-                <label for="operationHistory" class="col-1 col-form-label text-end">History</label>
-                <select class="col-10 form-select" id="operationHistory" aria-label="Select previous operation">
-                    <option value="" selected>New Operation</option>
-                </select>
-            </div>
-
             <form id="generatorForm">
                 <div class="row">
                     <!-- Event Attributes Panel (2/3) -->
@@ -133,69 +129,57 @@
 
                     <!-- Timing Panel (1/3) -->
                     <div class="col-4">
-                        <div class="card">
+                        <div class="card h-100">
                             <div class="card-header py-2">
-                                <button class="btn btn-sm btn-link text-decoration-none p-0 w-100 text-start" 
-                                        type="button" 
-                                        data-bs-toggle="collapse" 
-                                        data-bs-target="#timingPanelBody" 
-                                        aria-expanded="true" 
-                                        aria-controls="timingPanelBody">
-                                    <h6 class="mb-0 d-flex justify-content-between align-items-center">
-                                        <span><i class="bi bi-clock-fill text-info"></i> Timing</span>
-                                        <i class="bi bi-chevron-down"></i>
-                                    </h6>
-                                </button>
+                                <h6 class="mb-0"><i class="bi bi-clock-fill text-info"></i> Timing</h6>
                             </div>
-                            <div class="collapse show" id="timingPanelBody">
-                                <div class="card-body">
-                                    <!-- Iterations Control -->
-                                    <div class="mb-3">
-                                        <label for="eventIterations" class="form-label small">Iterations: <span id="eventIterationsValue">1</span></label>
-                                        <input type="range" min="1" max="500" value="1" class="form-range" id="eventIterations" name="iterations">
+                            <div class="card-body d-flex flex-column">
+                                <!-- Iterations Control -->
+                                <div class="mb-3">
+                                    <label for="eventIterations" class="form-label small">Iterations: <span id="eventIterationsValue">1</span></label>
+                                    <input type="range" min="1" max="500" value="1" class="form-range" id="eventIterations" name="iterations">
+                                </div>
+                                
+                                <!-- Delay Control -->
+                                <div class="mb-3">
+                                    <label for="eventDelay" class="form-label small">Delay: <span id="eventDelayValue">100</span> ms</label>
+                                    <input type="range" min="50" max="2000" value="100" class="form-range" id="eventDelay" name="delay">
+                                </div>
+                                
+                                <hr>
+                                
+                                <!-- Auto-Repeat Control -->
+                                <div class="mb-2">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="repeaterEnabled" role="switch">
+                                        <label class="form-check-label small fw-bold" for="repeaterEnabled">
+                                            <i class="bi bi-arrow-repeat"></i> Auto-Repeat
+                                        </label>
                                     </div>
-                                    
-                                    <!-- Delay Control -->
-                                    <div class="mb-3">
-                                        <label for="eventDelay" class="form-label small">Delay: <span id="eventDelayValue">100</span> ms</label>
-                                        <input type="range" min="50" max="2000" value="100" class="form-range" id="eventDelay" name="delay">
+                                </div>
+                                <div class="d-none" id="repeaterControls">
+                                    <select class="form-select form-select-sm mb-2" id="repeaterInterval">
+                                        <option value="1000">1 second</option>
+                                        <option value="2000">2 seconds</option>
+                                        <option value="5000" selected>5 seconds</option>
+                                        <option value="10000">10 seconds</option>
+                                        <option value="20000">20 seconds</option>
+                                        <option value="30000">30 seconds</option>
+                                        <option value="60000">1 minute</option>
+                                        <option value="120000">2 minutes</option>
+                                        <option value="300000">5 minutes</option>
+                                        <option value="600000">10 minutes</option>
+                                        <option value="1800000">30 minutes</option>
+                                        <option value="3600000">1 hour</option>
+                                        <option value="7200000">2 hours</option>
+                                        <option value="21600000">6 hours</option>
+                                        <option value="43200000">12 hours</option>
+                                    </select>
+                                    <div class="small mb-2">
+                                        <div class="text-muted">Next: <span id="repeaterNextExecution">--</span></div>
+                                        <div class="text-muted">Runs: <span id="repeaterRunCount">0</span></div>
                                     </div>
-                                    
-                                    <hr>
-                                    
-                                    <!-- Auto-Repeat Control -->
-                                    <div class="mb-2">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="repeaterEnabled" role="switch">
-                                            <label class="form-check-label small fw-bold" for="repeaterEnabled">
-                                                <i class="bi bi-arrow-repeat"></i> Auto-Repeat
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="d-none" id="repeaterControls">
-                                        <select class="form-select form-select-sm mb-2" id="repeaterInterval">
-                                            <option value="1000">1 second</option>
-                                            <option value="2000">2 seconds</option>
-                                            <option value="5000" selected>5 seconds</option>
-                                            <option value="10000">10 seconds</option>
-                                            <option value="20000">20 seconds</option>
-                                            <option value="30000">30 seconds</option>
-                                            <option value="60000">1 minute</option>
-                                            <option value="120000">2 minutes</option>
-                                            <option value="300000">5 minutes</option>
-                                            <option value="600000">10 minutes</option>
-                                            <option value="1800000">30 minutes</option>
-                                            <option value="3600000">1 hour</option>
-                                            <option value="7200000">2 hours</option>
-                                            <option value="21600000">6 hours</option>
-                                            <option value="43200000">12 hours</option>
-                                        </select>
-                                        <div class="small mb-2">
-                                            <div class="text-muted">Next: <span id="repeaterNextExecution">--</span></div>
-                                            <div class="text-muted">Runs: <span id="repeaterRunCount">0</span></div>
-                                        </div>
-                                        <span class="badge bg-secondary w-100" id="repeaterStatus">Inactive</span>
-                                    </div>
+                                    <span class="badge bg-secondary w-100" id="repeaterStatus">Inactive</span>
                                 </div>
                             </div>
                         </div>

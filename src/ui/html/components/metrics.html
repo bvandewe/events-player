@@ -1,0 +1,98 @@
+<!-- Real-time Metrics Section -->
+<div class="metrics-section mb-3">
+    <div class="d-flex align-items-center mb-2 collapse-header" data-bs-toggle="collapse" data-bs-target="#metricsCollapse">
+        <i class="bi bi-chevron-down me-2" id="metricsChevron"></i>
+        <h6 class="mb-0">Real-time Metrics</h6>
+    </div>
+    <div class="collapse show" id="metricsCollapse">
+        <div class="row">
+            <!-- Total Events -->
+            <div class="col-md-3">
+                <div class="card bg-primary-subtle">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-primary-emphasis">Total Events</h6>
+                                <h2 class="card-title mb-0 fw-bold text-primary" id="statTotalEvents">0</h2>
+                                <small class="text-primary-emphasis" id="statTotalEventsTime"></small>
+                            </div>
+                            <i class="bi bi-collection fs-1 text-primary opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Rate -->
+            <div class="col-md-3">
+                <div class="card bg-success-subtle">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-success-emphasis">Event Rate</h6>
+                                <h2 class="card-title mb-0 fw-bold text-success">
+                                    <span id="statAvgRate">0</span>
+                                    <i class="bi bi-info-circle-fill fs-6" 
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Average events per minute across all time buckets"></i>
+                                    <span class="mx-1">/</span>
+                                    <span id="statPeakRate">0</span>
+                                    <i class="bi bi-info-circle-fill fs-6" 
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Peak events per minute (highest bucket value)"></i>
+                                </h2>
+                                <small class="text-success-emphasis">avg / peak per min</small>
+                            </div>
+                            <i class="bi bi-speedometer2 fs-1 text-success opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unique Types -->
+            <div class="col-md-3">
+                <div class="card bg-info-subtle">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-info-emphasis">Event Types</h6>
+                                <h2 class="card-title mb-0 fw-bold text-info metric-clickable" 
+                                    id="statUniqueTypes" 
+                                    role="button" 
+                                    tabindex="0"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    title="Click to filter by top type">0</h2>
+                                <small class="text-info-emphasis" id="statUniqueTypesInfo"></small>
+                            </div>
+                            <i class="bi bi-diagram-3 fs-1 text-info opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unique Sources -->
+            <div class="col-md-3">
+                <div class="card bg-warning-subtle">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 text-warning-emphasis">Event Sources</h6>
+                                <h2 class="card-title mb-0 fw-bold text-warning metric-clickable" 
+                                    id="statUniqueSources" 
+                                    role="button" 
+                                    tabindex="0"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    title="Click to filter by top source">0</h2>
+                                <small class="text-warning-emphasis" id="statUniqueSourcesInfo"></small>
+                            </div>
+                            <i class="bi bi-hdd-stack fs-1 text-warning opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,5 @@
 import uuid
+import logging
 from contextvars import ContextVar
 
 from fastapi import FastAPI, Request
@@ -10,6 +11,9 @@ from .routes import router as api_router
 from .stream import router as streaming_router
 from .settings import settings
 from .auth import auth_middleware
+
+# Silence noisy SSE keepalive logs
+logging.getLogger("sse_starlette.sse").setLevel(logging.WARNING)
 
 # Request ID context variable for tracing
 request_id_var: ContextVar[str] = ContextVar("request_id", default="")

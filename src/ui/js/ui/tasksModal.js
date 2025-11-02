@@ -15,6 +15,9 @@ export const tasksModalController = (() => {
     let isVisible = false;
     let taskCountBadge = null;
 
+    // Browser-side tasks storage
+    const browserTasks = new Map(); // taskId -> { name, progress, onCancel, status, location: 'browser' }
+
     // DOM elements
     let tasksList = null;
     let noTasksMessage = null;
@@ -94,8 +97,11 @@ export const tasksModalController = (() => {
                 const data = JSON.parse(event.data);
                 const tasks = data.active_tasks || [];
 
-                // Update badge with current task count
-                updateBadgeCount(tasks.length);
+                // Update backend task count
+                backendTaskCount = tasks.length;
+
+                // Update badge with combined count (backend + browser)
+                updateBadgeCount(backendTaskCount + getBrowserTaskCount());
 
                 // If modal is open, also update the UI
                 if (isVisible) {
@@ -104,7 +110,7 @@ export const tasksModalController = (() => {
                     tasks.forEach(task => {
                         tasksObj[task.task_id] = task;
                     });
-                    renderTasks(tasksObj);
+                    renderAllTasks(tasksObj);
                 }
             } catch (error) {
                 console.error('[TasksModal] Error parsing badge SSE message:', error);
@@ -174,6 +180,79 @@ export const tasksModalController = (() => {
     };
 
     /**
+     * Register a browser-side task
+     * @param {string} taskId - Unique task identifier
+     * @param {Object} taskInfo - Task information { name, onCancel }
+     */
+    const registerBrowserTask = (taskId, taskInfo) => {
+        browserTasks.set(taskId, {
+            ...taskInfo,
+            status: 'Running',
+            progress: 0,
+            location: 'browser',
+            startedAt: new Date().toISOString()
+        });
+
+        console.log('[TasksModal] Registered browser task:', taskId, taskInfo.name);
+
+        // Update badge count
+        updateBadgeCount(getBrowserTaskCount() + getBackendTaskCount());
+
+        // Update UI if modal is visible
+        if (isVisible) {
+            renderAllTasks();
+        }
+    };
+
+    /**
+     * Unregister a browser-side task
+     * @param {string} taskId - Task identifier to remove
+     */
+    const unregisterBrowserTask = (taskId) => {
+        if (browserTasks.delete(taskId)) {
+            console.log('[TasksModal] Unregistered browser task:', taskId);
+
+            // Update badge count
+            updateBadgeCount(getBrowserTaskCount() + getBackendTaskCount());
+
+            // Update UI if modal is visible
+            if (isVisible) {
+                renderAllTasks();
+            }
+        }
+    };
+
+    /**
+     * Update browser task progress
+     * @param {string} taskId - Task identifier
+     * @param {number} progress - Progress percentage (0-100)
+     */
+    const updateBrowserTaskProgress = (taskId, progress) => {
+        const task = browserTasks.get(taskId);
+        if (task) {
+            task.progress = progress;
+
+            // Update UI if modal is visible
+            if (isVisible) {
+                renderAllTasks();
+            }
+        }
+    };
+
+    /**
+     * Get count of browser tasks
+     */
+    const getBrowserTaskCount = () => {
+        return browserTasks.size;
+    };
+
+    /**
+     * Get count of backend tasks (from last SSE update)
+     */
+    let backendTaskCount = 0;
+    const getBackendTaskCount = () => backendTaskCount;
+
+    /**
      * Show the tasks modal
      */
     const show = () => {
@@ -220,10 +299,18 @@ export const tasksModalController = (() => {
     };
 
     /**
-     * Render tasks in the modal
+     * Render all tasks (backend + browser) in the modal
      */
-    const renderTasks = (tasks) => {
-        const taskIds = Object.keys(tasks);
+    const renderAllTasks = (backendTasks = {}) => {
+        // Combine backend and browser tasks
+        const allTasks = { ...backendTasks };
+
+        // Add browser tasks
+        browserTasks.forEach((task, taskId) => {
+            allTasks[taskId] = task;
+        });
+
+        const taskIds = Object.keys(allTasks);
         const taskCount = taskIds.length;
 
         // Update task count badge
@@ -242,13 +329,29 @@ export const tasksModalController = (() => {
 
         noTasksMessage.style.display = 'none';
 
+        // Sort tasks: browser tasks first, then backend tasks
+        taskIds.sort((a, b) => {
+            const taskA = allTasks[a];
+            const taskB = allTasks[b];
+            if (taskA.location === 'browser' && taskB.location !== 'browser') return -1;
+            if (taskA.location !== 'browser' && taskB.location === 'browser') return 1;
+            return 0;
+        });
+
         // Render task items
         tasksList.innerHTML = '';
         taskIds.forEach(taskId => {
-            const task = tasks[taskId];
+            const task = allTasks[taskId];
             const taskItem = createTaskItem(taskId, task);
             tasksList.appendChild(taskItem);
         });
+    };
+
+    /**
+     * Render tasks in the modal (legacy function for backward compatibility)
+     */
+    const renderTasks = (tasks) => {
+        renderAllTasks(tasks);
     };
 
     /**
@@ -258,6 +361,11 @@ export const tasksModalController = (() => {
         const div = document.createElement('div');
         div.className = 'list-group-item';
 
+        const isBrowserTask = task.location === 'browser';
+        const locationBadge = isBrowserTask ?
+            '<span class="badge bg-info">Browser</span>' :
+            '<span class="badge bg-secondary">Backend</span>';
+
         const statusBadgeClass = task.status === 'Running' ? 'bg-success' :
             task.status === 'Cancelling' ? 'bg-warning' :
                 task.status === 'Completed' ? 'bg-info' : 'bg-secondary';
@@ -266,23 +374,41 @@ export const tasksModalController = (() => {
             <div class="d-flex w-100 justify-content-between align-items-center">
                 <div class="flex-grow-1">
                     <h6 class="mb-1">
-                        <span class="badge ${statusBadgeClass}">${task.status}</span>
-                        <span class="ms-2 text-muted small font-monospace">${taskId.substring(0, 8)}...</span>
+                        ${locationBadge}
+                        <span class="badge ${statusBadgeClass} ms-1">${task.status}</span>
+                        ${isBrowserTask ?
+                `<span class="ms-2">${task.name || 'Browser Task'}</span>` :
+                `<span class="ms-2 text-muted small font-monospace">${taskId.substring(0, 8)}...</span>`
+            }
                     </h6>
-                    <div class="progress mt-2" style="height: 20px;">
-                        <div class="progress-bar ${task.cancelled ? 'bg-warning' : 'bg-success'}" 
-                             role="progressbar" 
-                             style="width: ${task.progress}%"
-                             aria-valuenow="${task.progress}" 
-                             aria-valuemin="0" 
-                             aria-valuemax="100">
-                            ${task.progress}%
+                    ${isBrowserTask && task.progress > 0 ? `
+                        <div class="progress mt-2" style="height: 20px;">
+                            <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 style="width: ${task.progress}%"
+                                 aria-valuenow="${task.progress}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                ${task.progress > 5 ? task.progress + '%' : ''}
+                            </div>
                         </div>
-                    </div>
+                    ` : !isBrowserTask ? `
+                        <div class="progress mt-2" style="height: 20px;">
+                            <div class="progress-bar ${task.cancelled ? 'bg-warning' : 'bg-success'}" 
+                                 role="progressbar" 
+                                 style="width: ${task.progress}%"
+                                 aria-valuenow="${task.progress}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                ${task.progress}%
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="ms-3">
                     <button class="btn btn-sm btn-outline-danger cancel-task-btn" 
                             data-task-id="${taskId}"
+                            data-is-browser="${isBrowserTask}"
                             ${task.cancelled || task.status === 'Completed' ? 'disabled' : ''}>
                         <i class="bi bi-stop-circle"></i> Cancel
                     </button>
@@ -292,13 +418,49 @@ export const tasksModalController = (() => {
 
         // Add event listener for cancel button
         const cancelBtn = div.querySelector('.cancel-task-btn');
-        cancelBtn.addEventListener('click', () => handleCancelTask(taskId));
+        cancelBtn.addEventListener('click', () => {
+            if (isBrowserTask) {
+                handleCancelBrowserTask(taskId);
+            } else {
+                handleCancelTask(taskId);
+            }
+        });
 
         return div;
     };
 
     /**
-     * Handle cancel single task
+     * Handle cancelling a browser-side task
+     */
+    const handleCancelBrowserTask = (taskId) => {
+        const task = browserTasks.get(taskId);
+        if (task) {
+            console.log('[TasksModal] Cancelling browser task:', taskId);
+
+            // Call the onCancel callback if provided
+            if (task.onCancel && typeof task.onCancel === 'function') {
+                try {
+                    task.onCancel();
+                } catch (error) {
+                    console.error('[TasksModal] Error calling onCancel:', error);
+                }
+            }
+
+            // Remove the task
+            unregisterBrowserTask(taskId);
+
+            toastController.showToast({
+                detail: [{
+                    loc: ['task'],
+                    msg: `Browser task "${task.name || taskId}" cancelled successfully`,
+                    type: 'success'
+                }]
+            });
+        }
+    };
+
+    /**
+     * Handle cancel single task (backend)
      */
     const handleCancelTask = async (taskId) => {
         try {
@@ -382,6 +544,9 @@ export const tasksModalController = (() => {
     return {
         init,
         show,
-        hide
+        hide,
+        registerBrowserTask,
+        unregisterBrowserTask,
+        updateBrowserTaskProgress
     };
 })();

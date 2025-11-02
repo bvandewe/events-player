@@ -419,6 +419,51 @@ class GlobalFilterController {
     }
 
     /**
+     * Set a specific filter value programmatically
+     * @param {string} filterType - 'type', 'source', or 'subject'
+     * @param {string} value - The value to set (or null to clear that filter)
+     */
+    setFilter(filterType, value) {
+        const filters = appState.get('filters');
+
+        // Update the appropriate dropdown
+        switch (filterType) {
+            case 'type':
+                if (this.typeSelect) {
+                    this.typeSelect.value = value || '';
+                }
+                filters.type = value || null;
+                break;
+            case 'source':
+                if (this.sourceSelect) {
+                    this.sourceSelect.value = value || '';
+                }
+                filters.source = value || null;
+                break;
+            case 'subject':
+                if (this.subjectSelect) {
+                    this.subjectSelect.value = value || '';
+                }
+                filters.subject = value || null;
+                break;
+            default:
+                console.warn(`[GlobalFilters] Unknown filter type: ${filterType}`);
+                return;
+        }
+
+        // Update state - this will notify all subscribers and persist
+        appState.updateFilters(filters);
+
+        // Update active filter count badge
+        this.updateActiveFiltersCount();
+
+        // Update filter indicators on all views
+        this.updateFilterIndicators();
+
+        console.log(`[GlobalFilters] Filter set: ${filterType} = ${value}`);
+    }
+
+    /**
      * Clear all filters
      */
     clearFilters() {

@@ -65,10 +65,21 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-subtitle mb-2 text-success-emphasis">Avg Rate</h6>
-                                    <h2 class="card-title mb-0 fw-bold text-success" id="statAvgRate">0</h2>
-                                    <small class="text-success-emphasis">events/min</small>
-                                    <small class="text-success-emphasis d-block" id="statAvgRateTime"></small>
+                                    <h6 class="card-subtitle mb-2 text-success-emphasis">Event Rate</h6>
+                                    <h2 class="card-title mb-0 fw-bold text-success">
+                                        <span id="statAvgRate">0</span>
+                                        <i class="bi bi-info-circle-fill fs-6" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Average events per minute across all time buckets"></i>
+                                        <span class="mx-1">/</span>
+                                        <span id="statPeakRate">0</span>
+                                        <i class="bi bi-info-circle-fill fs-6" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Peak events per minute (highest bucket value)"></i>
+                                    </h2>
+                                    <small class="text-success-emphasis">avg / peak per min</small>
                                 </div>
                                 <i class="bi bi-speedometer2 fs-1 text-success opacity-25"></i>
                             </div>
@@ -167,7 +178,9 @@
                 <div class="container-fluid p-3 h-100" style="min-width: 1000px; background-color: var(--bs-body-bg);">
                     <div class="ms-3 d-flex justify-space-evenly">
                         <span class="mx-2 align-middle text-secondary fw-lighter"><small>Event #</small></span>
-                        <span class="ms-4 align-middle text-secondary fw-lighter"><small>Timestamp</small></span>
+                        <span class="ms-4 align-middle text-secondary fw-lighter actionLink" id="timestampToggle" style="cursor: pointer;" title="Click to toggle between relative and absolute time">
+                            <small>Timestamp <i class="bi bi-arrow-repeat"></i></small>
+                        </span>
                         <span class="ms-auto text-secondary fw-lighter"><small>&nbsp;</small></span>
                         <span class="d-flex gap-3 justify-content-evenly flex-grow-1">
                             <span class="text-secondary fw-lighter text-truncate" style="max-width: 33%;"><small>Type</small></span>
@@ -201,6 +214,10 @@
                                     <option value="6">30 min</option>
                                     <option value="7" selected>1 hr</option>
                                 </select>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="timelineAutoRefresh" checked>
+                                    <label class="form-check-label small" for="timelineAutoRefresh">Auto-refresh</label>
+                                </div>
                                 <button class="btn btn-sm btn-outline-secondary" 
                                         id="timelineEnlargeBtn"
                                         data-bs-toggle="tooltip" 

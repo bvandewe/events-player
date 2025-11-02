@@ -75,6 +75,11 @@ const timelineController = (() => {
     // Format: {value: number, unit: 'second'|'minute'}
     const zoomLevels = [
         { value: 1, unit: 'second' },   // 1 second
+        { value: 3, unit: 'second' },   // 3 seconds
+        { value: 5, unit: 'second' },   // 5 seconds
+        { value: 10, unit: 'second' },  // 10 seconds
+        { value: 15, unit: 'second' },  // 15 seconds
+        { value: 20, unit: 'second' },  // 20 seconds
         { value: 30, unit: 'second' },  // 30 seconds
         { value: 1, unit: 'minute' },   // 1 minute
         { value: 3, unit: 'minute' },   // 3 minutes
@@ -84,17 +89,21 @@ const timelineController = (() => {
         { value: 60, unit: 'minute' }   // 1 hour
     ];
 
-    // Load saved bucket size from localStorage, default to 1 hour (index 7)
+    // Load saved bucket size from localStorage, default to 1 hour (index 12)
     const savedZoomIndex = localStorage.getItem('timeline_bucket_size');
-    let currentZoomIndex = savedZoomIndex !== null ? parseInt(savedZoomIndex, 10) : 7;
+    let currentZoomIndex = savedZoomIndex !== null ? parseInt(savedZoomIndex, 10) : 12;
 
     // Validate loaded index
     if (currentZoomIndex < 0 || currentZoomIndex >= zoomLevels.length) {
-        currentZoomIndex = 7; // Default to 1 hour
+        currentZoomIndex = 12; // Default to 1 hour
     }
 
     // DOM elements (will be initialized in init())
     let bucketSizeSelect;
+    let autoRefreshToggle;
+
+    // Auto-refresh state
+    let autoRefreshEnabled = true; // Default to enabled
 
     // Stats elements
     let statTotalEvents;
@@ -124,6 +133,7 @@ const timelineController = (() => {
 
         // Initialize DOM element references
         bucketSizeSelect = document.getElementById('timelineBucketSize');
+        autoRefreshToggle = document.getElementById('timelineAutoRefresh');
         statTotalEvents = document.getElementById('statTotalEvents');
         statTotalEventsTime = document.getElementById('statTotalEventsTime');
         statPeakRate = document.getElementById('statPeakRate');
@@ -181,7 +191,14 @@ const timelineController = (() => {
      * Initialize the Chart.js chart
      */
     function initChart() {
-        const ctx = document.getElementById('timelineChart').getContext('2d');
+        const canvasElement = document.getElementById('timelineChart');
+
+        if (!canvasElement) {
+            console.warn('[Timeline] Canvas element "timelineChart" not found in DOM');
+            return;
+        }
+
+        const ctx = canvasElement.getContext('2d');
 
         // Plugin to sync left and right y-axes
         const syncYAxesPlugin = {
@@ -351,6 +368,12 @@ const timelineController = (() => {
             return;
         }
 
+        // Check if auto-refresh is enabled
+        if (!autoRefreshEnabled) {
+            console.log('[Timeline] Auto-refresh disabled, skipping scheduled refresh');
+            return;
+        }
+
         // Mark that we have a pending refresh
         pendingRefresh = true;
 
@@ -365,7 +388,7 @@ const timelineController = (() => {
 
         refreshTimer = setTimeout(() => {
             refreshTimer = null;
-            if (pendingRefresh) {
+            if (pendingRefresh && autoRefreshEnabled) {
                 pendingRefresh = false;
                 refreshChart().catch(err => console.error('[Timeline] Refresh failed:', err));
             }
@@ -754,11 +777,12 @@ const timelineController = (() => {
             bucketSize: `${bucketSize / 1000}s`
         });
 
-        // Update global filters to show custom time range
-        // This will sync the UI and apply the filter properly
-        const currentFilters = appState.get('filters') || {};
+        // Reset all filters first, then apply only the date range filter
+        // This ensures a clean filter state focused on the selected time period
         appState.updateFilters({
-            ...currentFilters,
+            type: '',
+            source: '',
+            subject: null,
             timeRange: 'custom',
             customStartTime: startTime,
             customEndTime: endTime
@@ -767,11 +791,13 @@ const timelineController = (() => {
         // Switch to Streams tab
         appState.set('activeTab', 'streams');
 
-        // Trigger Bootstrap tab switch
-        const streamsTab = document.querySelector('[data-bs-target="#streams"]');
+        // Trigger Bootstrap tab switch to streams-pane
+        const streamsTab = document.querySelector('#streams-tab');
         if (streamsTab) {
             const tab = new bootstrap.Tab(streamsTab);
             tab.show();
+        } else {
+            console.warn('[Timeline] Streams tab button not found');
         }
     }    /**
      * Highlight events in the streams list that fall within a time range
@@ -812,6 +838,33 @@ const timelineController = (() => {
      * Setup event listeners
      */
     function setupEventListeners() {
+        // Auto-refresh toggle
+        if (autoRefreshToggle) {
+            console.log('[Timeline] Setting up auto-refresh toggle');
+
+            // Load saved state from localStorage
+            const savedState = localStorage.getItem('timeline_auto_refresh');
+            if (savedState !== null) {
+                autoRefreshEnabled = savedState === 'true';
+                autoRefreshToggle.checked = autoRefreshEnabled;
+            }
+
+            autoRefreshToggle.addEventListener('change', (e) => {
+                autoRefreshEnabled = e.target.checked;
+                console.log('[Timeline] Auto-refresh', autoRefreshEnabled ? 'enabled' : 'disabled');
+
+                // Save to localStorage
+                localStorage.setItem('timeline_auto_refresh', autoRefreshEnabled.toString());
+
+                // If auto-refresh was just enabled, trigger an immediate refresh
+                if (autoRefreshEnabled) {
+                    scheduleRefresh(true);
+                }
+            });
+        } else {
+            console.warn('[Timeline] Auto-refresh toggle not found');
+        }
+
         // Bucket size dropdown
         if (bucketSizeSelect) {
             console.log('[Timeline] Setting up bucket size dropdown');

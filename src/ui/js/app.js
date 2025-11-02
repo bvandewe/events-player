@@ -34,10 +34,10 @@ storageManager.init().then(() => {
         });
     });
 
-    // Initialize unified dashboard controller
-    import('./unifiedDashboard').then(({ unifiedDashboardController }) => {
-        unifiedDashboardController.init();
-        console.log('[App] Unified dashboard initialized');
+    // Initialize dashboard controller
+    import('./dashboard').then(({ dashboardController }) => {
+        dashboardController.init();
+        console.log('[App] Dashboard initialized');
     });
 }).catch(error => {
     console.error('[App] Failed to initialize storage manager:', error);
@@ -84,6 +84,14 @@ import { toastController } from "./ui/toast";
 toastController.init(bootstrap);
 // Make it globally available
 window.toastController = toastController;
+
+import { initializeCollapseState } from "./ui/collapseState";
+// Initialize collapse state on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeCollapseState);
+} else {
+    initializeCollapseState();
+}
 
 import { generatorForm } from "./ui/generatorForm"
 generatorForm.init();
