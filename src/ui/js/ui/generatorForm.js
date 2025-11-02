@@ -502,10 +502,11 @@ export const generatorForm = (() => {
         event.preventDefault();
         event.stopPropagation();
 
-        const formData = new FormData(event.target);
-        const data = Object.fromEntries(formData.entries());
+        try {
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
 
-        console.log('[GeneratorForm] Form data collected:', data);
+            console.log('[GeneratorForm] Form data collected:', data);
 
         // Convert numeric fields to integers
         data.iterations = parseInt(data.iterations, 10);
@@ -548,22 +549,32 @@ export const generatorForm = (() => {
             subject: data.randomize_subject
         });
 
+        console.log('[GeneratorForm] Checking authorization...');
+        console.log('[GeneratorForm] authorizationManager:', authorizationManager);
+        console.log('[GeneratorForm] authorizationManager.isOperator:', typeof authorizationManager?.isOperator);
+
         // Check if user is authorized
         if (!authorizationManager.isOperator()) {
+            console.log('[GeneratorForm] User is not an operator, showing error');
             authorizationManager.showAuthorizationError('Only operators and administrators can generate events');
             return;
         }
 
+        console.log('[GeneratorForm] User is authorized, proceeding...');
+
         // Check if non-admin is trying to use iterations or custom delay
         // Default delay is 100ms, operators can use iterations=1 with delay=100
         if (!authorizationManager.isAdmin()) {
-            console.log('Check: iterations > 1?', data.iterations > 1, 'delay !== 100?', data.delay !== 100);
+            console.log('[GeneratorForm] Check: iterations > 1?', data.iterations > 1, 'delay !== 100?', data.delay !== 100);
 
             if (data.iterations > 1 || data.delay !== 100) {
+                console.log('[GeneratorForm] User is not admin and trying to use advanced features, showing error');
                 authorizationManager.showAuthorizationError('Only administrators can use iterations > 1 or custom delay settings');
                 return;
             }
         }
+
+        console.log('[GeneratorForm] Making API call to /api/generate with data:', data);
 
         // Use apiPost which handles automatic token refresh on 401
         apiPost('/api/generate', data)
@@ -618,6 +629,17 @@ export const generatorForm = (() => {
                     }]
                 });
             });
+        } catch (error) {
+            console.error('[GeneratorForm] Error in handleSubmit:', error);
+            console.error('[GeneratorForm] Error stack:', error.stack);
+            toastController.showToast({
+                detail: [{
+                    loc: ['form'],
+                    msg: error.message || 'Failed to process form submission',
+                    type: 'error'
+                }]
+            });
+        }
     };
 
     /**
