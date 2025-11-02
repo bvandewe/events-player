@@ -508,127 +508,133 @@ export const generatorForm = (() => {
 
             console.log('[GeneratorForm] Form data collected:', data);
 
-        // Convert numeric fields to integers
-        data.iterations = parseInt(data.iterations, 10);
-        data.delay = parseInt(data.delay, 10);
+            // Convert numeric fields to integers
+            data.iterations = parseInt(data.iterations, 10);
+            data.delay = parseInt(data.delay, 10);
 
-        // Remove custom_gateway_url from payload (not needed by API)
-        delete data.custom_gateway_url;
+            // Remove custom_gateway_url from payload (not needed by API)
+            delete data.custom_gateway_url;
 
-        // Add randomization flags based on button states (only if iterations > 1)
-        const randomSourceBtn = document.getElementById('randomSourceBtn');
-        const randomTypeBtn = document.getElementById('randomTypeBtn');
-        const randomSubjectBtn = document.getElementById('randomSubjectBtn');
+            // Add randomization flags based on button states (only if iterations > 1)
+            const randomSourceBtn = document.getElementById('randomSourceBtn');
+            const randomTypeBtn = document.getElementById('randomTypeBtn');
+            const randomSubjectBtn = document.getElementById('randomSubjectBtn');
 
-        data.randomize_source = data.iterations > 1 && randomSourceBtn?.classList.contains('active') || false;
-        data.randomize_type = data.iterations > 1 && randomTypeBtn?.classList.contains('active') || false;
-        data.randomize_subject = data.iterations > 1 && randomSubjectBtn?.classList.contains('active') || false;
+            data.randomize_source = data.iterations > 1 && randomSourceBtn?.classList.contains('active') || false;
+            data.randomize_type = data.iterations > 1 && randomTypeBtn?.classList.contains('active') || false;
+            data.randomize_subject = data.iterations > 1 && randomSubjectBtn?.classList.contains('active') || false;
 
-        // Use custom gateway URL if selected
-        if (data.event_gateway === '__custom__') {
-            const customGatewayUrl = document.getElementById('custom_gateway_url')?.value?.trim();
-            if (!customGatewayUrl) {
-                toastController.showToast({
-                    detail: [{
-                        loc: ['form', 'custom_gateway_url'],
-                        msg: 'Please enter a custom gateway URL',
-                        type: 'error'
-                    }]
-                });
+            // Use custom gateway URL if selected
+            if (data.event_gateway === '__custom__') {
+                const customGatewayUrl = document.getElementById('custom_gateway_url')?.value?.trim();
+                if (!customGatewayUrl) {
+                    toastController.showToast({
+                        detail: [{
+                            loc: ['form', 'custom_gateway_url'],
+                            msg: 'Please enter a custom gateway URL',
+                            type: 'error'
+                        }]
+                    });
+                    return;
+                }
+                data.event_gateway = customGatewayUrl;
+            }
+
+            console.log('Form data:', data);
+            console.log('Iterations:', data.iterations, 'type:', typeof data.iterations);
+            console.log('Delay:', data.delay, 'type:', typeof data.delay);
+            console.log('Randomization:', {
+                source: data.randomize_source,
+                type: data.randomize_type,
+                subject: data.randomize_subject
+            });
+
+            console.log('[GeneratorForm] Checking authorization...');
+            console.log('[GeneratorForm] authorizationManager:', authorizationManager);
+            console.log('[GeneratorForm] authorizationManager.isOperator:', typeof authorizationManager?.isOperator);
+
+            // Check if user is authorized
+            if (!authorizationManager.isOperator()) {
+                console.log('[GeneratorForm] User is not an operator, showing error');
+                authorizationManager.showAuthorizationError('Only operators and administrators can generate events');
                 return;
             }
-            data.event_gateway = customGatewayUrl;
-        }
 
-        console.log('Form data:', data);
-        console.log('Iterations:', data.iterations, 'type:', typeof data.iterations);
-        console.log('Delay:', data.delay, 'type:', typeof data.delay);
-        console.log('Randomization:', {
-            source: data.randomize_source,
-            type: data.randomize_type,
-            subject: data.randomize_subject
-        });
+            console.log('[GeneratorForm] User is authorized, proceeding...');
 
-        console.log('[GeneratorForm] Checking authorization...');
-        console.log('[GeneratorForm] authorizationManager:', authorizationManager);
-        console.log('[GeneratorForm] authorizationManager.isOperator:', typeof authorizationManager?.isOperator);
+            // Check if non-admin is trying to use iterations or custom delay
+            // Default delay is 100ms, operators can use iterations=1 with delay=100
+            if (!authorizationManager.isAdmin()) {
+                console.log('[GeneratorForm] Check: iterations > 1?', data.iterations > 1, 'delay !== 100?', data.delay !== 100);
 
-        // Check if user is authorized
-        if (!authorizationManager.isOperator()) {
-            console.log('[GeneratorForm] User is not an operator, showing error');
-            authorizationManager.showAuthorizationError('Only operators and administrators can generate events');
-            return;
-        }
-
-        console.log('[GeneratorForm] User is authorized, proceeding...');
-
-        // Check if non-admin is trying to use iterations or custom delay
-        // Default delay is 100ms, operators can use iterations=1 with delay=100
-        if (!authorizationManager.isAdmin()) {
-            console.log('[GeneratorForm] Check: iterations > 1?', data.iterations > 1, 'delay !== 100?', data.delay !== 100);
-
-            if (data.iterations > 1 || data.delay !== 100) {
-                console.log('[GeneratorForm] User is not admin and trying to use advanced features, showing error');
-                authorizationManager.showAuthorizationError('Only administrators can use iterations > 1 or custom delay settings');
-                return;
+                if (data.iterations > 1 || data.delay !== 100) {
+                    console.log('[GeneratorForm] User is not admin and trying to use advanced features, showing error');
+                    authorizationManager.showAuthorizationError('Only administrators can use iterations > 1 or custom delay settings');
+                    return;
+                }
             }
-        }
 
         console.log('[GeneratorForm] Making API call to /api/generate with data:', data);
 
         // Use apiPost which handles automatic token refresh on 401
-        apiPost('/api/generate', data)
+        const apiPromise = apiPost('/api/generate', data);
+        console.log('[GeneratorForm] apiPost returned:', apiPromise);
+
+        apiPromise
             .then(response => {
+                console.log('[GeneratorForm] Received response:', response);
                 if (response.status === 403) {
                     return response.json().then(error => {
                         throw new Error(error.detail || 'Forbidden: Insufficient permissions');
                     });
                 }
+                console.log('[GeneratorForm] Parsing response as JSON...');
                 return response.json();
             })
             .then(result => {
-                console.log('Form submitted successfully:', result);
+                console.log('[GeneratorForm] Form submitted successfully:', result);                    // Save operation to history
+                    saveOperationToHistory({
+                        event_gateway: data.event_gateway,
+                        custom_gateway_url: document.getElementById('custom_gateway_url')?.value || '',
+                        event_source: data.event_source,
+                        event_type: data.event_type,
+                        event_subject: data.event_subject,
+                        event_data: data.event_data,
+                        iterations: data.iterations,
+                        delay: data.delay,
+                        randomize_source: data.randomize_source,
+                        randomize_type: data.randomize_type,
+                        randomize_subject: data.randomize_subject
+                    });
 
-                // Save operation to history
-                saveOperationToHistory({
-                    event_gateway: data.event_gateway,
-                    custom_gateway_url: document.getElementById('custom_gateway_url')?.value || '',
-                    event_source: data.event_source,
-                    event_type: data.event_type,
-                    event_subject: data.event_subject,
-                    event_data: data.event_data,
-                    iterations: data.iterations,
-                    delay: data.delay,
-                    randomize_source: data.randomize_source,
-                    randomize_type: data.randomize_type,
-                    randomize_subject: data.randomize_subject
+                    Promise.all(
+                        [
+                            console.log(result),
+                            taskController.handleTaskStatus(result.task_id),
+                            toastController.showToast(result)
+                        ]
+                    );
+
+                    // Start auto-repeat if enabled and not already running
+                    const repeaterEnabledCheckbox = document.getElementById('repeaterEnabled');
+                    if (repeaterEnabledCheckbox?.checked && !repeaterInterval && repeaterStartFunction) {
+                        console.log('[GeneratorForm] Starting auto-repeat after successful submission');
+                        repeaterStartFunction();
+                    }
+                })
+                .catch(error => {
+                    console.error('[GeneratorForm] Error in promise chain:', error);
+                    console.error('[GeneratorForm] Error type:', typeof error);
+                    console.error('[GeneratorForm] Error message:', error?.message);
+                    console.error('[GeneratorForm] Error stack:', error?.stack);
+                    toastController.showToast({
+                        detail: [{
+                            loc: ['form'],
+                            msg: error.message || 'Failed to generate events',
+                            type: 'error'
+                        }]
+                    });
                 });
-
-                Promise.all(
-                    [
-                        console.log(result),
-                        taskController.handleTaskStatus(result.task_id),
-                        toastController.showToast(result)
-                    ]
-                );
-
-                // Start auto-repeat if enabled and not already running
-                const repeaterEnabledCheckbox = document.getElementById('repeaterEnabled');
-                if (repeaterEnabledCheckbox?.checked && !repeaterInterval && repeaterStartFunction) {
-                    console.log('[GeneratorForm] Starting auto-repeat after successful submission');
-                    repeaterStartFunction();
-                }
-            })
-            .catch(error => {
-                console.error('Error submitting form:', error);
-                toastController.showToast({
-                    detail: [{
-                        loc: ['form'],
-                        msg: error.message || 'Failed to generate events',
-                        type: 'error'
-                    }]
-                });
-            });
         } catch (error) {
             console.error('[GeneratorForm] Error in handleSubmit:', error);
             console.error('[GeneratorForm] Error stack:', error.stack);
