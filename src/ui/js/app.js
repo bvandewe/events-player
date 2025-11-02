@@ -35,7 +35,7 @@ storageManager.init().then(() => {
     });
 
     // Initialize dashboard controller
-    import('./dashboard').then(({ dashboardController }) => {
+    import('./main').then(({ dashboardController }) => {
         dashboardController.init();
         console.log('[App] Dashboard initialized');
     });
