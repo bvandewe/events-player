@@ -6,6 +6,7 @@ import { appState } from '../state/appState';
 import { globalFilterController } from '../ui/globalFilters';
 import { searchController } from '../ui/search';
 import * as bootstrap from 'bootstrap';
+import { formatDistanceToNow } from 'date-fns';
 
 export const sseEventsController = (() => {
 
@@ -41,7 +42,32 @@ export const sseEventsController = (() => {
         // create the second span element with classes "align-middle" and "text-secondary", and set its text content
         const span2 = document.createElement('span');
         span2.classList.add('align-middle', 'text-secondary', 'event-timestamp');
-        span2.textContent = `${timestamp}`;
+        span2.style.cursor = 'help';
+
+        // Format relative time and store both formats in data attributes
+        try {
+            const relativeTime = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+            const absoluteTime = timestamp;
+
+            // Store both formats in data attributes
+            span2.setAttribute('data-relative-time', relativeTime);
+            span2.setAttribute('data-absolute-time', absoluteTime);
+            span2.setAttribute('data-format', 'relative'); // Track current format
+
+            // Initially show relative time
+            span2.textContent = relativeTime;
+
+            // Add tooltip with absolute timestamp
+            span2.setAttribute('data-bs-toggle', 'tooltip');
+            span2.setAttribute('data-bs-placement', 'top');
+            span2.setAttribute('data-bs-title', absoluteTime);
+            span2.setAttribute('title', absoluteTime);
+        } catch (error) {
+            console.warn('[Events] Failed to format timestamp:', timestamp, error);
+            span2.textContent = timestamp;
+            span2.setAttribute('data-absolute-time', timestamp);
+            span2.setAttribute('data-format', 'absolute');
+        }
 
         // create the third span element with classes "mx-auto", "align-middle", and "text-info-emphasis", and set its text content
         const span3 = document.createElement('span');
@@ -172,6 +198,33 @@ export const sseEventsController = (() => {
         sseConnection.incrementCount();
     };
 
+    /**
+     * Update filtered event count based on current filters and total count
+     */
+    const updateFilteredCount = () => {
+        const stateFilters = appState.get('filters') || {};
+        const totalCount = appState.get('eventCount');
+
+        // Check if any filters are active
+        const hasActiveFilters = stateFilters.type ||
+            stateFilters.source ||
+            stateFilters.subject !== null ||
+            (stateFilters.timeRange && stateFilters.timeRange !== 'all');
+
+        if (hasActiveFilters) {
+            // Count visible events in the DOM
+            const eventsStack = document.getElementById('events-stack');
+            if (eventsStack) {
+                const visibleEvents = eventsStack.querySelectorAll('.accordion-item:not(.d-none)').length;
+                appState.setFilteredEventCount(visibleEvents);
+                console.log('[Events] Updated filtered count:', visibleEvents, '/', totalCount);
+            }
+        } else {
+            // No filters active
+            appState.setFilteredEventCount(null);
+        }
+    };
+
     const handleNewEvent = async (event) => {
         if ("data" in event) {
             var hasError = "none";
@@ -256,6 +309,8 @@ export const sseEventsController = (() => {
             // Check if event matches active filters from global state
             if (!globalFilterController.matchesFilters(cloudEventData)) {
                 console.log('[Events] Event filtered out:', cloudEventData.type);
+                // Update filtered count even when event is filtered out
+                updateFilteredCount();
                 return; // Don't display this event
             }
 
@@ -270,10 +325,19 @@ export const sseEventsController = (() => {
             const item = createAccordionItem(accordionData);
             eventsStack.prepend(item);
 
+            // Initialize tooltips for the new event timestamp
+            const timestampEl = item.querySelector('.event-timestamp[data-bs-toggle="tooltip"]');
+            if (timestampEl) {
+                new bootstrap.Tooltip(timestampEl, { trigger: 'hover' });
+            }
+
             // Apply search filter to new event if search is active
             if (searchController.getSearchTerm && searchController.getSearchTerm()) {
                 searchController.reapplySearch();
             }
+
+            // Update filtered count AFTER item is added to DOM
+            updateFilteredCount();
         }
     };
 
@@ -335,35 +399,49 @@ export const sseEventsController = (() => {
 
                 if (timeRange && timeRange !== 'all') {
                     const now = Date.now();
-                    timeRangeEnd = now;
 
-                    // Convert global time range format to milliseconds
-                    switch (timeRange) {
-                        case '1h':
-                            timeRangeStart = now - (60 * 60 * 1000);
-                            break;
-                        case '6h':
-                            timeRangeStart = now - (6 * 60 * 60 * 1000);
-                            break;
-                        case '24h':
-                            timeRangeStart = now - (24 * 60 * 60 * 1000);
-                            break;
-                        case '7d':
-                            timeRangeStart = now - (7 * 24 * 60 * 60 * 1000);
-                            break;
+                    // Handle custom time range (from timeline click or manual selection)
+                    if (timeRange === 'custom') {
+                        timeRangeStart = globalFilters.customStartTime;
+                        timeRangeEnd = globalFilters.customEndTime;
+                        console.log('[Events] Applying custom time range from global filters:', {
+                            start: timeRangeStart ? new Date(timeRangeStart).toISOString() : 'none',
+                            end: timeRangeEnd ? new Date(timeRangeEnd).toISOString() : 'none'
+                        });
+                    } else {
+                        // Convert predefined time range format to milliseconds
+                        timeRangeEnd = now;
+
+                        switch (timeRange) {
+                            case '1h':
+                                timeRangeStart = now - (60 * 60 * 1000);
+                                break;
+                            case '6h':
+                                timeRangeStart = now - (6 * 60 * 60 * 1000);
+                                break;
+                            case '24h':
+                                timeRangeStart = now - (24 * 60 * 60 * 1000);
+                                break;
+                            case '7d':
+                                timeRangeStart = now - (7 * 24 * 60 * 60 * 1000);
+                                break;
+                        }
+
+                        console.log('[Events] Applying time range from global filters:', {
+                            timeRange,
+                            start: new Date(timeRangeStart).toISOString(),
+                            end: new Date(timeRangeEnd).toISOString()
+                        });
                     }
-
-                    console.log('[Events] Applying time range from global filters:', {
-                        timeRange,
-                        start: new Date(timeRangeStart).toISOString(),
-                        end: new Date(timeRangeEnd).toISOString()
-                    });
                 }
             }
 
             let events = await eventStorageManager.getRecentEvents({ limit: maxQueueSize });
 
             console.log('[Events] getRecentEvents returned:', events ? events.length : 'null/undefined', 'events');
+
+            // Store the total count BEFORE filtering
+            const totalEventsCount = events ? events.length : 0;
 
             // Check if any filters are active (URL params or dropdown filters)
             const stateFilters = appState.get('filters');
@@ -430,6 +508,17 @@ export const sseEventsController = (() => {
                 });
 
                 console.log('[Events] After filtering:', events.length, 'events');
+
+                // Update filtered count in appState for counter display
+                if (hasActiveFilters) {
+                    appState.setFilteredEventCount(events.length);
+                } else {
+                    // No filters active, reset filtered count
+                    appState.setFilteredEventCount(null);
+                }
+            } else {
+                // No filters active, reset filtered count
+                appState.setFilteredEventCount(null);
             }
 
             if (events && events.length > 0) {
@@ -462,12 +551,19 @@ export const sseEventsController = (() => {
                     // Don't increment in loop - set count once at the end
                     const item = createAccordionItem(accordionData);
                     eventsStack.prepend(item);
+
+                    // Initialize tooltips for the new event timestamp
+                    const timestampEl = item.querySelector('.event-timestamp[data-bs-toggle="tooltip"]');
+                    if (timestampEl) {
+                        new bootstrap.Tooltip(timestampEl, { trigger: 'hover' });
+                    }
                 });
 
-                // Set counter to the actual number of events loaded (filtered)
-                sseConnection.setCount(events.length);
+                // Set counter to the TOTAL number of events in storage (not filtered count)
+                // The filtered count is set separately via appState.setFilteredEventCount()
+                sseConnection.setCount(totalEventsCount);
 
-                console.log(`[Events] Displayed ${events.length} events`);
+                console.log(`[Events] Displayed ${events.length} events out of ${totalEventsCount} total`);
 
                 // Apply search filter if search is active
                 if (searchController.getSearchTerm && searchController.getSearchTerm()) {
@@ -552,6 +648,59 @@ export const sseEventsController = (() => {
                 loadEventsFromStorage();
             }
         });
+
+        // Setup timestamp toggle functionality
+        const setupTimestampToggle = () => {
+            const timestampToggle = document.getElementById('timestampToggle');
+            if (timestampToggle) {
+                timestampToggle.addEventListener('click', () => {
+                    // Get all timestamp elements
+                    const timestamps = document.querySelectorAll('.event-timestamp');
+
+                    if (timestamps.length === 0) return;
+
+                    // Check current format from first timestamp
+                    const currentFormat = timestamps[0].getAttribute('data-format');
+                    const newFormat = currentFormat === 'relative' ? 'absolute' : 'relative';
+
+                    console.log(`[Events] Toggling timestamps from ${currentFormat} to ${newFormat}`);
+
+                    // Toggle all timestamps
+                    timestamps.forEach(span => {
+                        const relativeTime = span.getAttribute('data-relative-time');
+                        const absoluteTime = span.getAttribute('data-absolute-time');
+
+                        if (newFormat === 'absolute') {
+                            // Show absolute time, tooltip shows relative
+                            span.textContent = absoluteTime;
+                            span.setAttribute('data-bs-title', relativeTime);
+                            span.setAttribute('title', relativeTime);
+                            span.setAttribute('data-format', 'absolute');
+                        } else {
+                            // Show relative time, tooltip shows absolute
+                            span.textContent = relativeTime;
+                            span.setAttribute('data-bs-title', absoluteTime);
+                            span.setAttribute('title', absoluteTime);
+                            span.setAttribute('data-format', 'relative');
+                        }
+
+                        // Reinitialize tooltip if it exists
+                        const tooltip = bootstrap.Tooltip.getInstance(span);
+                        if (tooltip) {
+                            tooltip.dispose();
+                            new bootstrap.Tooltip(span, { trigger: 'hover' });
+                        }
+                    });
+                });
+            }
+        };
+
+        // Initialize toggle after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupTimestampToggle);
+        } else {
+            setupTimestampToggle();
+        }
     };
 
     return {

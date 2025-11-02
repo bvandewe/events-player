@@ -129,6 +129,19 @@ export const actionsController = (() => {
         // Show modal
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
+
+        // Ensure the confirmation modal and its backdrop are on top
+        modalEl.addEventListener('shown.bs.modal', () => {
+            // Set z-index higher than any other modal
+            modalEl.style.zIndex = '1060';
+
+            // Find and update the backdrop z-index
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 0) {
+                const lastBackdrop = backdrops[backdrops.length - 1];
+                lastBackdrop.style.zIndex = '1059';
+            }
+        }, { once: true });
     };
 
     const init = (bs) => {

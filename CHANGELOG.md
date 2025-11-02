@@ -1,5 +1,141 @@
 # CHANGE LOG
 
+## 0.4.3 - 2025-11-02
+
+### Added
+
+#### Features
+
+- **Enhanced Timeline Bucket Sizes**
+    - Added 6 new granular bucket size options for high-frequency event analysis
+    - New options: 1s, 3s, 5s, 10s, 15s, 20s
+    - Total of 13 bucket size options ranging from 1 second to 1 hour
+    - Improved event rate analysis for sub-30-second monitoring
+    - Bucket size selection persists in localStorage
+
+- **Click-to-Filter Metrics**
+    - Event Types metric card now clickable to filter by most common type
+    - Event Sources metric card now clickable to filter by most common source
+    - Visual hover effects and active state indicators
+    - Full keyboard accessibility (Enter/Space key support)
+    - Tooltips guide users to click functionality
+    - Programmatic filter API added to globalFilterController
+
+- **Analytics Charts**
+    - Implemented Top Sources horizontal bar chart (gray theme)
+    - Implemented Top Event Types horizontal bar chart (green theme)
+    - Implemented Top Subjects horizontal bar chart (yellow theme)
+    - Charts display top 10 items for each category
+    - Full-screen enlarge functionality for detailed viewing
+    - Real-time updates synchronized with event stream
+    - Charts respect global filter state
+
+- **Timeline Enhancements**
+    - Added auto-refresh toggle for timeline chart
+    - Toggle state persists in localStorage
+    - Manual refresh available when auto-refresh is disabled
+    - Improved performance for high-volume event streams
+
+- **Event Timestamp Features**
+    - Toggle between relative time ("2 minutes ago") and absolute timestamps
+    - Click timestamp column header to switch display format
+    - Format persists per session
+    - Tooltips show alternative format on hover
+
+- **Browser Task Management**
+    - Tasks modal now displays both backend and browser-side tasks
+    - Auto-repeat event generator appears in task list
+    - Browser tasks show distinct "Browser" badge
+    - Separate cancel handling for browser vs backend tasks
+    - Task count badge includes both task types
+
+- **Generator Form Improvements**
+    - Reorganized offcanvas header layout
+    - Reset and History buttons moved to left side for better UX
+    - Operation history dropdown integrated into header
+    - More compact and intuitive layout
+
+- **Event Rate Metrics**
+    - Split event rate into Average and Peak metrics
+    - Average: mean events per minute across all buckets
+    - Peak: highest event count in any single minute
+    - Dual display format "avg / peak per min"
+    - Tooltips explain calculation method
+
+### Changed
+
+#### UI/UX Improvements
+
+- **Unified Dashboard Architecture**
+    - Consolidated dashboard to single main view with component-based structure
+    - Created reusable component files: metrics.html, streams.html, analytics.html, storage.html, chartModal.html
+    - Main.html now includes all components in clean, modular structure
+    - Removed redundant dashboard-unified.html in favor of main.html
+    - Updated index.html to include main.html instead of dashboard-unified.html
+
+- **State Management**
+    - Dashboard controller refactored from factory pattern to class-based singleton
+    - Improved real-time update throttling (2-second delay for metrics)
+    - Analytics charts always update regardless of active tab
+    - Better separation of concerns between tabs and charts
+
+- **Component Organization**
+    - Each UI section now in separate HTML component file
+    - Collapsible sections with chevron indicators
+    - Collapse state persists in localStorage
+    - New collapseState.js module for centralized collapse management
+
+- **Tasks Modal**
+    - Enhanced to support both backend and browser-side tasks
+    - Location badges distinguish task origin (Backend/Browser)
+    - Browser tasks show animated progress bars
+    - Updated modal title to "Manage Tasks" (was "Active Generator Tasks")
+    - Improved info text to clarify task types
+
+### Fixed
+
+#### Bug Fixes
+
+- **Analytics Chart Initialization**
+    - Fixed empty analytics panels - charts were placeholder TODO functions
+    - Implemented full Chart.js initialization with proper registration
+    - Added updateAnalyticsCharts() method to populate data
+    - Charts now properly display and update in real-time
+
+- **Build System**
+    - Fixed Parcel cache corruption (MDB_BAD_TXN error)
+    - Added .parcel-cache to .gitignore
+    - Successfully rebuilt after cache cleanup
+
+- **Auto-Repeat Generator**
+    - Fixed auto-repeat to start only after first manual form submission
+    - Prevents automatic start when checkbox is enabled
+    - Proper task registration when repeater starts
+    - Task unregistration when repeater stops or is cancelled
+
+- **Modal Z-Index**
+    - Confirmation modal now appears on top of other modals
+    - Fixed backdrop layering issues
+    - Dynamic z-index adjustment (1060 for modal, 1059 for backdrop)
+
+- **Dashboard Routing**
+    - Fixed app.js to import dashboard.js instead of non-existent unifiedDashboard.js
+    - Removed deleted unifiedDashboard.js file references
+    - Dashboard controller properly initialized
+
+#### Code Quality
+
+- **Import Statements**
+    - Added missing date-fns import for formatDistanceToNow in events.js
+    - Fixed module path for collapseState.js in app.js
+
+### Technical Debt
+
+- **File Cleanup**
+    - Deleted obsolete unifiedDashboard.js (replaced by refactored dashboard.js)
+    - Cleaned up duplicate dashboard implementation
+    - Removed redundant unified dashboard code
+
 ## 0.4.2 - 2025-11-01
 
 ### Added

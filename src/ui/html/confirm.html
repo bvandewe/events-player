@@ -1,4 +1,14 @@
-<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+<style>
+  /* Ensure confirmation modal is always on top of other modals */
+  #confirmModal {
+    z-index: 1060; /* Higher than Bootstrap's default modal z-index of 1055 */
+  }
+  #confirmModal .modal-backdrop {
+    z-index: 1059;
+  }
+</style>
+
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
