@@ -497,10 +497,20 @@ export const generatorForm = (() => {
         }
     };
 
-    const handleSubmit = (event) => {
+    let isSubmitting = false; // Prevent duplicate submissions
+    
+    const handleSubmit = async (event) => {
         console.log('[GeneratorForm] handleSubmit called', event);
         event.preventDefault();
         event.stopPropagation();
+
+        // Prevent duplicate submissions
+        if (isSubmitting) {
+            console.warn('[GeneratorForm] Already submitting, ignoring duplicate submit event');
+            return;
+        }
+        
+        isSubmitting = true;
 
         try {
             const formData = new FormData(event.target);
@@ -577,67 +587,65 @@ export const generatorForm = (() => {
             console.log('[GeneratorForm] Making API call to /api/generate with data:', data);
 
             // Use apiPost which handles automatic token refresh on 401
-            const apiPromise = apiPost('/api/generate', data);
-            console.log('[GeneratorForm] apiPost returned:', apiPromise);
-
-            apiPromise
-                .then(response => {
-                    console.log('[GeneratorForm] Received response:', response);
-                    if (response.status === 403) {
-                        return response.json().then(error => {
-                            throw new Error(error.detail || 'Forbidden: Insufficient permissions');
-                        });
-                    }
-                    console.log('[GeneratorForm] Parsing response as JSON...');
-                    return response.json();
-                })
-                .then(result => {
-                    console.log('[GeneratorForm] Form submitted successfully:', result);                    // Save operation to history
-                    saveOperationToHistory({
-                        event_gateway: data.event_gateway,
-                        custom_gateway_url: document.getElementById('custom_gateway_url')?.value || '',
-                        event_source: data.event_source,
-                        event_type: data.event_type,
-                        event_subject: data.event_subject,
-                        event_data: data.event_data,
-                        iterations: data.iterations,
-                        delay: data.delay,
-                        randomize_source: data.randomize_source,
-                        randomize_type: data.randomize_type,
-                        randomize_subject: data.randomize_subject
-                    });
-
-                    Promise.all(
-                        [
-                            console.log(result),
-                            taskController.handleTaskStatus(result.task_id),
-                            toastController.showToast(result)
-                        ]
-                    );
-
-                    // Start auto-repeat if enabled and not already running
-                    const repeaterEnabledCheckbox = document.getElementById('repeaterEnabled');
-                    if (repeaterEnabledCheckbox?.checked && !repeaterInterval && repeaterStartFunction) {
-                        console.log('[GeneratorForm] Starting auto-repeat after successful submission');
-                        repeaterStartFunction();
-                    }
-                })
-                .catch(error => {
-                    console.error('[GeneratorForm] Error in promise chain:', error);
-                    console.error('[GeneratorForm] Error type:', typeof error);
-                    console.error('[GeneratorForm] Error message:', error?.message);
-                    console.error('[GeneratorForm] Error stack:', error?.stack);
-                    toastController.showToast({
-                        detail: [{
-                            loc: ['form'],
-                            msg: error.message || 'Failed to generate events',
-                            type: 'error'
-                        }]
-                    });
+            try {
+                const response = await apiPost('/api/generate', data);
+                console.log('[GeneratorForm] Received response:', response);
+                
+                if (response.status === 403) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Forbidden: Insufficient permissions');
+                }
+                
+                console.log('[GeneratorForm] Parsing response as JSON...');
+                const result = await response.json();
+                console.log('[GeneratorForm] Form submitted successfully:', result);
+                
+                // Save operation to history
+                saveOperationToHistory({
+                    event_gateway: data.event_gateway,
+                    custom_gateway_url: document.getElementById('custom_gateway_url')?.value || '',
+                    event_source: data.event_source,
+                    event_type: data.event_type,
+                    event_subject: data.event_subject,
+                    event_data: data.event_data,
+                    iterations: data.iterations,
+                    delay: data.delay,
+                    randomize_source: data.randomize_source,
+                    randomize_type: data.randomize_type,
+                    randomize_subject: data.randomize_subject
                 });
+
+                // Handle task status and show toast
+                await Promise.all([
+                    taskController.handleTaskStatus(result.task_id),
+                    toastController.showToast(result)
+                ]);
+
+                // Start auto-repeat if enabled and not already running
+                const repeaterEnabledCheckbox = document.getElementById('repeaterEnabled');
+                if (repeaterEnabledCheckbox?.checked && !repeaterInterval && repeaterStartFunction) {
+                    console.log('[GeneratorForm] Starting auto-repeat after successful submission');
+                    repeaterStartFunction();
+                }
+            } catch (error) {
+                console.error('[GeneratorForm] Error in API call:', error);
+                console.error('[GeneratorForm] Error type:', typeof error);
+                console.error('[GeneratorForm] Error message:', error?.message);
+                console.error('[GeneratorForm] Error stack:', error?.stack);
+                toastController.showToast({
+                    detail: [{
+                        loc: ['form'],
+                        msg: error.message || 'Failed to generate events',
+                        type: 'error'
+                    }]
+                });
+            } finally {
+                isSubmitting = false;
+            }
         } catch (error) {
             console.error('[GeneratorForm] Error in handleSubmit:', error);
             console.error('[GeneratorForm] Error stack:', error.stack);
+            isSubmitting = false;
             toastController.showToast({
                 detail: [{
                     loc: ['form'],
