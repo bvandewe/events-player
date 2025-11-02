@@ -19,7 +19,7 @@ class MetricsController {
      */
     init() {
         console.log('[Metrics] Initializing...');
-        
+
         // Setup click handlers for click-to-filter
         this.setupClickHandlers();
 

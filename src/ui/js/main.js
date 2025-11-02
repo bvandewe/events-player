@@ -15,7 +15,7 @@ class MainDashboardController {
     constructor() {
         this.activeTab = 'streams';
         this.storageManager = null;
-        
+
         // Component controllers
         this.components = {
             metrics: null,
@@ -119,7 +119,7 @@ class MainDashboardController {
     updateFilterIndicator() {
         const filters = appState.get('filters');
         const indicator = document.getElementById('activeFiltersIndicator');
-        
+
         if (!indicator) return;
 
         const activeFilters = [];
@@ -177,7 +177,7 @@ class MainDashboardController {
      */
     async onFiltersChanged() {
         console.log('[MainDashboard] Filters changed');
-        
+
         // Update all components
         if (this.components.metrics) {
             await this.components.metrics.update();
