@@ -99,7 +99,8 @@ async def sse_stream(request: Request):
     client_id = None
     if request.client:
         # Add an individual queue for each new client' browser tab
-        client_id = f"{request.client.host}:{request.client.port}"
+        # Use 'events-' prefix to avoid collision with other SSE streams
+        client_id = f"events-{request.client.host}:{request.client.port}"
         log.info("New SSE client for /stream/events: %s", client_id)
         sse_clients[client_id] = asyncio.Queue(MAX_QUEUE_SIZE)
     return EventSourceResponse(event_generator(client_id, request))
@@ -158,44 +159,60 @@ def get_task(request: Request, task_id: str):
     return EventSourceResponse(task_status_generator(task_id))
 
 
-async def client_stats_generator(request: Request):
+# Generator for unified metadata (tasks + clients)
+async def metadata_generator(request: Request):
     """
-    Stream SSE client statistics in real-time.
+    Unified SSE generator that streams all metadata updates:
+    - Active tasks
+    - SSE client statistics
+    - Combined stats
 
-    This generator monitors the sse_clients dictionary and emits updates
-    whenever the client list changes (clients connect/disconnect) or
-    when queue sizes change significantly.
+    This reduces the need for multiple SSE connections and polling.
     """
     try:
-        previous_client_count = len(sse_clients)
-        previous_client_ids = set(sse_clients.keys())
+        previous_task_state = None
+        previous_client_count = -1  # Force initial emit
+        previous_client_ids = set()  # type: set[str]
         previous_queue_sizes: dict[str, int] = {}
 
-        log.info("Client stats stream started")
+        log.info("Metadata stream started")
 
         while True:
             # Check if the requesting client disconnected
             if await request.is_disconnected():
-                log.debug("Client stats stream: client disconnected")
+                log.debug("Metadata stream: client disconnected")
                 break
 
-            # Check current state
+            # ===== TASK STATISTICS =====
+            current_task_state = json.dumps(
+                {"active_tasks": [task.model_dump() for task in active_tasks.values()]},
+                sort_keys=True,
+            )
+
+            if current_task_state != previous_task_state:
+                yield dict(
+                    event="tasks",
+                    data=json.dumps(
+                        {"active_tasks": [task.model_dump() for task in active_tasks.values()]}
+                    ),
+                )
+                previous_task_state = current_task_state
+                log.debug("Metadata stream: tasks update sent")
+
+            # ===== CLIENT STATISTICS =====
             current_client_count = len(sse_clients)
             current_client_ids = set(sse_clients.keys())
-
-            # Calculate current queue sizes
             current_queue_sizes = {
                 client_id: queue.qsize() for client_id, queue in sse_clients.items()
             }
 
-            # Detect changes in client list or queue sizes
             queue_sizes_changed = current_queue_sizes != previous_queue_sizes
             clients_changed = current_client_count != previous_client_count
             client_ids_changed = current_client_ids != previous_client_ids
             client_list_changed = clients_changed or client_ids_changed
+            is_first_emit = previous_client_count == -1
 
-            if client_list_changed or queue_sizes_changed:
-                # Calculate statistics
+            if client_list_changed or queue_sizes_changed or is_first_emit:
                 stats = []
                 total_queued = 0
 
@@ -212,7 +229,7 @@ async def client_stats_generator(request: Request):
                         }
                     )
 
-                payload = {
+                client_stats_payload = {
                     "total_clients": len(sse_clients),
                     "total_queued_events": total_queued,
                     "max_queue_size": MAX_QUEUE_SIZE,
@@ -228,98 +245,46 @@ async def client_stats_generator(request: Request):
                     "clients": sorted(stats, key=lambda x: x["queue_size"], reverse=True),
                 }
 
-                yield {"data": json.dumps(payload)}
+                yield dict(event="clients", data=json.dumps(client_stats_payload))
 
-                # Update tracking variables
                 previous_client_count = current_client_count
                 previous_client_ids = current_client_ids
                 previous_queue_sizes = current_queue_sizes
 
                 log.debug(
-                    f"Client stats update: {current_client_count} clients, {total_queued} queued"
+                    f"Metadata stream: clients update sent ({current_client_count} clients, {total_queued} queued)"
                 )
-
-            # Sleep briefly before checking again
-            await asyncio.sleep(0.5)
-
-    except (asyncio.CancelledError, GeneratorExit):
-        log.debug("Client stats generator cancelled")
-    except Exception as e:
-        log.error("Error in client_stats_generator: %s", e)
-
-
-# Stream client statistics
-@router.get(
-    path="/stream/clients",
-    tags=["Server Sent Event (SSE) Stream"],
-    operation_id="stream_client_stats",
-)
-async def stream_client_stats(request: Request):
-    """
-    SSE endpoint that streams real-time SSE client statistics.
-
-    Emits updates whenever clients connect or disconnect.
-    Useful for monitoring system health and client behavior.
-    """
-    client_id = "unknown"
-    if request.client:
-        client_id = f"{request.client.host}:{request.client.port}"
-    log.info("New SSE client for /stream/clients: %s", client_id)
-    return EventSourceResponse(client_stats_generator(request))
-
-
-# Generator for task statistics
-async def task_stats_generator(request: Request):
-    """
-    Generator for streaming task statistics via SSE.
-    Emits updates whenever active tasks change.
-    """
-    try:
-        previous_state = None
-
-        while True:
-            # If client closes connection, stop
-            if await request.is_disconnected():
-                log.debug("Task stats client disconnected")
-                break
-
-            # Serialize current active tasks
-            current_state = json.dumps(
-                {"active_tasks": [task for task in active_tasks.values()]}, sort_keys=True
-            )
-
-            # Only emit if state has changed
-            if current_state != previous_state:
-                yield dict(
-                    event="message",
-                    data=json.dumps({"active_tasks": [task for task in active_tasks.values()]}),
-                )
-                previous_state = current_state
 
             # Check for changes every 500ms
             await asyncio.sleep(0.5)
 
     except (asyncio.CancelledError, GeneratorExit):
-        log.debug("Task stats generator cancelled")
+        log.debug("Metadata generator cancelled")
     except Exception as e:
-        log.error("Error in task_stats_generator: %s", e)
+        log.error("Error in metadata_generator: %s", e)
 
 
-# Stream task statistics
+# Stream unified metadata (tasks + clients)
 @router.get(
-    path="/stream/tasks",
+    path="/stream/meta",
     tags=["Server Sent Event (SSE) Stream"],
-    operation_id="stream_task_stats",
+    operation_id="stream_metadata",
 )
-async def stream_task_stats(request: Request):
+async def stream_metadata(request: Request):
     """
-    SSE endpoint that streams real-time active task statistics.
+    SSE endpoint that streams all metadata updates in a unified stream:
+    - Active tasks (event: 'tasks')
+    - SSE client statistics (event: 'clients')
 
-    Emits updates whenever tasks are created, updated, or completed.
-    Useful for monitoring background task status in admin interface.
+    This reduces the need for multiple SSE connections and polling,
+    allowing the frontend to use just two SSE connections total:
+    1. /stream/events for CloudEvents
+    2. /stream/meta for all metadata
+
+    Events are sent with specific event types that the frontend can listen for.
     """
     client_id = "unknown"
     if request.client:
         client_id = f"{request.client.host}:{request.client.port}"
-    log.info("New SSE client for /stream/tasks: %s", client_id)
-    return EventSourceResponse(task_stats_generator(request))
+    log.info("New SSE client for /stream/meta: %s", client_id)
+    return EventSourceResponse(metadata_generator(request))

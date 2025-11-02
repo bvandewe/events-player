@@ -6,14 +6,15 @@
 import * as bootstrap from 'bootstrap';
 import { apiGet, apiPost } from '../utils/apiClient.js';
 import { toastController } from './toast.js';
+import { metadataSSE } from '../sse/metadata.js';
 
 export const tasksModalController = (() => {
     let modal = null;
     let modalElement = null;
-    let eventSource = null;
-    let badgeEventSource = null;
+    let unsubscribe = null; // Unsubscribe function for metadata stream
     let isVisible = false;
     let taskCountBadge = null;
+    let backendTasks = []; // Cache backend tasks from metadata stream
 
     // Browser-side tasks storage
     const browserTasks = new Map(); // taskId -> { name, progress, onCancel, status, location: 'browser' }
@@ -56,99 +57,44 @@ export const tasksModalController = (() => {
             console.log('[TasksModal] Modal shown, loading tasks...');
             isVisible = true;
             loadActiveTasks(); // Initial load
-            setupSSEConnection(); // Start SSE for real-time updates
         });
 
         // Stop SSE when modal is hidden
         modalElement.addEventListener('hide.bs.modal', () => {
             console.log('[TasksModal] Modal hidden');
             isVisible = false;
-            closeSSEConnection();
         });
 
-        // Setup background SSE connection for badge updates
-        setupBadgeSSEConnection();
+        // Subscribe to metadata stream for task updates
+        setupMetadataSubscription();
 
         console.log('[TasksModal] Initialized');
     };
 
     /**
-     * Setup background SSE connection for badge updates
-     * This runs constantly to keep the badge count updated
+     * Subscribe to the unified metadata stream for task updates
      */
-    const setupBadgeSSEConnection = () => {
-        console.log('[TasksModal] Setting up badge SSE connection...');
+    const setupMetadataSubscription = () => {
+        console.log('[TasksModal] Subscribing to metadata stream...');
 
-        // Close existing connection if any
-        if (badgeEventSource) {
-            console.log('[TasksModal] Closing existing badge SSE connection');
-            badgeEventSource.close();
-            badgeEventSource = null;
-        }
+        // Subscribe to 'tasks' events from the unified metadata stream
+        unsubscribe = metadataSSE.subscribe('tasks', (data) => {
+            console.log('[TasksModal] Received tasks update from metadata stream');
 
-        badgeEventSource = new EventSource('/stream/tasks');
+            // Extract backend tasks from the metadata
+            backendTasks = data.active_tasks || [];
 
-        badgeEventSource.addEventListener('open', () => {
-            console.log('[TasksModal] Badge SSE connection established');
-        });
+            // Update badge with combined count (backend + browser)
+            const totalCount = backendTasks.length + getBrowserTaskCount();
+            updateBadgeCount(totalCount);
 
-        badgeEventSource.addEventListener('message', (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                const tasks = data.active_tasks || [];
-
-                // Update backend task count
-                backendTaskCount = tasks.length;
-
-                // Update badge with combined count (backend + browser)
-                updateBadgeCount(backendTaskCount + getBrowserTaskCount());
-
-                // If modal is open, also update the UI
-                if (isVisible) {
-                    // Convert array to object keyed by task_id for renderTasks
-                    const tasksObj = {};
-                    tasks.forEach(task => {
-                        tasksObj[task.task_id] = task;
-                    });
-                    renderAllTasks(tasksObj);
-                }
-            } catch (error) {
-                console.error('[TasksModal] Error parsing badge SSE message:', error);
+            // If modal is open, render all tasks
+            if (isVisible) {
+                renderAllTasks(backendTasks);
             }
         });
 
-        badgeEventSource.addEventListener('error', (error) => {
-            console.error('[TasksModal] Badge SSE connection error:', error);
-
-            // If connection fails, try to reconnect after delay
-            if (badgeEventSource.readyState === EventSource.CLOSED) {
-                console.log('[TasksModal] Badge SSE connection closed, will reconnect...');
-                setTimeout(() => {
-                    if (badgeEventSource && badgeEventSource.readyState === EventSource.CLOSED) {
-                        setupBadgeSSEConnection();
-                    }
-                }, 5000);
-            }
-        });
-    };
-
-    /**
-     * Setup SSE connection to listen for task changes when modal is open
-     */
-    const setupSSEConnection = () => {
-        console.log('[TasksModal] Setting up modal SSE connection...');
-        // We reuse the badge connection since it's already streaming
-        // The badge SSE connection will call renderTasks when modal is open
-        console.log('[TasksModal] Using shared SSE connection for modal updates');
-    };
-
-    /**
-     * Close SSE connection
-     */
-    const closeSSEConnection = () => {
-        // We don't close the badge SSE connection when modal closes
-        // It continues running in the background to keep badge updated
-        console.log('[TasksModal] Modal closed, SSE continues in background');
+        console.log('[TasksModal] Subscribed to metadata stream');
     };
 
     /**
@@ -196,11 +142,12 @@ export const tasksModalController = (() => {
         console.log('[TasksModal] Registered browser task:', taskId, taskInfo.name);
 
         // Update badge count
-        updateBadgeCount(getBrowserTaskCount() + getBackendTaskCount());
+        const totalCount = backendTasks.length + getBrowserTaskCount();
+        updateBadgeCount(totalCount);
 
         // Update UI if modal is visible
         if (isVisible) {
-            renderAllTasks();
+            renderAllTasks(backendTasks);
         }
     };
 
@@ -213,11 +160,12 @@ export const tasksModalController = (() => {
             console.log('[TasksModal] Unregistered browser task:', taskId);
 
             // Update badge count
-            updateBadgeCount(getBrowserTaskCount() + getBackendTaskCount());
+            const totalCount = backendTasks.length + getBrowserTaskCount();
+            updateBadgeCount(totalCount);
 
             // Update UI if modal is visible
             if (isVisible) {
-                renderAllTasks();
+                renderAllTasks(backendTasks);
             }
         }
     };
@@ -247,10 +195,9 @@ export const tasksModalController = (() => {
     };
 
     /**
-     * Get count of backend tasks (from last SSE update)
+     * Get count of backend tasks (from metadata stream)
      */
-    let backendTaskCount = 0;
-    const getBackendTaskCount = () => backendTaskCount;
+    const getBackendTaskCount = () => backendTasks.length;
 
     /**
      * Show the tasks modal
@@ -541,12 +488,24 @@ export const tasksModalController = (() => {
         }
     };
 
+    /**
+     * Cleanup resources (unsubscribe from metadata stream)
+     */
+    const cleanup = () => {
+        console.log('[TasksModal] Cleaning up resources...');
+        if (unsubscribe) {
+            unsubscribe();
+            unsubscribe = null;
+        }
+    };
+
     return {
         init,
         show,
         hide,
         registerBrowserTask,
         unregisterBrowserTask,
-        updateBrowserTaskProgress
+        updateBrowserTaskProgress,
+        cleanup
     };
 })();

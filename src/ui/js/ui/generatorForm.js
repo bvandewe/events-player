@@ -498,7 +498,7 @@ export const generatorForm = (() => {
     };
 
     let isSubmitting = false; // Prevent duplicate submissions
-    
+
     const handleSubmit = async (event) => {
         console.log('[GeneratorForm] handleSubmit called', event);
         event.preventDefault();
@@ -509,7 +509,7 @@ export const generatorForm = (() => {
             console.warn('[GeneratorForm] Already submitting, ignoring duplicate submit event');
             return;
         }
-        
+
         isSubmitting = true;
 
         try {
@@ -590,16 +590,16 @@ export const generatorForm = (() => {
             try {
                 const response = await apiPost('/api/generate', data);
                 console.log('[GeneratorForm] Received response:', response);
-                
+
                 if (response.status === 403) {
                     const error = await response.json();
                     throw new Error(error.detail || 'Forbidden: Insufficient permissions');
                 }
-                
+
                 console.log('[GeneratorForm] Parsing response as JSON...');
                 const result = await response.json();
                 console.log('[GeneratorForm] Form submitted successfully:', result);
-                
+
                 // Save operation to history
                 saveOperationToHistory({
                     event_gateway: data.event_gateway,

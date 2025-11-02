@@ -4,13 +4,14 @@
  */
 
 import * as bootstrap from 'bootstrap';
+import { metadataSSE } from '../sse/metadata.js';
 
 export const clientsModalController = (() => {
     let modal = null;
     let isVisible = false;
     let clientCountBadge = null;
-    let eventSource = null;
-    let badgeEventSource = null;
+    let unsubscribe = null; // Unsubscribe function for metadata stream
+    let latestData = null; // Cache the latest SSE data
 
     // DOM elements
     const elements = {
@@ -53,114 +54,74 @@ export const clientsModalController = (() => {
         modalElement.addEventListener('shown.bs.modal', () => {
             console.log('[ClientsModal] Modal opened');
             isVisible = true;
-            // Fetch initial data immediately when modal opens
-            fetchInitialStats();
-            setupSSEConnection();
+
+            // If we have cached data from SSE, use it immediately
+            if (latestData) {
+                console.log('[ClientsModal] Using cached SSE data');
+                updateUI(latestData);
+            } else {
+                // Only fetch if we don't have cached data
+                console.log('[ClientsModal] No cached data, fetching...');
+                fetchInitialStats();
+            }
         });
 
         modalElement.addEventListener('hidden.bs.modal', () => {
             console.log('[ClientsModal] Modal closed');
             isVisible = false;
-            closeSSEConnection();
         });
 
-        // Setup background SSE connection for badge updates
-        setupBadgeSSEConnection();
+        // Subscribe to metadata stream for client updates
+        setupMetadataSubscription();
 
         console.log('[ClientsModal] Initialized');
     };
 
     /**
-     * Setup background SSE connection for badge updates
-     * This runs constantly to keep the badge count updated
+     * Subscribe to the unified metadata stream for client updates
      */
-    const setupBadgeSSEConnection = () => {
-        console.log('[ClientsModal] Setting up badge SSE connection...');
+    const setupMetadataSubscription = () => {
+        console.log('[ClientsModal] Subscribing to metadata stream...');
 
-        // Close existing connection if any
-        if (badgeEventSource) {
-            console.log('[ClientsModal] Closing existing badge SSE connection');
-            badgeEventSource.close();
-            badgeEventSource = null;
-        }
+        // Subscribe to 'clients' events from the unified metadata stream
+        unsubscribe = metadataSSE.subscribe('clients', (data) => {
+            console.log('[ClientsModal] Received clients update from metadata stream');
 
-        badgeEventSource = new EventSource('/stream/clients');
+            // Cache the latest data
+            latestData = data;
 
-        badgeEventSource.addEventListener('open', () => {
-            console.log('[ClientsModal] Badge SSE connection established');
-        });
+            // Update badge with current client count
+            updateBadgeCount(data.total_clients);
 
-        badgeEventSource.addEventListener('message', (event) => {
-            try {
-                const data = JSON.parse(event.data);
-
-                // Update badge with current client count
-                updateBadgeCount(data.total_clients);
-
-                // If modal is open, also update the UI
-                if (isVisible) {
-                    updateUI(data);
-                }
-            } catch (error) {
-                console.error('[ClientsModal] Error parsing badge SSE message:', error);
+            // If modal is open, also update the UI
+            if (isVisible) {
+                updateUI(data);
             }
         });
 
-        badgeEventSource.addEventListener('error', (error) => {
-            console.error('[ClientsModal] Badge SSE connection error:', error);
-
-            // If connection fails, try to reconnect after delay
-            if (badgeEventSource.readyState === EventSource.CLOSED) {
-                console.log('[ClientsModal] Badge SSE connection closed, will reconnect...');
-                setTimeout(() => {
-                    if (badgeEventSource && badgeEventSource.readyState === EventSource.CLOSED) {
-                        setupBadgeSSEConnection();
-                    }
-                }, 5000);
-            }
-        });
+        console.log('[ClientsModal] Subscribed to metadata stream');
     };
 
     /**
      * Fetch initial statistics when modal opens
+     * Only used if we don't have cached SSE data yet
      */
     const fetchInitialStats = async () => {
-        console.log('[ClientsModal] Fetching initial stats...');
+        console.log('[ClientsModal] Fetching initial stats from API...');
         try {
             const response = await fetch('/api/sse/stats');
+            console.log('[ClientsModal] Fetch response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            console.log('[ClientsModal] Fetched initial stats:', data);
             updateUI(data);
-            console.log('[ClientsModal] Initial stats loaded');
+            console.log('[ClientsModal] Initial stats loaded successfully');
         } catch (error) {
             console.error('[ClientsModal] Error fetching initial stats:', error);
             showError();
         }
-    };
-
-    /**
-     * Setup SSE connection to listen for client changes when modal is open
-     * This provides real-time updates to the modal UI
-     */
-    const setupSSEConnection = () => {
-        console.log('[ClientsModal] Setting up modal SSE connection...');
-
-        // We can reuse the badge connection since it's already streaming
-        // Just need to ensure UI updates happen when modal is visible
-        // The badge SSE connection will call updateUI when modal is open
-
-        console.log('[ClientsModal] Using shared SSE connection for modal updates');
-    };
-
-    /**
-     * Close SSE connection
-     */
-    const closeSSEConnection = () => {
-        // We don't close the badge SSE connection when modal closes
-        // It continues running in the background to keep badge updated
-        console.log('[ClientsModal] Modal closed, SSE continues in background');
     };
 
     /**
@@ -342,13 +303,9 @@ export const clientsModalController = (() => {
      */
     const cleanup = () => {
         console.log('[ClientsModal] Cleaning up resources...');
-        if (badgeEventSource) {
-            badgeEventSource.close();
-            badgeEventSource = null;
-        }
-        if (eventSource) {
-            eventSource.close();
-            eventSource = null;
+        if (unsubscribe) {
+            unsubscribe();
+            unsubscribe = null;
         }
     };
 

@@ -60,7 +60,17 @@ function initAuth() {
         // Initialize export controller AFTER authorization is ready
         import('./ui/exportEvents').then(({ exportEventsController }) => {
             exportEventsController.init(storageManager);
+        }).catch(error => {
+            console.error('[App] Failed to initialize export controller:', error);
         });
+
+        // Initialize generator form AFTER auth is ready
+        try {
+            generatorForm.init();
+            console.log('[App] Generator form initialized');
+        } catch (error) {
+            console.error('[App] Failed to initialize generator form:', error);
+        }
     }).catch(error => {
         console.error('[App] Failed to initialize authentication:', error);
     });
@@ -93,8 +103,8 @@ if (document.readyState === 'loading') {
     initializeCollapseState();
 }
 
-import { generatorForm } from "./ui/generatorForm"
-generatorForm.init();
+import { generatorForm } from "./ui/generatorForm";
+// Generator form will be initialized after auth - see initAuth() function
 
 import { tasksModalController } from "./ui/tasksModal";
 tasksModalController.init();
@@ -105,6 +115,12 @@ import { clientsModalController } from "./ui/clientsModal";
 clientsModalController.init();
 // Make it globally available for auth dropdown
 window.clientsModalController = clientsModalController;
+
+// Initialize metadata SSE connection after all components are ready
+// This provides a single SSE stream for tasks and clients metadata
+import { metadataSSE } from "./sse/metadata";
+console.log('[App] Initializing metadata SSE connection...');
+metadataSSE.init();
 
 // Export controller will be initialized after auth - see initAuth() function
 
@@ -132,13 +148,14 @@ document.addEventListener('click', () => {
     tooltipList.forEach(tooltip => tooltip.hide());
 }, true); // Use capture to catch all click events
 
-// Cleanup SSE connection when navigating away to prevent connection leaks
+// Cleanup SSE connections when navigating away to prevent connection leaks
 import { sseConnection } from "./sse/connection";
+import { metadataSSE } from "./sse/metadata";
 
 window.addEventListener('beforeunload', () => {
     console.log('[App] Page unloading, closing all SSE connections');
     sseConnection.close();
-    clientsModalController.cleanup();
+    metadataSSE.close();
 });
 
 // Export for use in other modules
