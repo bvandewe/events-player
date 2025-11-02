@@ -174,16 +174,13 @@ async def handle_generator_request(
                     )
                     response.raise_for_status()
             except httpx.HTTPStatusError as exc:
-                active_tasks.pop(task.id, None)
                 log.error("HTTP error occurred when posting to gateway: %s", exc)
                 task.status = "Failed"
                 task.progress = -1
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Bad Gateway: Failed to post event to {generator_request.event_gateway} - HTTP {exc.response.status_code}",
-                ) from exc
+                task.error = f"Bad Gateway: Failed to post event to {generator_request.event_gateway} - HTTP {exc.response.status_code}"
+                active_tasks[task.id] = task  # Update task with error info
+                return  # Exit gracefully without raising exception
             except httpx.ConnectError as exc:
-                active_tasks.pop(task.id, None)
                 log.error(
                     "Connection error when posting to gateway %s: %s",
                     generator_request.event_gateway,
@@ -191,23 +188,23 @@ async def handle_generator_request(
                 )
                 task.status = "Failed"
                 task.progress = -1
-                raise HTTPException(
-                    status_code=503,
-                    detail=f"Service Unavailable: Could not connect to {generator_request.event_gateway}",
-                ) from exc
+                task.error = (
+                    f"Service Unavailable: Could not connect to {generator_request.event_gateway}"
+                )
+                active_tasks[task.id] = task  # Update task with error info
+                return  # Exit gracefully without raising exception
             except httpx.TimeoutException as exc:
-                active_tasks.pop(task.id, None)
                 log.error(
                     "Timeout when posting to gateway %s: %s", generator_request.event_gateway, exc
                 )
                 task.status = "Failed"
                 task.progress = -1
-                raise HTTPException(
-                    status_code=504,
-                    detail=f"Gateway Timeout: Request to {generator_request.event_gateway} timed out",
-                ) from exc
+                task.error = (
+                    f"Gateway Timeout: Request to {generator_request.event_gateway} timed out"
+                )
+                active_tasks[task.id] = task  # Update task with error info
+                return  # Exit gracefully without raising exception
             except httpx.RequestError as exc:
-                active_tasks.pop(task.id, None)
                 log.error(
                     "Request error when posting to gateway %s: %s",
                     generator_request.event_gateway,
@@ -215,10 +212,9 @@ async def handle_generator_request(
                 )
                 task.status = "Failed"
                 task.progress = -1
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Bad Gateway: Error sending request to {generator_request.event_gateway} - {type(exc).__name__}",
-                ) from exc
+                task.error = f"Bad Gateway: Error sending request to {generator_request.event_gateway} - {type(exc).__name__}"
+                active_tasks[task.id] = task  # Update task with error info
+                return  # Exit gracefully without raising exception
 
             progress = round((i + 1) / iterations * 100)
 
@@ -232,12 +228,12 @@ async def handle_generator_request(
             if task.id in active_tasks and task.progress >= 0:
                 active_tasks[task.id] = task
             elif task.progress == -1:
+                log.error("Task %s failed!", task.id)
                 active_tasks.pop(task.id, None)
-                raise HTTPException(
-                    status_code=500, detail=f"Task {task.id} didnt complete or failed!"
-                )
+                return  # Exit gracefully
             else:
-                raise HTTPException(status_code=500, detail=f"Task {task.id} does not exist!")
+                log.error("Task %s does not exist!", task.id)
+                return  # Exit gracefully
 
             # wait for the requested delay
             await asyncio.sleep(delay_ms / 1000)
@@ -247,6 +243,14 @@ async def handle_generator_request(
         active_tasks.pop(task.id, None)
 
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e)) from e
+        log.error("Validation error in task %s: %s", task.id, e)
+        task.status = "Failed"
+        task.progress = -1
+        task.error = f"Validation error: {str(e)}"
+        active_tasks[task.id] = task
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {e}") from e
+        log.error("Unexpected error in task %s: %s", task.id, e, exc_info=True)
+        task.status = "Failed"
+        task.progress = -1
+        task.error = f"Internal server error: {str(e)}"
+        active_tasks[task.id] = task

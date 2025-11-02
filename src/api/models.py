@@ -1,3 +1,4 @@
+import json
 import typing
 from datetime import datetime
 from pydantic import BaseModel, HttpUrl, field_validator, ConfigDict
@@ -47,6 +48,20 @@ class EventGeneratorRequest(BaseModel):
     randomize_type: bool = False
     randomize_subject: bool = False
 
+    @field_validator("event_data")
+    @classmethod
+    def validate_event_data_json(cls, value: str) -> str:
+        """Validate that event_data is valid JSON"""
+        if not value or not value.strip():
+            raise ValueError("event_data cannot be empty")
+
+        try:
+            json.loads(value)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"event_data must be valid JSON: {str(e)}")
+
+        return value
+
     @field_validator("iterations")
     @classmethod
     def check_positive_iterations(cls, value: int) -> int:
@@ -72,7 +87,7 @@ class EventGeneratorTask(BaseModel):
     progress: int = 0
     client_id: typing.Optional[str] = None
     cancelled: bool = False  # Flag to signal task cancellation
+    error: typing.Optional[str] = None  # Error message if task failed
 
     def __setitem__(self, key: str, value: typing.Any) -> None:
         setattr(self, key, value)
-    

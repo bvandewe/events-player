@@ -1,5 +1,70 @@
 # CHANGE LOG
 
+## 0.4.4 - 2025-11-02
+
+### Added
+
+#### Infrastructure
+
+- **Unified Metadata SSE Stream**
+    - New `/stream/meta` endpoint consolidates tasks and clients metadata
+    - Single SSE connection for all metadata (tasks + clients statistics)
+    - Eliminates polling, provides real-time metadata updates
+    - Frontend uses dedicated MetadataSSEManager for subscription-based updates
+    - Reduced SSE connections from 5+ to just 2 per browser tab
+
+#### Backend
+
+- **Input Validation for Event Generator**
+    - Added JSON validation for `event_data` field in EventGeneratorRequest model
+    - Prevents invalid JSON from being processed by background tasks
+    - Custom validation error messages for better user experience
+    - Global exception handlers for RequestValidationError and ValidationError
+    - Returns structured error responses with field-level details
+
+### Changed
+
+#### Architecture
+
+- **SSE Connection Optimization**
+    - Clients modal now subscribes to unified metadata stream
+    - Tasks modal now subscribes to unified metadata stream
+    - Proper initialization order: components load before SSE connections
+    - Metadata SSE initialized after all components are ready
+    - Both modals share single SSE connection via subscription pattern
+
+### Removed
+
+#### Cleanup
+
+- **Obsolete SSE Endpoints**
+    - Removed `/stream/clients` endpoint (superseded by `/stream/meta`)
+    - Removed `/stream/tasks` endpoint (superseded by `/stream/meta`)
+    - Removed `client_stats_generator()` function
+    - Removed `task_stats_generator()` function
+    - Reduced backend code by 172 lines (462 → 290 lines in stream.py)
+
+### Fixed
+
+#### Error Handling
+
+- **Graceful Generator Request Failures**
+    - Invalid JSON data now rejected at validation layer (422 status)
+    - Clear error messages guide users to fix input issues
+    - No background tasks created for invalid requests
+    - Prevents malformed events from being sent to gateway
+    - Better error tracking with structured responses
+
+### Performance
+
+- **Browser Connection Limits**
+    - Reduced to 2 persistent SSE connections per tab:
+        - 1 for CloudEvents (`/stream/events`)
+        - 1 for all metadata (`/stream/meta`)
+    - Supports 3+ concurrent browser tabs reliably
+    - Eliminated resource-intensive polling operations
+    - Real-time updates with lower overhead
+
 ## 0.4.3 - 2025-11-02
 
 ### Added

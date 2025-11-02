@@ -280,6 +280,8 @@ async def generate_events(
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(require_operator),  # Require admin or operator role
 ):
+    log.info("=== GENERATE EVENTS ENDPOINT CALLED ===")
+    log.info("User: %s with roles: %s", current_user.get("username"), current_user.get("roles"))
     log.debug("Received request on generator: %s", generator_request)
 
     # Only admin can use iterations > 1 or custom delay (non-default)
@@ -292,6 +294,7 @@ async def generate_events(
             )
 
     try:
+        log.info("Creating task...")
         task_id = str(uuid.uuid4())
         client_id = ""
         if request.client:
@@ -301,14 +304,17 @@ async def generate_events(
             id=task_id, status="Creating", progress=0, client_id=client_id
         )
         active_tasks[task_id] = current_task
+        log.info("Adding background task for task_id: %s", task_id)
         background_tasks.add_task(handle_generator_request, generator_request, task=current_task)
         result = {
             "message": f"Ok. Working on it in the background... (task: {task_id})",
             "status": "success",
             "task_id": task_id,
         }
+        log.info("Returning response for task_id: %s", task_id)
         return result
     except Exception as e:
+        log.error("Error in generate_events: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
 

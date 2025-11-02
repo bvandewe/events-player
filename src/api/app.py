@@ -5,6 +5,9 @@ from contextvars import ContextVar
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 
 from .description import description
 from .routes import router as api_router
@@ -84,6 +87,51 @@ async def add_request_id(request: Request, call_next):
 
 # Authentication middleware
 app.middleware("http")(auth_middleware)
+
+
+# Global exception handler for validation errors
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Handle Pydantic validation errors with user-friendly messages.
+    """
+    errors = []
+    for error in exc.errors():
+        field = " -> ".join(str(loc) for loc in error["loc"])
+        message = error["msg"]
+        error_type = error["type"]
+
+        # Provide more user-friendly messages for common validation errors
+        if "event_data" in field and "json" in message.lower():
+            message = (
+                "The 'Event Data' field must contain valid JSON. Please check your JSON syntax."
+            )
+        elif error_type == "missing":
+            message = f"The field '{field}' is required but was not provided."
+
+        errors.append({"field": field, "message": message, "type": error_type})
+
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation error",
+            "errors": errors,
+            "message": "Please check your input and try again.",
+        },
+    )
+
+
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    """
+    Handle Pydantic ValidationError (for model validation outside requests).
+    """
+    errors = []
+    for error in exc.errors():
+        field = " -> ".join(str(loc) for loc in error["loc"])
+        errors.append({"field": field, "message": error["msg"], "type": error["type"]})
+
+    return JSONResponse(status_code=422, content={"detail": "Validation error", "errors": errors})
 
 
 # Customize OpenAPI schema to include OAuth2 security
