@@ -20,7 +20,7 @@ class AnalyticsController {
 
         // Import Chart.js dynamically
         const { Chart, registerables } = await import('chart.js');
-        
+
         // Register components if not already registered
         if (!Chart.getChart('topSourcesChart')) {
             Chart.register(...registerables);

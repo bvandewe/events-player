@@ -35,7 +35,7 @@ class StorageController {
         // Recent Events
         const recentMax = this.storageManager.maxRecentEvents;
         const recentPercent = Math.round((stats.recentCount / recentMax) * 100);
-        
+
         const recentCountEl = document.getElementById('recentCount');
         const recentMaxEl = document.getElementById('recentMax');
         const recentProgressEl = document.getElementById('recentProgress');
@@ -61,7 +61,7 @@ class StorageController {
         // Metadata
         const metadataMax = this.storageManager.maxMetadataEvents;
         const metadataPercent = Math.round((stats.metadataCount / metadataMax) * 100);
-        
+
         const metadataCountEl = document.getElementById('metadataCount');
         const metadataMaxEl = document.getElementById('metadataMax');
         const metadataProgressEl = document.getElementById('metadataProgress');

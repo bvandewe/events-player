@@ -39,7 +39,7 @@ class TimelineController {
     constructor(storageManager) {
         this.storageManager = storageManager;
         this.chart = null;
-        
+
         // Throttling for timeline updates
         this.refreshTimer = null;
         this.pendingRefresh = false;
@@ -398,7 +398,7 @@ class TimelineController {
         const timeSpanMs = lastTime - firstTime;
 
         if (this.statElements.totalEventsTime) {
-            this.statElements.totalEventsTime.textContent = 
+            this.statElements.totalEventsTime.textContent =
                 timeSpanMs > 0 ? formatDistanceToNow(new Date(firstTime), { addSuffix: false }) : 'Now';
         }
 
@@ -429,7 +429,7 @@ class TimelineController {
         }
         if (this.statElements.quietPeriodsSize) {
             const bucketInfo = this.getBucketSize();
-            this.statElements.quietPeriodsSize.textContent = 
+            this.statElements.quietPeriodsSize.textContent =
                 `${bucketInfo.value} ${bucketInfo.unit}${bucketInfo.value > 1 ? 's' : ''}`;
         }
     }
@@ -456,7 +456,7 @@ class TimelineController {
                 this.currentZoomIndex = parseInt(e.target.value, 10);
                 localStorage.setItem('timeline_bucket_size', this.currentZoomIndex);
                 console.log('[Timeline] Bucket size changed to:', this.getBucketSize());
-                
+
                 // Reinitialize chart with new bucket size
                 if (this.chart) {
                     this.chart.destroy();
