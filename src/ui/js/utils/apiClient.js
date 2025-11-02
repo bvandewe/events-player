@@ -64,16 +64,40 @@ export async function apiFetch(url, options = {}, isRetry = false) {
  * 
  * @param {string} url - The URL to post to
  * @param {object} data - The data to send as JSON
+ * @param {number} timeout - Request timeout in milliseconds (default: 30000)
  * @returns {Promise<Response>} The fetch response
  */
-export async function apiPost(url, data) {
-    return apiFetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    });
+export async function apiPost(url, data, timeout = 30000) {
+    console.log(`[API] POST ${url} with timeout ${timeout}ms`);
+    
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+        console.error(`[API] Request timeout after ${timeout}ms`);
+        controller.abort();
+    }, timeout);
+
+    try {
+        const response = await apiFetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        console.log(`[API] POST ${url} completed with status ${response.status}`);
+        return response;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            console.error(`[API] Request aborted (timeout: ${timeout}ms)`);
+            throw new Error(`Request timeout after ${timeout}ms`);
+        }
+        throw error;
+    }
 }
 
 /**
