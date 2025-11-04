@@ -32,7 +32,7 @@ class ApiSettings(BaseSettings):
     )
 
     # App version
-    tag: str = "0.3.4"
+    tag: str = "0.4.5"
     repository_url: str = "https://github.com/bvandewe/events-player"
 
     # Logging configs
@@ -93,6 +93,16 @@ class ApiSettings(BaseSettings):
     auth_issuer: str = ""  # Expected JWT issuer (optional - auto-derived from oauth_* if not set)
     auth_audience: str = ""  # Expected JWT audience
     auth_algorithm: str = "RS256"  # JWT signature algorithm
+
+    # Trust mode: Skip signature verification (USE WITH CAUTION)
+    # Set to True when running behind Istio/service mesh that has already validated the JWT
+    # This mode still decodes the token to extract user info but skips:
+    #   - Signature verification (no JWKS lookup)
+    #   - Issuer validation
+    #   - Audience validation
+    # ⚠️ WARNING: Only enable this in trusted environments where JWT validation
+    # is handled by the proxy layer (e.g., Istio with RequestAuthentication)
+    auth_trust_mode: bool = False
 
     # Role mapping configuration
     # Maps JWT token roles to application roles (admin, operator, user)

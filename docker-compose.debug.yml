@@ -33,11 +33,11 @@ services:
       default_generator_event: '{"event_source": "https://dummy.source.com/sys-admin", "event_type": "com.source.dummy.test.requested.v1", "event_subject": "some.interesting.concept.key_abcde12345", "event_data": {"foo": "bar"}}'
 
       # Frontend Display Configuration
-      browser_queue_size: 1000
+      browser_queue_size: 500
 
       # Frontend Storage Configuration (IndexedDB)
-      storage_max_recent_events: 5000 # Tier 1: Max full events (capacity-based FIFO)
-      storage_max_metadata_events: 100000 # Tier 2: Max metadata entries (capacity-based FIFO)
+      storage_max_recent_events: 1000 # Tier 1: Max full events (capacity-based FIFO)
+      storage_max_metadata_events: 20000 # Tier 2: Max metadata entries (capacity-based FIFO)
 
       # HTTP Client Configuration
       http_client_timeout: 30.0

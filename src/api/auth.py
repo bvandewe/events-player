@@ -86,7 +86,10 @@ class JWTValidator:
                 self._jwks_cache = jwks_data
                 self._jwks_cache_time = datetime.now()
 
+                # Log available key IDs for troubleshooting
+                available_kids = [key.get("kid", "unknown") for key in jwks_data.get("keys", [])]
                 logger.info(f"Fetched JWKS from {jwks_url}")
+                logger.debug(f"Available key IDs (kid): {available_kids}")
                 return jwks_data
 
         except httpx.HTTPError as e:
@@ -123,7 +126,13 @@ class JWTValidator:
                         logger.error(f"Failed to construct key: {e}")
                         return None
 
-            logger.warning(f"No matching key found for kid: {kid}")
+            # Log available keys for troubleshooting
+            available_kids = [key.get("kid", "unknown") for key in jwks.get("keys", [])]
+            logger.warning(
+                f"No matching key found for kid: {kid}. "
+                f"Available kids in JWKS: {available_kids}. "
+                f"This may indicate a key rotation or token from a different issuer."
+            )
             return None
 
         except JWTError as e:
@@ -133,6 +142,11 @@ class JWTValidator:
     async def validate_token(self, token: str) -> Dict[str, Any]:
         """
         Validate JWT token and extract user information.
+
+        Supports two modes:
+        1. Full validation (default): Verifies signature, issuer, audience, expiry
+        2. Trust mode (AUTH_TRUST_MODE=true): Only decodes token without verification
+           (use when Istio/service mesh has already validated the token)
 
         Args:
             token: JWT token string
@@ -152,6 +166,17 @@ class JWTValidator:
             HTTPException: If token is invalid
         """
         try:
+            # Trust mode: Skip verification (for Istio/service mesh scenarios)
+            if settings.auth_trust_mode:
+                logger.info("Trust mode enabled - decoding token without verification")
+                # Decode without verification
+                payload = jwt.get_unverified_claims(token)
+                logger.debug(
+                    f"Token decoded in trust mode for user: {payload.get('sub', 'unknown')}"
+                )
+                return payload
+
+            # Standard mode: Full JWT validation
             # Fetch JWKS
             jwks = await self._fetch_jwks()
 
@@ -169,7 +194,13 @@ class JWTValidator:
 
                 if not signing_key:
                     raise HTTPException(
-                        status_code=401, detail="Unable to find signing key for token"
+                        status_code=401,
+                        detail="Unable to find signing key for token. "
+                        "This may indicate: 1) Token from a different issuer/realm, "
+                        "2) Key rotation occurred and token is outdated, "
+                        "3) Token was issued before keys were rotated. "
+                        "Please try logging out and logging in again. "
+                        "Or set AUTH_TRUST_MODE=true if running behind Istio/service mesh.",
                     )
 
             # Validate and decode token

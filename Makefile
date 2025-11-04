@@ -46,6 +46,11 @@ docker-dev: ## Build and start Docker image
 	@echo "Building and running Docker image..."
 	docker-compose -f docker-compose.debug.yml up --build -d
 
+docker-rebuild: ## Rebuild services using docker-compose
+	@echo "Rebuilding services..."
+	docker-compose -f docker-compose.debug.yml down
+	docker-compose -f docker-compose.debug.yml up --build -d
+
 docker-up: ## Start services using docker-compose
 	@echo "Starting services..."
 	docker-compose -f docker-compose.debug.yml up -d
@@ -53,6 +58,11 @@ docker-up: ## Start services using docker-compose
 docker-down: ## Stop services using docker-compose
 	@echo "Stopping services..."
 	docker-compose -f docker-compose.debug.yml down
+
+docker-restart: ## Restart services using docker-compose
+	@echo "Restarting services..."
+	docker-compose -f docker-compose.debug.yml down
+	docker-compose -f docker-compose.debug.yml up -d
 
 docker-debug: ## Start services in debug mode with hot-reload
 	@echo "Starting services in debug mode..."
