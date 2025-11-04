@@ -21,7 +21,7 @@ services:
       PYTHONPATH: /app/src
 
       # Application Settings
-      tag: "v0.4.0"
+      tag: "v0.4.5"
       repository_url: "https://github.com/bvandewe/events-player"
 
       # Logging Configuration
@@ -44,6 +44,7 @@ services:
 
       # Authentication & Authorization
       auth_required: "false" # Set to "true" to require authentication
+      auth_trust_mode: "false" # Set to "true" to skip JWT signature verification (use with Istio/service mesh)
       # auth_jwks_url and auth_issuer are auto-derived from oauth_* settings below
       # Only set these explicitly if using Istio/Service Mesh without OAuth
       auth_audience: events-player-web
