@@ -26,6 +26,7 @@ player:
     
     # Authentication & Authorization
     auth_required: "false"  # Set to "true" to enable authentication
+    auth_trust_mode: "false"  # Set to "true" to enable trust mode (skip JWT signature verification, USE WITH CAUTION)
     # auth_jwks_url and auth_issuer are auto-derived from oauth_* settings below
     # Only set these explicitly if using Istio/Service Mesh without OAuth
     auth_audience: "events-player-web"

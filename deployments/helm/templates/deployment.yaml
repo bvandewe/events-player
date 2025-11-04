@@ -35,6 +35,8 @@ spec:
             # Authentication & Authorization
             - name: auth_required
               value: "{{ .Values.player.env.auth_required }}"
+            - name: auth_trust_mode
+              value: "{{ .Values.player.env.auth_trust_mode }}"
             - name: auth_jwks_url
               value: "{{ .Values.player.env.auth_jwks_url }}"
             - name: auth_issuer

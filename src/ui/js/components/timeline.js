@@ -20,6 +20,7 @@ import {
 import 'chartjs-adapter-date-fns';
 import { format, formatDistanceToNow } from 'date-fns';
 import { appState } from '../state/appState';
+import { actionsController } from '../ui/actions';
 
 // Register Chart.js components
 Chart.register(
@@ -339,7 +340,11 @@ class TimelineController {
                 console.log('[Timeline] No events to display');
                 this.chart.data.labels = [];
                 this.chart.data.datasets[0].data = [];
-                this.chart.update();
+                try {
+                    this.chart.update();
+                } catch (chartError) {
+                    console.error('[Timeline] Chart update error (no events):', chartError);
+                }
                 this.updateStats([]);
                 return;
             }
@@ -363,7 +368,45 @@ class TimelineController {
             // Update chart
             this.chart.data.labels = sortedBuckets.map(b => b.time);
             this.chart.data.datasets[0].data = sortedBuckets.map(b => b.count);
-            this.chart.update();
+
+            try {
+                this.chart.update();
+            } catch (chartError) {
+                console.error('[Timeline] Chart update error:', chartError);
+
+                // Check if this is the time scale error
+                if (chartError.message && chartError.message.includes('too far apart with stepSize')) {
+                    // Extract timestamps from error message if possible
+                    const match = chartError.message.match(/(\d+)\s+and\s+(\d+)\s+are too far apart with stepSize of (\d+)\s+(\w+)/);
+                    let errorDetails = chartError.message;
+
+                    if (match) {
+                        const [, start, end, stepSize, unit] = match;
+                        const startDate = new Date(parseInt(start));
+                        const endDate = new Date(parseInt(end));
+                        const timeDiff = parseInt(end) - parseInt(start);
+                        const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                        const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
+
+                        errorDetails = `The time range is too large (${daysDiff} days, ${hoursDiff} hours) for the current bucket size (${stepSize} ${unit}).`;
+                    }
+
+                    actionsController.showError({
+                        title: 'Timeline Display Error',
+                        message: 'The selected bucket size is too small for the time range of your events. Please try using a larger bucket size (e.g., minutes or hours instead of seconds).',
+                        details: errorDetails
+                    });
+                } else {
+                    // Generic chart error
+                    actionsController.showError({
+                        title: 'Chart Error',
+                        message: 'An error occurred while updating the timeline chart.',
+                        error: chartError
+                    });
+                }
+
+                return; // Don't update stats if chart update failed
+            }
 
             // Update stats
             this.updateStats(sortedBuckets);
@@ -371,6 +414,13 @@ class TimelineController {
             console.log('[Timeline] Chart refreshed with', events.length, 'events in', sortedBuckets.length, 'buckets');
         } catch (error) {
             console.error('[Timeline] Error refreshing chart:', error);
+
+            // Show error modal for unexpected errors
+            actionsController.showError({
+                title: 'Timeline Error',
+                message: 'An unexpected error occurred while refreshing the timeline.',
+                error: error
+            });
         }
     }
 

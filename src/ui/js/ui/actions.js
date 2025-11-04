@@ -144,6 +144,78 @@ export const actionsController = (() => {
         }, { once: true });
     };
 
+    /**
+     * Show an error modal with custom message and details
+     * @param {Object} options - Configuration object
+     * @param {string} options.title - Modal title (default: "Error")
+     * @param {string} options.message - User-friendly error message
+     * @param {string} options.details - Technical details (optional)
+     * @param {Error} options.error - Error object (optional, will extract details from it)
+     */
+    const showError = (options) => {
+        const {
+            title = 'Error',
+            message = 'An error occurred',
+            details = null,
+            error = null
+        } = options;
+
+        // Get modal elements
+        const modalEl = document.getElementById('errorModal');
+        const titleEl = document.getElementById('errorModalTitle');
+        const messageEl = document.getElementById('errorModalMessage');
+        const detailsContainerEl = document.getElementById('errorModalDetails');
+        const detailsTextEl = document.getElementById('errorModalDetailsText');
+
+        if (!modalEl || !titleEl || !messageEl || !detailsContainerEl || !detailsTextEl) {
+            console.error('[Actions] Error modal elements not found');
+            // Fallback to console and alert
+            console.error('[Error]', message, details || error);
+            alert(`${title}: ${message}`);
+            return;
+        }
+
+        // Set content
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+
+        // Handle technical details
+        let technicalDetails = details;
+        if (!technicalDetails && error) {
+            if (error.stack) {
+                technicalDetails = error.stack;
+            } else if (error.message) {
+                technicalDetails = error.message;
+            } else {
+                technicalDetails = String(error);
+            }
+        }
+
+        if (technicalDetails) {
+            detailsTextEl.textContent = technicalDetails;
+            detailsContainerEl.style.display = 'block';
+        } else {
+            detailsContainerEl.style.display = 'none';
+        }
+
+        // Show modal
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Ensure the error modal and its backdrop are on top
+        modalEl.addEventListener('shown.bs.modal', () => {
+            // Set z-index higher than any other modal
+            modalEl.style.zIndex = '1070';
+
+            // Find and update the backdrop z-index
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 0) {
+                const lastBackdrop = backdrops[backdrops.length - 1];
+                lastBackdrop.style.zIndex = '1069';
+            }
+        }, { once: true });
+    };
+
     const init = (bs) => {
         bootstrap = bs;
 
@@ -172,7 +244,8 @@ export const actionsController = (() => {
 
     return {
         init,
-        showConfirm
+        showConfirm,
+        showError
     }
 
 })();

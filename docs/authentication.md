@@ -116,8 +116,8 @@ The API enforces role-based access at the endpoint level:
 
 - **Required Role**: `operator` or `admin`
 - **Admin-Only Features**:
-  - `iterations > 1`: Only admins can generate multiple events
-  - `delay != 150`: Only admins can customize delay between events
+    - `iterations > 1`: Only admins can generate multiple events
+    - `delay != 150`: Only admins can customize delay between events
 
 **Example Response (403 Forbidden):**
 
@@ -270,6 +270,41 @@ The intended audience for the JWT token, typically the client ID.
 - **Example**: `API_AUTH_REQUIRED=false`
 
 When false, authentication is optional. Protected endpoints still require authentication, but public endpoints remain accessible.
+
+#### `API_AUTH_TRUST_MODE`
+
+- **Description**: Skip JWT signature verification (trust mode)
+- **Type**: Boolean (string)
+- **Default**: `"false"`
+- **Example**: `API_AUTH_TRUST_MODE=true`
+
+⚠️ **Use with caution**: When enabled, the application will decode JWT tokens without verifying:
+
+- Signature (no JWKS lookup required)
+- Issuer validation
+- Audience validation
+
+**When to use:**
+
+- Running behind Istio/service mesh with RequestAuthentication policy
+- Proxy layer (e.g., Istio) has already validated the JWT
+- Token issuer/realm differs from your configured OAuth settings
+- Troubleshooting key ID mismatch issues
+
+**Security implications:**
+
+- Only enable in trusted environments where JWT validation is handled upstream
+- The application still extracts user info and enforces RBAC
+- Ensure your proxy/mesh is properly configured to validate tokens
+
+**Example with Istio:**
+
+```bash
+docker run -p 8080:8080 \
+  -e AUTH_REQUIRED=true \
+  -e AUTH_TRUST_MODE=true \
+  ghcr.io/bvandewe/events-player:latest
+```
 
 #### `API_KEYCLOAK_URL`
 
@@ -583,47 +618,47 @@ The application validates tokens on every API request:
 #### Event Generation
 
 - `POST /api/generate` - Generate events (requires `operator` or `admin`)
-  - Submits background task for event generation
-  - Returns task ID for tracking
-  - Validates OAuth token before processing
+    - Submits background task for event generation
+    - Returns task ID for tracking
+    - Validates OAuth token before processing
 
 #### Task Management
 
 - `GET /api/tasks` - View all active tasks (requires `admin`)
 
-  - Lists running, pending, completed, and failed tasks
-  - Returns task status, progress, and timestamps
-  - Admin-only endpoint
+    - Lists running, pending, completed, and failed tasks
+    - Returns task status, progress, and timestamps
+    - Admin-only endpoint
 
 - `POST /api/task/{task_id}/cancel` - Cancel specific task (requires `admin`)
 
-  - Gracefully stops event generation task
-  - Events generated before cancellation are preserved
-  - Admin-only endpoint
+    - Gracefully stops event generation task
+    - Events generated before cancellation are preserved
+    - Admin-only endpoint
 
 - `POST /api/tasks/cancel-all` - Cancel all running tasks (requires `admin`)
-  - Bulk cancellation for all active tasks
-  - Emergency control feature
-  - Admin-only endpoint
+    - Bulk cancellation for all active tasks
+    - Emergency control feature
+    - Admin-only endpoint
 
 #### Authentication Management
 
 - `GET /api/auth/info` - Get current authentication status and config
 
-  - Returns user info if authenticated
-  - Provides Keycloak configuration for login
-  - Public endpoint
+    - Returns user info if authenticated
+    - Provides Keycloak configuration for login
+    - Public endpoint
 
 - `POST /api/auth/callback` - OAuth callback handler for token exchange
 
-  - Exchanges authorization code for tokens
-  - PKCE verification
-  - Returns access_token, refresh_token, and user info
+    - Exchanges authorization code for tokens
+    - PKCE verification
+    - Returns access_token, refresh_token, and user info
 
 - `POST /api/auth/refresh` - Refresh access token
-  - Exchanges refresh_token for new access_token
-  - Extends user session without re-login
-  - Returns new tokens and updated expiry
+    - Exchanges refresh_token for new access_token
+    - Extends user session without re-login
+    - Returns new tokens and updated expiry
 
 ### Authorization Rules
 

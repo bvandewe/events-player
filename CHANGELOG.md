@@ -1,5 +1,58 @@
 # CHANGE LOG
 
+## 0.4.5 - 2025-11-04
+
+### Added
+
+#### Authentication
+
+- **Trust Mode for Istio/Service Mesh**
+    - New `AUTH_TRUST_MODE` environment variable to skip JWT signature verification
+    - Enables deployment behind Istio/service mesh where JWT validation is handled upstream
+    - Decodes token without verification while still enforcing RBAC
+    - Useful for scenarios where token issuer/realm differs from OAuth configuration
+    - Added comprehensive documentation in `notes/ISTIO_TRUST_MODE.md`
+
+#### Error Handling
+
+- **Enhanced JWT Validation Logging**
+    - Logs available key IDs when key mismatch occurs
+    - Better error messages explaining possible root causes
+    - Suggests enabling trust mode for Istio deployments
+    - Added troubleshooting guide in `notes/JWT_KEY_MISMATCH_TROUBLESHOOTING.md`
+
+#### UI Improvements
+
+- **Timeline Error Modal**
+    - New error modal displays Chart.js time scale errors to users
+    - User-friendly messages when bucket size is too small for time range
+    - Suggests using larger bucket sizes (minutes/hours instead of seconds)
+    - Added technical details section for debugging
+
+### Fixed
+
+#### UI
+
+- **Duplicate Timeline Bucket Size Options**
+    - Removed static HTML options from timeline bucket selector
+    - JavaScript now fully manages dropdown options dynamically
+    - Eliminated duplicate entries (13 static + 13 dynamic → 13 total)
+
+#### Authentication
+
+- **JWT Key ID Mismatch Handling**
+    - Better handling of Keycloak key rotation scenarios
+    - Trust mode solves token validation issues in Istio environments
+    - Improved error messages guide users to appropriate solutions
+
+### Documentation
+
+- **Authentication Guides**
+    - Updated `docs/authentication.md` with `AUTH_TRUST_MODE` configuration
+    - Added security considerations and usage guidelines
+    - Created `notes/ISTIO_TRUST_MODE.md` with complete Istio setup examples
+    - Updated `notes/JWT_KEY_MISMATCH_TROUBLESHOOTING.md` with trust mode solution
+
 ## 0.4.4 - 2025-11-02
 
 ### Added
