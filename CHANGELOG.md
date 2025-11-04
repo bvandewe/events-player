@@ -1,5 +1,17 @@
 # CHANGE LOG
 
+## 0.4.6 - 2025-11-04
+
+### Fixed
+
+#### Authentication
+
+- **Trust Mode Token Decoding**
+    - Fixed JWT decoding in trust mode to use correct python-jose API
+    - Changed from `jwt.get_unverified_claims()` to `jwt.decode()` with `verify_signature=False`
+    - Ensures roles are properly extracted from `realm_access.roles` in trust mode
+    - Critical fix for Istio/service mesh deployments
+
 ## 0.4.5 - 2025-11-04
 
 ### Added

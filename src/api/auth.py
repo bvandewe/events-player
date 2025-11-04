@@ -169,11 +169,22 @@ class JWTValidator:
             # Trust mode: Skip verification (for Istio/service mesh scenarios)
             if settings.auth_trust_mode:
                 logger.info("Trust mode enabled - decoding token without verification")
-                # Decode without verification
-                payload = jwt.get_unverified_claims(token)
-                logger.debug(
+                # Decode without verification - skip all validations
+                # Note: python-jose requires a key parameter even when not verifying,
+                # so we pass an empty string
+                options = {
+                    'verify_signature': False,
+                    'verify_exp': False,
+                    'verify_nbf': False,
+                    'verify_iat': False,
+                    'verify_aud': False,
+                    'verify_iss': False
+                }
+                payload = jwt.decode(token, '', options=options)
+                logger.info(
                     f"Token decoded in trust mode for user: {payload.get('sub', 'unknown')}"
                 )
+                logger.debug(f"Trust mode token payload keys: {list(payload.keys())}")
                 return payload
 
             # Standard mode: Full JWT validation
@@ -266,16 +277,24 @@ class JWTValidator:
         # OAuth/OIDC format: realm_roles or realm_access.roles
         if "realm_roles" in token_payload:
             roles = token_payload["realm_roles"]
+            logger.debug(f"Roles extracted from 'realm_roles': {roles}")
         elif "realm_access" in token_payload and "roles" in token_payload["realm_access"]:
             roles = token_payload["realm_access"]["roles"]
+            logger.debug(f"Roles extracted from 'realm_access.roles': {roles}")
 
         # Istio format: groups
         elif "groups" in token_payload:
             roles = token_payload["groups"]
+            logger.debug(f"Roles extracted from 'groups': {roles}")
 
         # Generic roles claim
         elif "roles" in token_payload:
             roles = token_payload["roles"]
+            logger.debug(f"Roles extracted from 'roles': {roles}")
+        else:
+            logger.warning(
+                f"No roles found in token. Available claims: {list(token_payload.keys())}"
+            )
 
         # Ensure roles is a list
         if not isinstance(roles, list):
@@ -307,6 +326,11 @@ class JWTValidator:
         # Use email as username if username not present
         if not user_info["username"] and user_info["email"]:
             user_info["username"] = user_info["email"].split("@")[0]
+
+        logger.info(
+            f"Extracted user info: username={user_info['username']}, "
+            f"roles={user_info['roles']}, groups={user_info['groups']}"
+        )
 
         return user_info
 
@@ -355,7 +379,10 @@ async def auth_middleware(request: Request, call_next):
             # Inject user info into request state
             request.state.user = user_info
 
-            logger.debug(f"Authenticated request from user: {user_info['username']}")
+            logger.info(
+                f"Authenticated request from user: {user_info['username']}, "
+                f"roles: {user_info['roles']}"
+            )
 
         except HTTPException as e:
             # Token validation failed
