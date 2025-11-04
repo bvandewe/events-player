@@ -173,17 +173,16 @@ class JWTValidator:
                 # Note: python-jose requires a key parameter even when not verifying,
                 # so we pass an empty string
                 options = {
-                    'verify_signature': False,
-                    'verify_exp': False,
-                    'verify_nbf': False,
-                    'verify_iat': False,
-                    'verify_aud': False,
-                    'verify_iss': False
+                    "verify_signature": False,
+                    "verify_exp": False,
+                    "verify_nbf": False,
+                    "verify_iat": False,
+                    "verify_aud": False,
+                    "verify_iss": False,
+                    "verify_at_hash": False,  # Skip at_hash validation (OpenID Connect)
                 }
-                payload = jwt.decode(token, '', options=options)
-                logger.info(
-                    f"Token decoded in trust mode for user: {payload.get('sub', 'unknown')}"
-                )
+                payload = jwt.decode(token, "", options=options)
+                logger.info("Trust mode: Token decoded successfully")
                 logger.debug(f"Trust mode token payload keys: {list(payload.keys())}")
                 return payload
 
@@ -277,20 +276,20 @@ class JWTValidator:
         # OAuth/OIDC format: realm_roles or realm_access.roles
         if "realm_roles" in token_payload:
             roles = token_payload["realm_roles"]
-            logger.debug(f"Roles extracted from 'realm_roles': {roles}")
+            logger.debug(f"Roles extracted from 'realm_roles': {len(roles)} role(s)")
         elif "realm_access" in token_payload and "roles" in token_payload["realm_access"]:
             roles = token_payload["realm_access"]["roles"]
-            logger.debug(f"Roles extracted from 'realm_access.roles': {roles}")
+            logger.debug(f"Roles extracted from 'realm_access.roles': {len(roles)} role(s)")
 
         # Istio format: groups
         elif "groups" in token_payload:
             roles = token_payload["groups"]
-            logger.debug(f"Roles extracted from 'groups': {roles}")
+            logger.debug(f"Roles extracted from 'groups': {len(roles)} role(s)")
 
         # Generic roles claim
         elif "roles" in token_payload:
             roles = token_payload["roles"]
-            logger.debug(f"Roles extracted from 'roles': {roles}")
+            logger.debug(f"Roles extracted from 'roles': {len(roles)} role(s)")
         else:
             logger.warning(
                 f"No roles found in token. Available claims: {list(token_payload.keys())}"
@@ -327,9 +326,8 @@ class JWTValidator:
         if not user_info["username"] and user_info["email"]:
             user_info["username"] = user_info["email"].split("@")[0]
 
-        logger.info(
-            f"Extracted user info: username={user_info['username']}, "
-            f"roles={user_info['roles']}, groups={user_info['groups']}"
+        logger.debug(
+            f"User info extracted: {len(user_info['roles'])} role(s), {len(user_info['groups'])} group(s)"
         )
 
         return user_info
@@ -379,10 +377,7 @@ async def auth_middleware(request: Request, call_next):
             # Inject user info into request state
             request.state.user = user_info
 
-            logger.info(
-                f"Authenticated request from user: {user_info['username']}, "
-                f"roles: {user_info['roles']}"
-            )
+            logger.debug(f"Request authenticated: {len(user_info['roles'])} role(s)")
 
         except HTTPException as e:
             # Token validation failed
@@ -510,8 +505,8 @@ async def require_role(
     # Check if user has any of the required roles
     if not any(role in user_roles for role in required_roles):
         logger.warning(
-            f"User {user.get('username')} (roles: {user_roles}) "
-            f"attempted to access endpoint requiring roles: {required_roles}"
+            f"Access denied: User has {len(user_roles)} role(s), "
+            f"requires one of: {required_roles}"
         )
         raise HTTPException(
             status_code=403,
