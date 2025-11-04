@@ -1,5 +1,21 @@
 # CHANGE LOG
 
+## 0.4.7 - 2025-11-04
+
+### Security
+
+#### Authentication
+
+- **Trust Mode Token Decoding**
+    - Added `verify_at_hash=False` to skip OpenID Connect at_hash validation
+
+- **Removed Sensitive Logging**
+    - No longer logs usernames, user IDs, emails in authentication logs
+    - No longer logs full role arrays in authentication logs
+    - Changed INFO level logs to DEBUG for detailed authentication info
+    - Authorization failures now log role counts instead of actual role names
+    - Reduces risk of PII leakage in production logs
+
 ## 0.4.6 - 2025-11-04
 
 ### Fixed
@@ -11,6 +27,7 @@
     - Changed from `jwt.get_unverified_claims()` to `jwt.decode()` with `verify_signature=False`
     - Ensures roles are properly extracted from `realm_access.roles` in trust mode
     - Critical fix for Istio/service mesh deployments
+    - Resolves "No access_token provided to compare against at_hash claim" errors
 
 ## 0.4.5 - 2025-11-04
 
