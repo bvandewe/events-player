@@ -11,7 +11,7 @@
 CloudEvent Player is a lightweight, browser-based tool designed to help developers test, generate, and monitor [CloudEvents](https://cloudevents.io/) in real-time. It combines an event publisher, subscriber, and visual inspector in a single application.
 
 <div style="text-align: center; margin: 30px 0;">
-  <img src="assets/images/cloudevent-player_demo_0.2.gif" alt="CloudEvent Player Demo" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+  <img src="assets/images/events-player_v0.4.9.gif" alt="CloudEvent Player Demo" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px;">
 </div>
 
 **Demo Setup:** Two CloudEvent Players monitoring each other's events
