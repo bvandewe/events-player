@@ -1,5 +1,68 @@
 # CHANGE LOG
 
+## 0.4.10 - 2025-11-06
+
+### Added
+
+#### Timeline Features
+
+- **Stacked Bar Chart by Event Source**
+    - Timeline now displays stacked bars showing event count per source per time bucket
+    - Each source gets a unique color (HSL color generation for better distribution)
+    - Interactive legend allows filtering by source
+    - Enhanced tooltips show per-source breakdown with total footer
+    - Proper stacked mode enabled on both X and Y axes
+
+- **Click-to-Filter and Auto-Zoom**
+    - Clicking timeline bars filters entire application by that bucket's time range
+    - Automatically zooms in one level (reduces bucket size) when clicking
+    - Progressive drill-down: hour → 30min → 20min → 15min → etc.
+    - Bucket size dropdown updates automatically during zoom
+    - Grafana-like interactive time exploration
+
+- **Enhanced Time Range Options**
+    - Expanded from 4 to 12 preset time ranges
+    - New options: 5m, 15m, 30m, 3h, 12h, 2d, 30d
+    - Custom time range with date/time pickers
+    - Visible custom range inputs when "Custom Range" selected
+
+- **Click-to-Filter on Analytics Charts**
+    - Top Sources, Top Types, and Top Subjects charts now clickable
+    - Clicking any bar filters the entire application by that dimension
+    - Tooltips indicate "(click to filter)" for user guidance
+    - Unified filtering UX across all charts
+
+### Fixed
+
+#### Timeline
+
+- **Empty Timeline Error**
+    - Fixed `TypeError: Cannot set properties of undefined` when no events exist
+    - Properly clears all datasets when timeline is empty
+
+- **Timezone/Timestamp Handling**
+    - Fixed timezone offset issue causing 1-hour discrepancy
+    - Event times without timezone suffix now correctly parsed as UTC
+    - Bucket times now use raw timestamps instead of Chart.js parsed values
+    - Click-to-filter now uses correct timestamps for accurate event filtering
+
+- **Time Range Filter Reset**
+    - Manually changing bucket size now resets time range filter to "all"
+    - Prevents confusing state where narrow time filter is active with new bucket size
+    - Clears custom start/end times when bucket size changes
+
+### Changed
+
+#### UI Components
+
+- **Global Filters Panel**
+    - Custom time range inputs now properly show/hide based on selection
+    - Better state management for custom vs preset time ranges
+
+- **Time Range Consistency**
+    - All components (timeline, analytics, metrics, events) support new time ranges
+    - Unified time range calculation across all filter options
+
 ## 0.4.9 - 2025-11-05
 
 ### Fixed

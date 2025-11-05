@@ -69,12 +69,33 @@ class AnalyticsController {
                 maintainAspectRatio: false,
                 indexAxis: 'y',
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                return `${context.label}: ${context.parsed.x} events (click to filter)`;
+                            }
+                        }
+                    }
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
                         ticks: { precision: 0 }
+                    }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const source = this.charts.topSources.data.labels[index];
+                        console.log('[Analytics] Source bar clicked, filtering by source:', source);
+
+                        // Update global filters
+                        const currentFilters = appState.get('filters') || {};
+                        appState.set('filters', {
+                            ...currentFilters,
+                            source: source
+                        });
                     }
                 }
             }
@@ -106,12 +127,33 @@ class AnalyticsController {
                 maintainAspectRatio: false,
                 indexAxis: 'y',
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                return `${context.label}: ${context.parsed.x} events (click to filter)`;
+                            }
+                        }
+                    }
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
                         ticks: { precision: 0 }
+                    }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const type = this.charts.topTypes.data.labels[index];
+                        console.log('[Analytics] Type bar clicked, filtering by type:', type);
+
+                        // Update global filters
+                        const currentFilters = appState.get('filters') || {};
+                        appState.set('filters', {
+                            ...currentFilters,
+                            type: type
+                        });
                     }
                 }
             }
@@ -143,12 +185,33 @@ class AnalyticsController {
                 maintainAspectRatio: false,
                 indexAxis: 'y',
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                return `${context.label}: ${context.parsed.x} events (click to filter)`;
+                            }
+                        }
+                    }
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
                         ticks: { precision: 0 }
+                    }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const subject = this.charts.topSubjects.data.labels[index];
+                        console.log('[Analytics] Subject bar clicked, filtering by subject:', subject);
+
+                        // Update global filters
+                        const currentFilters = appState.get('filters') || {};
+                        appState.set('filters', {
+                            ...currentFilters,
+                            subject: subject
+                        });
                     }
                 }
             }
@@ -232,10 +295,17 @@ class AnalyticsController {
             } else {
                 const now = Date.now();
                 const ranges = {
-                    '1h': 3600000,
-                    '6h': 21600000,
-                    '24h': 86400000,
-                    '7d': 604800000
+                    '5m': 5 * 60 * 1000,
+                    '15m': 15 * 60 * 1000,
+                    '30m': 30 * 60 * 1000,
+                    '1h': 60 * 60 * 1000,
+                    '3h': 3 * 60 * 60 * 1000,
+                    '6h': 6 * 60 * 60 * 1000,
+                    '12h': 12 * 60 * 60 * 1000,
+                    '24h': 24 * 60 * 60 * 1000,
+                    '2d': 2 * 24 * 60 * 60 * 1000,
+                    '7d': 7 * 24 * 60 * 60 * 1000,
+                    '30d': 30 * 24 * 60 * 60 * 1000
                 };
                 const timeMs = ranges[filters.timeRange];
                 if (timeMs) {

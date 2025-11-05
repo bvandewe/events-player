@@ -75,6 +75,9 @@ class TimelineController {
         // Auto-refresh state
         this.autoRefreshEnabled = true; // Default to enabled
 
+        // Store raw bucket times for click handling
+        this.rawBucketTimes = [];
+
         // DOM elements (will be initialized in init())
         this.bucketSizeSelect = null;
         this.autoRefreshToggle = null;
@@ -164,20 +167,19 @@ class TimelineController {
             type: 'bar',
             data: {
                 labels: [],
-                datasets: [{
-                    label: 'Events',
-                    data: [],
-                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
-                    borderColor: 'rgba(13, 110, 253, 1)',
-                    borderWidth: 1
-                }]
+                datasets: [] // Will be populated dynamically with one dataset per source
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     x: {
                         type: 'time',
+                        stacked: true, // Enable stacking
                         time: {
                             unit: timeUnit,
                             displayFormats: {
@@ -193,6 +195,7 @@ class TimelineController {
                     },
                     y: {
                         beginAtZero: true,
+                        stacked: true, // Enable stacking
                         ticks: {
                             precision: 0
                         },
@@ -204,6 +207,8 @@ class TimelineController {
                 },
                 plugins: {
                     tooltip: {
+                        mode: 'index',
+                        intersect: false,
                         callbacks: {
                             title: (tooltipItems) => {
                                 if (!tooltipItems || tooltipItems.length === 0) return '';
@@ -211,13 +216,91 @@ class TimelineController {
                                 return format(new Date(timestamp), 'PPpp');
                             },
                             label: (context) => {
+                                const source = context.dataset.label;
                                 const count = context.parsed.y;
-                                return `Events: ${count}`;
+                                return `${source}: ${count}`;
+                            },
+                            footer: (tooltipItems) => {
+                                const total = tooltipItems.reduce((sum, item) => sum + item.parsed.y, 0);
+                                return `Total: ${total}`;
                             }
                         }
                     },
                     legend: {
-                        display: false
+                        display: true, // Show legend with sources
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 8,
+                            font: {
+                                size: 11
+                            }
+                        },
+                        onClick: (e, legendItem, legend) => {
+                            // Click on legend to filter by source
+                            const source = legendItem.text;
+                            console.log('[Timeline] Legend clicked, filtering by source:', source);
+
+                            // Update global filters
+                            const currentFilters = appState.get('filters') || {};
+                            appState.set('filters', {
+                                ...currentFilters,
+                                source: source
+                            });
+                        }
+                    }
+                },
+                onClick: async (event, elements) => {
+                    // Click on bar to filter by time range and zoom in
+                    if (elements.length > 0) {
+                        const element = elements[0];
+                        const index = element.index;
+
+                        // Use stored raw bucket time instead of parsed chart label
+                        const bucketTime = this.rawBucketTimes[index];
+                        const bucketSizeMs = this.getBucketSizeMs();
+                        const startTime = bucketTime;
+                        const endTime = bucketTime + bucketSizeMs;
+
+                        console.log('[Timeline] Bar clicked, filtering by time range:',
+                            format(new Date(startTime), 'PPpp'), 'to', format(new Date(endTime), 'PPpp'));
+                        console.log('[Timeline] Raw timestamps:', { startTime, endTime, bucketTime, bucketSizeMs });
+
+                        // Zoom in one level (decrease bucket size) unless already at minimum
+                        let needsReinit = false;
+                        if (this.currentZoomIndex > 0) {
+                            this.currentZoomIndex--;
+                            localStorage.setItem('timeline_bucket_size', this.currentZoomIndex);
+                            console.log('[Timeline] Zooming in to bucket size:', this.getBucketSize());
+
+                            // Update bucket size dropdown
+                            if (this.bucketSizeSelect) {
+                                this.bucketSizeSelect.value = this.currentZoomIndex;
+                            }
+
+                            needsReinit = true;
+                        }
+
+                        // Update global filters with custom time range
+                        const currentFilters = appState.get('filters') || {};
+                        appState.set('filters', {
+                            ...currentFilters,
+                            timeRange: 'custom',
+                            customStartTime: startTime,
+                            customEndTime: endTime
+                        });
+
+                        // Reinitialize chart with new bucket size after a short delay
+                        // to allow filter update to propagate
+                        if (needsReinit) {
+                            setTimeout(() => {
+                                if (this.chart) {
+                                    this.chart.destroy();
+                                }
+                                this.initChart();
+                                this.scheduleRefresh(true);
+                            }, 100);
+                        }
                     }
                 }
             }
@@ -262,10 +345,17 @@ class TimelineController {
             } else {
                 const now = Date.now();
                 const ranges = {
-                    '1h': 3600000,
-                    '6h': 21600000,
-                    '24h': 86400000,
-                    '7d': 604800000
+                    '5m': 5 * 60 * 1000,
+                    '15m': 15 * 60 * 1000,
+                    '30m': 30 * 60 * 1000,
+                    '1h': 60 * 60 * 1000,
+                    '3h': 3 * 60 * 60 * 1000,
+                    '6h': 6 * 60 * 60 * 1000,
+                    '12h': 12 * 60 * 60 * 1000,
+                    '24h': 24 * 60 * 60 * 1000,
+                    '2d': 2 * 24 * 60 * 60 * 1000,
+                    '7d': 7 * 24 * 60 * 60 * 1000,
+                    '30d': 30 * 24 * 60 * 60 * 1000
                 };
                 const timeMs = ranges[filters.timeRange];
                 if (timeMs) {
@@ -339,7 +429,8 @@ class TimelineController {
             if (!events || events.length === 0) {
                 console.log('[Timeline] No events to display');
                 this.chart.data.labels = [];
-                this.chart.data.datasets[0].data = [];
+                this.chart.data.datasets = []; // Clear all datasets
+                this.rawBucketTimes = []; // Clear raw bucket times
                 try {
                     this.chart.update();
                 } catch (chartError) {
@@ -352,22 +443,56 @@ class TimelineController {
             // Get bucket size
             const bucketSizeMs = this.getBucketSizeMs();
 
-            // Create buckets
-            const buckets = {};
+            // Create buckets - track events by source per bucket
+            const buckets = {}; // { bucketTime: { source1: count, source2: count, ... } }
+            const sources = new Set();
+
             events.forEach(event => {
-                const timestamp = new Date(event.time).getTime();
+                // Ensure event time has timezone info (add Z if missing for UTC)
+                let eventTimeStr = event.time;
+                if (!eventTimeStr.endsWith('Z') && !eventTimeStr.includes('+') && !eventTimeStr.includes('T00:00:00')) {
+                    eventTimeStr = eventTimeStr + 'Z'; // Treat as UTC
+                }
+                const timestamp = new Date(eventTimeStr).getTime();
                 const bucketTime = Math.floor(timestamp / bucketSizeMs) * bucketSizeMs;
-                buckets[bucketTime] = (buckets[bucketTime] || 0) + 1;
+                const source = event.source || 'unknown';
+
+                sources.add(source);
+
+                if (!buckets[bucketTime]) {
+                    buckets[bucketTime] = {};
+                }
+                buckets[bucketTime][source] = (buckets[bucketTime][source] || 0) + 1;
             });
 
-            // Sort buckets by time
-            const sortedBuckets = Object.entries(buckets)
-                .map(([time, count]) => ({ time: parseInt(time), count }))
-                .sort((a, b) => a.time - b.time);
+            // Get sorted bucket times
+            const bucketTimes = Object.keys(buckets)
+                .map(t => parseInt(t))
+                .sort((a, b) => a - b);
+
+            // Create datasets - one per source
+            const sourceArray = Array.from(sources).sort();
+            const datasets = sourceArray.map((source, index) => {
+                // Generate color for this source using HSL for better distribution
+                const hue = (index * 360 / Math.max(sourceArray.length, 1)) % 360;
+                const color = `hsla(${hue}, 70%, 55%, 0.8)`;
+                const borderColor = `hsla(${hue}, 70%, 45%, 1)`;
+
+                return {
+                    label: source,
+                    data: bucketTimes.map(time => buckets[time][source] || 0),
+                    backgroundColor: color,
+                    borderColor: borderColor,
+                    borderWidth: 1
+                };
+            });
+
+            // Store raw bucket times for onClick handler
+            this.rawBucketTimes = bucketTimes;
 
             // Update chart
-            this.chart.data.labels = sortedBuckets.map(b => b.time);
-            this.chart.data.datasets[0].data = sortedBuckets.map(b => b.count);
+            this.chart.data.labels = bucketTimes;
+            this.chart.data.datasets = datasets;
 
             try {
                 this.chart.update();
@@ -408,10 +533,17 @@ class TimelineController {
                 return; // Don't update stats if chart update failed
             }
 
+            // Prepare bucket data for stats (convert to sortedBuckets format)
+            const sortedBuckets = bucketTimes.map(time => {
+                // Calculate total count for this bucket across all sources
+                const count = Object.values(buckets[time]).reduce((sum, c) => sum + c, 0);
+                return { time, count };
+            });
+
             // Update stats
             this.updateStats(sortedBuckets);
 
-            console.log('[Timeline] Chart refreshed with', events.length, 'events in', sortedBuckets.length, 'buckets');
+            console.log('[Timeline] Chart refreshed with', events.length, 'events in', bucketTimes.length, 'buckets across', sourceArray.length, 'sources');
         } catch (error) {
             console.error('[Timeline] Error refreshing chart:', error);
 
@@ -506,6 +638,18 @@ class TimelineController {
                 this.currentZoomIndex = parseInt(e.target.value, 10);
                 localStorage.setItem('timeline_bucket_size', this.currentZoomIndex);
                 console.log('[Timeline] Bucket size changed to:', this.getBucketSize());
+
+                // Reset time range filter to "all" when manually changing bucket size
+                const currentFilters = appState.get('filters') || {};
+                if (currentFilters.timeRange && currentFilters.timeRange !== 'all') {
+                    console.log('[Timeline] Resetting time range filter due to bucket size change');
+                    appState.set('filters', {
+                        ...currentFilters,
+                        timeRange: 'all',
+                        customStartTime: null,
+                        customEndTime: null
+                    });
+                }
 
                 // Reinitialize chart with new bucket size
                 if (this.chart) {

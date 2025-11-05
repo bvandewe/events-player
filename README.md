@@ -206,10 +206,3 @@ Once authenticated, you can test protected endpoints directly from Swagger UI. T
 
 - **OAuth2AuthorizationCode**: Full OAuth2 authorization code flow with PKCE (recommended for browser use)
 - **BearerAuth**: Direct JWT bearer token (for API clients that already have a token)
-
-### VS Code Debugging
-
-`Hint`:
-
-The debugger fails with vscode v1.75 (currently the latest version).
-Have to downgrade to 1.74: <https://code.visualstudio.com/updates/v1_74> Then, disable automatic updates (settings > 'update': set to "none")

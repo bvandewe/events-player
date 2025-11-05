@@ -216,18 +216,22 @@ class GlobalFilterController {
         if (this.timeRangeSelect && filters.timeRange) {
             this.timeRangeSelect.value = filters.timeRange;
 
-            // Show custom date inputs if custom range is selected
-            if (filters.timeRange === 'custom' && this.customTimeRangeInputs) {
-                this.customTimeRangeInputs.classList.remove('d-none');
+            // Show/hide custom date inputs based on selection
+            if (this.customTimeRangeInputs) {
+                if (filters.timeRange === 'custom') {
+                    this.customTimeRangeInputs.classList.remove('d-none');
 
-                // Restore custom date values
-                if (filters.customStartTime && this.customStartTimeInput) {
-                    const startDate = new Date(filters.customStartTime);
-                    this.customStartTimeInput.value = startDate.toISOString().slice(0, 19);
-                }
-                if (filters.customEndTime && this.customEndTimeInput) {
-                    const endDate = new Date(filters.customEndTime);
-                    this.customEndTimeInput.value = endDate.toISOString().slice(0, 19);
+                    // Restore custom date values
+                    if (filters.customStartTime && this.customStartTimeInput) {
+                        const startDate = new Date(filters.customStartTime);
+                        this.customStartTimeInput.value = startDate.toISOString().slice(0, 19);
+                    }
+                    if (filters.customEndTime && this.customEndTimeInput) {
+                        const endDate = new Date(filters.customEndTime);
+                        this.customEndTimeInput.value = endDate.toISOString().slice(0, 19);
+                    }
+                } else {
+                    this.customTimeRangeInputs.classList.add('d-none');
                 }
             }
         }
@@ -548,17 +552,38 @@ class GlobalFilterController {
                 let rangeMs = 0;
 
                 switch (filters.timeRange) {
+                    case '5m':
+                        rangeMs = 5 * 60 * 1000;
+                        break;
+                    case '15m':
+                        rangeMs = 15 * 60 * 1000;
+                        break;
+                    case '30m':
+                        rangeMs = 30 * 60 * 1000;
+                        break;
                     case '1h':
                         rangeMs = 60 * 60 * 1000;
+                        break;
+                    case '3h':
+                        rangeMs = 3 * 60 * 60 * 1000;
                         break;
                     case '6h':
                         rangeMs = 6 * 60 * 60 * 1000;
                         break;
+                    case '12h':
+                        rangeMs = 12 * 60 * 60 * 1000;
+                        break;
                     case '24h':
                         rangeMs = 24 * 60 * 60 * 1000;
                         break;
+                    case '2d':
+                        rangeMs = 2 * 24 * 60 * 60 * 1000;
+                        break;
                     case '7d':
                         rangeMs = 7 * 24 * 60 * 60 * 1000;
+                        break;
+                    case '30d':
+                        rangeMs = 30 * 24 * 60 * 60 * 1000;
                         break;
                 }
 
