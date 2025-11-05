@@ -1,5 +1,18 @@
 # CHANGE LOG
 
+## 0.4.9 - 2025-11-05
+
+### Fixed
+
+#### Authentication & Authorization
+
+- **Istio Mode Authentication Detection**
+    - Fixed `isAuthenticated()` to work correctly in Istio/OAuth2 Proxy mode
+    - In Istio mode, authentication is determined by presence of `userInfo` (not token)
+    - Tokens are managed server-side by OAuth2 Proxy, browser never sees them
+    - Frontend now correctly detects authenticated users in proxy-based authentication
+    - Resolves issue where users were authenticated on backend but UI showed as unauthenticated
+
 ## 0.4.8 - 2025-11-05
 
 ### Fixed
