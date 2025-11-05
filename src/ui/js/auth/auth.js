@@ -609,7 +609,13 @@ class AuthManager {
      * Check if user is authenticated
      */
     isAuthenticated() {
-        // Check if token exists and is not expired
+        // In Istio mode, we don't have a token in the browser (managed server-side)
+        // Check if we have userInfo from the backend
+        if (this.mode === 'istio') {
+            return this.userInfo !== null;
+        }
+
+        // In OAuth mode, check if token exists and is not expired
         if (!this.token || !this.userInfo) {
             return false;
         }
