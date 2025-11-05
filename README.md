@@ -16,6 +16,16 @@ docker run -p 8884:8080 ghcr.io/bvandewe/events-player:latest
 
 Then open: <http://localhost:8884>
 
+!!! warning With great power comes great responsibility!
+    Running this container with no other configuration will enable ALL features, including the sensitive generator that can emit any events anywhere...
+    Enable RBAC with `AUTH_REQUIRED=true` and use a OIDC Provider! See sample [docker-compose](./docker-compose.debug.yml).
+
+---
+
+The unmissable demo gif:
+
+![Demo](docs/assets/images/events-player_v0.4.9.gif)
+
 ## Getting Started
 
 Run two instances locally and send events between them:
@@ -37,8 +47,6 @@ docker run -d --rm -p 8885:8080 \
   -e api_default_generator_gateways='{"urls": ["http://localhost:8885/events/pub", "http://host.docker.internal:8884/events/pub"]}' \
   ghcr.io/bvandewe/events-player:latest
 ```
-
-![Demo](assets/cloudevent-player_demo_0.2.gif)
 
 The app provides a web-based interface that enables users to visualize events as they are received on the `POST /events/pub` endpoint. The UI provides simple web-form that enables users to generate event(s) and emit/transmit them to a selected customizable event gateway.
 
@@ -75,22 +83,22 @@ CloudEvent Player v0.4.0 features a redesigned unified dashboard:
 
 **Authentication is disabled by default.** The application works out of the box without any authentication configuration.
 
-To enable authentication and authorization, set the `api_auth_required` environment variable to `"true"`:
+To enable authentication and authorization, set the `auth_required` environment variable to `"true"`:
 
 ```bash
-docker run -p 8884:8080 -e api_auth_required="true" ghcr.io/bvandewe/events-player:latest
+docker run -p 8884:8080 -e auth_required="true" ghcr.io/bvandewe/events-player:latest
 ```
 
-When `api_auth_required=false` (default):
+When `auth_required=false` (default):
 
 - All features accessible without login
 - No authentication tokens required
 - Admin features (Clear Storage, Current Clients, Manage Tasks) available via gear icon
 
-When `api_auth_required=true`:
+When `auth_required=true`:
 
 - OAuth 2.0/OIDC authentication enforced
-- Role-based access control (admin, operator, user)
+- Role-based access control (default `role` claim values: `admin`, `operator`, `user`, see `AUTH_ROLE_*` environment variables)
 - Login required for event generation and admin features
 
 ### Authentication Modes
@@ -98,17 +106,17 @@ When `api_auth_required=true`:
 The application automatically detects the authentication mode based on the incoming request:
 
 - **Istio/Proxy Mode**: When user is pre-authenticated (JWT injected by OAuth2 Proxy/Istio)
-  - Frontend detects: `/api/auth/info` returns `authenticated: true`
-  - No login button shown, user already authenticated
-  - Token managed server-side by proxy layer
+    - Frontend detects: `/api/auth/info` returns `authenticated: true`
+    - No login button shown, user already authenticated
+    - Token managed server-side by proxy layer
   
 - **OAuth Mode**: When OAuth configuration is provided
-  - Frontend detects: OAuth config present in `/api/auth/info` response
-  - Login button shown when not authenticated
-  - Frontend handles OAuth flow with Keycloak/OIDC provider
+    - Frontend detects: OAuth config present in `/api/auth/info` response
+    - Login button shown when not authenticated
+    - Frontend handles OAuth flow with Keycloak/OIDC provider
   
 - **No Auth Mode**: When authentication is disabled (default)
-  - All features accessible without login
+    - All features accessible without login
 
 > **🔍 Technical Detail:** The frontend determines authentication mode from the authentication state, not from backend environment variables. This resilient design works even with minimal backend configuration. See `notes/MODE_DETECTION_CASE_STUDY.md` for details.
 
@@ -118,8 +126,8 @@ See the [full authentication documentation](https://bvandewe.github.io/events-pl
 
 - **No Server-Side Persistence**: Refreshing the browser resets client-side state
 - **Client-Side Storage Only**: Events stored in browser IndexedDB (capacity-based FIFO queues)
-  - Tier 1: Full events (default: 5000 max)
-  - Tier 2: Metadata (default: 100,000 max)
+    - Tier 1: Full events (default: 5000 max)
+    - Tier 2: Metadata (default: 100,000 max)
 - **Display Limit**: Configurable max events rendered in DOM (default: 1000)
 
 ## Usage

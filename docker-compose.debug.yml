@@ -43,7 +43,7 @@ services:
       http_client_timeout: 30.0
 
       # Authentication & Authorization
-      auth_required: "false" # Set to "true" to require authentication
+      auth_required: "true" # Set to "true" to require authentication
       auth_trust_mode: "false" # Set to "true" to skip JWT signature verification (use with Istio/service mesh)
       # auth_jwks_url and auth_issuer are auto-derived from oauth_* settings below
       # Only set these explicitly if using Istio/Service Mesh without OAuth
