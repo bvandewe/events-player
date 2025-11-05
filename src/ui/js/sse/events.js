@@ -413,17 +413,38 @@ export const sseEventsController = (() => {
                         timeRangeEnd = now;
 
                         switch (timeRange) {
+                            case '5m':
+                                timeRangeStart = now - (5 * 60 * 1000);
+                                break;
+                            case '15m':
+                                timeRangeStart = now - (15 * 60 * 1000);
+                                break;
+                            case '30m':
+                                timeRangeStart = now - (30 * 60 * 1000);
+                                break;
                             case '1h':
                                 timeRangeStart = now - (60 * 60 * 1000);
+                                break;
+                            case '3h':
+                                timeRangeStart = now - (3 * 60 * 60 * 1000);
                                 break;
                             case '6h':
                                 timeRangeStart = now - (6 * 60 * 60 * 1000);
                                 break;
+                            case '12h':
+                                timeRangeStart = now - (12 * 60 * 60 * 1000);
+                                break;
                             case '24h':
                                 timeRangeStart = now - (24 * 60 * 60 * 1000);
                                 break;
+                            case '2d':
+                                timeRangeStart = now - (2 * 24 * 60 * 60 * 1000);
+                                break;
                             case '7d':
                                 timeRangeStart = now - (7 * 24 * 60 * 60 * 1000);
+                                break;
+                            case '30d':
+                                timeRangeStart = now - (30 * 24 * 60 * 60 * 1000);
                                 break;
                         }
 
