@@ -1,5 +1,7 @@
 # OAuth Architecture - Hybrid Authentication
 
+> **⚠️ Important Update**: The authentication mode detection described in this document has been simplified. The frontend now determines mode from authentication state rather than backend configuration. See [MODE_DETECTION_CASE_STUDY.md](MODE_DETECTION_CASE_STUDY.md) for the actual implementation details.
+
 ## Overview
 
 This document describes the OAuth/OIDC authentication architecture for the CloudEvents Player that works seamlessly in two deployment scenarios:

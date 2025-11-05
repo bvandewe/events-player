@@ -83,13 +83,16 @@ Enable optional OAuth 2.0/OIDC authentication with role-based access control (RB
 - **Admin, Operator, and User roles** with fine-grained permissions
 - **Automatic token refresh** with OIDC offline_access for uninterrupted sessions
 - **Authorization Manager** for custom operator permissions
-- **Istio integration** for header-based authentication
+- **Istio/OAuth2 Proxy integration** for proxy-based authentication
+- **Automatic mode detection** - Frontend adapts to deployment environment
 
 When authentication is disabled (`auth_required=false`, default):
 
 - All features are immediately accessible
 - No login or configuration required
 - Admin features available via gear icon in navigation
+
+**Technical Highlight:** The system uses a resilient mode detection pattern where the frontend determines authentication mode from actual authentication state rather than backend configuration. This means it works correctly even with minimal configuration. See the [Authentication Guide](authentication.md) for details.
 
 See the [Authentication Guide](authentication.md) for OAuth/OIDC setup details and the [RBAC Configuration Guide](rbac-guide.md) for a complete step-by-step setup with Keycloak.
 
