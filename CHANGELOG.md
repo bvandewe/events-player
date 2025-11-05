@@ -1,5 +1,34 @@
 # CHANGE LOG
 
+## 0.4.8 - 2025-11-05
+
+### Fixed
+
+#### Authentication & Authorization
+
+- **OAuth2 Proxy / Istio Token Extraction**
+    - Fixed authentication middleware to extract JWT tokens from OAuth2 Proxy headers
+    - Now checks multiple token sources in order:
+        1. `Authorization: Bearer <token>` (standard OAuth)
+        2. `X-Auth-Request-Access-Token: <token>` (OAuth2 Proxy)
+        3. `X-Forwarded-Access-Token: <token>` (other proxies)
+    - Resolves issue where OAuth2 Proxy authenticated users were not recognized by backend
+    - Critical fix for deployments using OAuth2 Proxy with Istio/service mesh
+
+- **Token Role Extraction Priority**
+    - Fixed role extraction order to check `roles` claim before `groups` claim
+    - Previous order: `realm_roles` → `realm_access.roles` → `groups` → `roles`
+    - New order: `realm_roles` → `realm_access.roles` → `roles` → `groups`
+    - Resolves issue where tokens with both `roles` and `groups` claims would use group paths (e.g., `/admins`) instead of proper roles (e.g., `admin`)
+    - Groups are now only used as fallback when no role claims are present
+    - Added detailed logging to show which claim is being used for role extraction
+
+- **Frontend Authorization Manager**
+    - Fixed authorization manager to use role mappings from backend instead of hardcoded role names
+    - Now properly respects `API_AUTH_ROLE_ADMIN`, `API_AUTH_ROLE_OPERATOR`, `API_AUTH_ROLE_USER` environment variables
+    - Authorization checks now use configured role mappings: `authManager.roleMappings.admin` instead of hardcoded `'admin'`
+    - Critical fix for deployments with custom identity provider role naming conventions
+
 ## 0.4.7 - 2025-11-04
 
 ### Security

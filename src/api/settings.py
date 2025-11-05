@@ -32,7 +32,7 @@ class ApiSettings(BaseSettings):
     )
 
     # App version
-    tag: str = "0.4.7"
+    tag: str = "0.4.8"
     repository_url: str = "https://github.com/bvandewe/events-player"
 
     # Logging configs

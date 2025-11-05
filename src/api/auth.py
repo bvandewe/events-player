@@ -273,29 +273,30 @@ class JWTValidator:
         # Extract roles from various possible claim locations
         roles = []
 
-        # OAuth/OIDC format: realm_roles or realm_access.roles
+        # Log available claims for debugging
+        logger.info(f"Extracting roles from token. Available claims: {list(token_payload.keys())}")
+
+        # OAuth/OIDC format: realm_roles or realm_access.roles (highest priority)
         if "realm_roles" in token_payload:
             roles = token_payload["realm_roles"]
-            logger.debug(f"Roles extracted from 'realm_roles': {len(roles)} role(s)")
+            logger.info(f"✓ Roles extracted from 'realm_roles': {roles}")
         elif "realm_access" in token_payload and "roles" in token_payload["realm_access"]:
             roles = token_payload["realm_access"]["roles"]
-            logger.debug(f"Roles extracted from 'realm_access.roles': {len(roles)} role(s)")
+            logger.info(f"✓ Roles extracted from 'realm_access.roles': {roles}")
 
-        # Istio format: groups
-        elif "groups" in token_payload:
-            roles = token_payload["groups"]
-            logger.debug(f"Roles extracted from 'groups': {len(roles)} role(s)")
-
-        # Generic roles claim
+        # Generic roles claim (check before groups)
         elif "roles" in token_payload:
             roles = token_payload["roles"]
-            logger.debug(f"Roles extracted from 'roles': {len(roles)} role(s)")
+            logger.info(f"✓ Roles extracted from 'roles': {roles}")
+
+        # Istio/Keycloak groups format (lowest priority, may contain paths like /admins)
+        elif "groups" in token_payload:
+            roles = token_payload["groups"]
+            logger.info(f"✓ Roles extracted from 'groups': {roles}")
         else:
             logger.warning(
                 f"No roles found in token. Available claims: {list(token_payload.keys())}"
-            )
-
-        # Ensure roles is a list
+            )  # Ensure roles is a list
         if not isinstance(roles, list):
             roles = [roles] if roles else []
 
@@ -342,10 +343,15 @@ async def auth_middleware(request: Request, call_next):
     Authentication middleware that extracts and validates JWT tokens.
 
     This middleware:
-    1. Extracts Authorization header (if present)
+    1. Extracts JWT token from multiple sources (Authorization header, OAuth2 Proxy headers)
     2. Validates JWT token (if present)
     3. Injects user info into request.state.user
     4. Continues without blocking if no token (optional auth)
+
+    Supports multiple token injection methods:
+    - Authorization: Bearer <token> (standard OAuth)
+    - X-Auth-Request-Access-Token: <token> (OAuth2 Proxy)
+    - X-Forwarded-Access-Token: <token> (some proxies)
 
     The middleware does not block requests without authentication unless
     a specific endpoint requires it via dependency injection.
@@ -363,12 +369,26 @@ async def auth_middleware(request: Request, call_next):
     ]:
         return await call_next(request)
 
-    # Extract Authorization header
-    auth_header = request.headers.get("authorization", "")
+    # Try to extract token from various sources
+    token = None
 
+    # 1. Check Authorization header (standard OAuth)
+    auth_header = request.headers.get("authorization", "")
     if auth_header and auth_header.lower().startswith("bearer "):
         token = auth_header[7:]  # Remove "Bearer " prefix
+        logger.debug("Token extracted from Authorization header")
 
+    # 2. Check X-Auth-Request-Access-Token (OAuth2 Proxy)
+    elif "x-auth-request-access-token" in request.headers:
+        token = request.headers.get("x-auth-request-access-token")
+        logger.debug("Token extracted from X-Auth-Request-Access-Token header")
+
+    # 3. Check X-Forwarded-Access-Token (some proxies)
+    elif "x-forwarded-access-token" in request.headers:
+        token = request.headers.get("x-forwarded-access-token")
+        logger.debug("Token extracted from X-Forwarded-Access-Token header")
+
+    if token:
         try:
             # Validate token and extract user info
             token_payload = await jwt_validator.validate_token(token)

@@ -12,6 +12,7 @@ class AuthorizationManager {
         this.userRoles = [];
         this.isAuthenticated = false;
         this.authRequired = false;
+        this.roleMappings = null; // Store role mappings from backend (admin, operator, user)
     }
 
     /**
@@ -30,16 +31,20 @@ class AuthorizationManager {
             console.log('[Authorization] Auth not required - granting full access');
             this.isAuthenticated = true;
             this.userRoles = ['admin', 'operator', 'user']; // Grant all roles
+            this.roleMappings = { admin: 'admin', operator: 'operator', user: 'user' }; // Default mappings
             return; // Skip applying UI restrictions
         }
 
         if (authManager && authManager.userInfo) {
             this.isAuthenticated = true;
             this.userRoles = authManager.userInfo.roles || [];
+            this.roleMappings = authManager.roleMappings || { admin: 'admin', operator: 'operator', user: 'user' };
             console.log('[Authorization] User roles:', this.userRoles);
+            console.log('[Authorization] Role mappings:', this.roleMappings);
         } else {
             this.isAuthenticated = false;
             this.userRoles = [];
+            this.roleMappings = { admin: 'admin', operator: 'operator', user: 'user' }; // Default mappings
             console.log('[Authorization] No authenticated user');
         }
 
@@ -51,21 +56,24 @@ class AuthorizationManager {
      * Check if user has admin role
      */
     isAdmin() {
-        return this.userRoles.includes('admin');
+        if (!this.roleMappings) return false;
+        return this.userRoles.includes(this.roleMappings.admin);
     }
 
     /**
      * Check if user has operator or admin role
      */
     isOperator() {
-        return this.userRoles.includes('operator') || this.isAdmin();
+        if (!this.roleMappings) return false;
+        return this.userRoles.includes(this.roleMappings.operator) || this.isAdmin();
     }
 
     /**
      * Check if user has basic user role
      */
     isUser() {
-        return this.userRoles.includes('user');
+        if (!this.roleMappings) return false;
+        return this.userRoles.includes(this.roleMappings.user);
     }
 
     /**
