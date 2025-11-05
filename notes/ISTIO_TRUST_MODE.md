@@ -1,6 +1,8 @@
 # Istio Trust Mode Configuration Example
 
-This example shows how to configure the CloudEvent Player when running behind Istio service mesh where JWT validation is handled by Istio's RequestAuthentication policy.
+> **📖 Related Documentation**: This document covers Trust Mode configuration. For a complete understanding of how OAuth2 Proxy and Istio authentication works, see [OAUTH2_PROXY_ISTIO_SETUP.md](OAUTH2_PROXY_ISTIO_SETUP.md) and [MODE_DETECTION_CASE_STUDY.md](MODE_DETECTION_CASE_STUDY.md).
+
+This example shows how to configure the CloudEvent Player when running behind Istio service mesh where JWT validation is handled by Istio's RequestAuthentication policy or OAuth2 Proxy.
 
 ## Scenario
 

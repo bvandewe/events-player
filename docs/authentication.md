@@ -4,19 +4,22 @@ CloudEvent Player supports OAuth 2.0 authentication with Keycloak and role-based
 
 > **🚀 Quick Start**: For a complete step-by-step guide to set up RBAC with Keycloak, see the [RBAC Configuration Guide](rbac-guide.md).
 
+> **🔍 Mode Detection**: The frontend automatically detects authentication mode from the authentication state, not from backend configuration. This makes the system resilient to configuration issues. See [Technical Details](#mode-detection-internals) below.
+
 ## Overview
 
 The authentication system provides:
 
 - **OAuth 2.0 / OIDC**: Industry-standard authentication with Keycloak
+- **OAuth2 Proxy / Istio Support**: Works with proxy-based authentication
 - **PKCE Flow**: Secure authorization code flow for browser-based apps
 - **JWT Validation**: Token-based authentication with RS256 signature verification
 - **Role-Based Access Control**: Fine-grained permissions based on user roles
-- **Hybrid Mode**: Support for both Istio pre-authentication and Keycloak OAuth
+- **Automatic Mode Detection**: Frontend adapts to deployment environment
 
 ## Authentication Modes
 
-CloudEvent Player supports multiple authentication modes:
+CloudEvent Player automatically detects and adapts to different authentication scenarios:
 
 ### 1. **No Authentication** (Default)
 
@@ -26,42 +29,50 @@ When no authentication is configured, the application runs in open mode with no 
 docker run -p 8080:8080 ghcr.io/bvandewe/events-player:latest
 ```
 
-### 2. **Keycloak OAuth Mode**
+### 2. **Istio/Proxy Mode** (Production - Recommended)
+
+Pre-authenticated mode where JWT tokens are injected by OAuth2 Proxy or Istio service mesh. The backend validates tokens but the frontend doesn't handle the login flow.
+
+**How it works:**
+1. OAuth2 Proxy handles the OAuth flow with Keycloak
+2. OAuth2 Proxy stores tokens in encrypted cookie
+3. OAuth2 Proxy injects JWT in request headers to backend
+4. Backend validates JWT and extracts user information
+5. Frontend calls `/api/auth/info` and sees `authenticated: true`
+6. Frontend automatically enters "Istio mode" - no login button needed
+
+```bash
+docker run -p 8080:8080 \
+  -e AUTH_REQUIRED=true \
+  -e AUTH_TRUST_MODE=true \
+  ghcr.io/bvandewe/events-player:latest
+```
+
+**Environment Variables:**
+- `AUTH_REQUIRED=true` - Enable authentication
+- `AUTH_TRUST_MODE=true` - Skip JWT verification (proxy already validated)
+- `AUTH_JWKS_URL` - Optional, for JWT validation if not using trust mode
+- No `OAUTH_SERVER_URL` needed - OAuth handled by proxy
+
+**Key Benefit:** JWT never exposed to browser JavaScript (enhanced security)
+
+### 3. **OAuth/Keycloak Mode** (Development)
 
 Full OAuth 2.0 authentication with Keycloak for local development and standalone deployments.
 
-```bash
-docker run -p 8080:8080 \
-  -e api_auth_mode=keycloak \
-  -e api_keycloak_url=http://keycloak:8080 \
-  -e api_keycloak_realm=events-player \
-  -e api_keycloak_client_id=events-player-web \
-  ghcr.io/bvandewe/events-player:latest
-```
-
-### 3. **Istio JWT Mode**
-
-Pre-authenticated mode where JWT tokens are injected by Istio service mesh. The application validates tokens but doesn't handle the login flow.
+**How it works:**
+1. Frontend calls `/api/auth/info` and receives OAuth configuration
+2. Frontend shows login button when user not authenticated
+3. User clicks login → Redirects to Keycloak
+4. After successful login → Token stored in browser sessionStorage
+5. Frontend includes token in all API requests
 
 ```bash
 docker run -p 8080:8080 \
-  -e api_auth_mode=istio \
-  -e api_auth_jwks_url=https://keycloak.example.com/realms/events-player/protocol/openid-connect/certs \
-  -e api_auth_issuer=https://keycloak.example.com/realms/events-player \
-  -e api_auth_audience=events-player-web \
-  ghcr.io/bvandewe/events-player:latest
-```
-
-### 4. **Auto Mode** (Recommended)
-
-Automatically detects whether JWT is pre-injected (Istio) or if OAuth flow is needed (Keycloak).
-
-```bash
-docker run -p 8080:8080 \
-  -e api_auth_mode=auto \
-  -e api_auth_jwks_url=http://keycloak:8080/realms/events-player/protocol/openid-connect/certs \
-  -e api_keycloak_url=http://keycloak:8080 \
-  -e api_keycloak_realm=events-player \
+  -e AUTH_REQUIRED=true \
+  -e OAUTH_SERVER_URL=http://keycloak:8080 \
+  -e OAUTH_REALM=events-player \
+  -e OAUTH_CLIENT_ID=events-player-web \
   ghcr.io/bvandewe/events-player:latest
 ```
 
@@ -673,6 +684,90 @@ The application validates tokens on every API request:
 | `GET /api/tasks`             | ❌        | ❌   | ❌       | ✅    |
 | `POST /api/task/*/cancel`    | ❌        | ❌   | ❌       | ✅    |
 | `POST /api/tasks/cancel-all` | ❌        | ❌   | ❌       | ✅    |
+
+## Mode Detection Internals
+
+### How Frontend Detects Authentication Mode
+
+The frontend automatically determines the authentication mode by examining the `/api/auth/info` response:
+
+```javascript
+// Frontend logic (src/ui/js/auth/auth.js)
+
+const response = await fetch('/api/auth/info');
+const data = await response.json();
+
+if (data.authenticated) {
+    // User is already authenticated → Istio/Proxy mode
+    this.mode = 'istio';
+    this.userInfo = data.user;
+} else if (data.oauth_config) {
+    // OAuth config provided → OAuth mode
+    this.mode = 'oauth';
+    this.oauthConfig = data.oauth_config;
+} else {
+    // No authentication → Open mode
+    this.mode = 'none';
+}
+```
+
+**Key Insight:** The frontend does NOT use the `mode` field from the backend response. Instead, it independently determines the mode based on authentication state. This makes the system resilient to backend configuration issues.
+
+### Authentication State Logic
+
+```
+┌────────────────────────────────────────┐
+│  Frontend: GET /api/auth/info          │
+└──────────────┬─────────────────────────┘
+               │
+               ▼
+    ┌──────────────────────┐
+    │ authenticated: true? │
+    └──────┬───────────────┘
+           │
+      ┌────┴────┐
+      │         │
+      ▼         ▼
+    YES        NO
+      │         │
+      │         └──> Check oauth_config
+      │                    │
+      │              ┌─────┴─────┐
+      │              │           │
+      │             YES         NO
+      │              │           │
+      ▼              ▼           ▼
+  mode='istio'  mode='oauth'  mode='none'
+```
+
+### Why This Design is Resilient
+
+1. **Works with minimal configuration**: Backend can have no `AUTH_JWKS_URL` or `OAUTH_SERVER_URL` and still function correctly if user is authenticated
+2. **Adapts to deployment**: Automatically handles OAuth2 Proxy, Istio, or direct OAuth scenarios
+3. **Frontend independence**: Frontend doesn't depend on backend environment variables
+4. **Simple logic**: Only three states to handle based on actual authentication state
+
+### Example: OAuth2 Proxy + Istio
+
+In production with OAuth2 Proxy:
+
+1. OAuth2 Proxy intercepts browser request
+2. OAuth2 Proxy handles OAuth flow with Keycloak
+3. OAuth2 Proxy injects JWT in request header
+4. Backend extracts JWT, validates user
+5. Backend returns `/api/auth/info` with `authenticated: true`
+6. Frontend sees `authenticated: true` → Sets `mode = 'istio'`
+7. No login button shown, user already authenticated ✅
+
+**Backend configuration can be minimal:**
+```bash
+AUTH_REQUIRED=true
+AUTH_TRUST_MODE=true
+# No AUTH_JWKS_URL needed!
+# No OAUTH_SERVER_URL needed!
+```
+
+See `notes/MODE_DETECTION_CASE_STUDY.md` for the full technical analysis.
 
 ## Next Steps
 
