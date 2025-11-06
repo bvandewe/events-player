@@ -173,8 +173,9 @@ class TimelineController {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: {
-                    mode: 'index',
-                    intersect: false
+                    mode: 'nearest',
+                    intersect: true, // Only trigger on actual bar, not empty space
+                    axis: 'x'
                 },
                 scales: {
                     x: {
@@ -186,8 +187,10 @@ class TimelineController {
                                 second: 'HH:mm:ss',
                                 minute: 'HH:mm',
                                 hour: 'HH:mm'
-                            }
+                            },
+                            minUnit: 'second' // Ensure precise time handling
                         },
+                        offset: false, // Bars align to exact time values
                         title: {
                             display: true,
                             text: 'Time'
@@ -207,8 +210,9 @@ class TimelineController {
                 },
                 plugins: {
                     tooltip: {
-                        mode: 'index',
-                        intersect: false,
+                        mode: 'nearest',
+                        intersect: true, // Only show tooltip when hovering actual bar
+                        axis: 'x',
                         callbacks: {
                             title: (tooltipItems) => {
                                 if (!tooltipItems || tooltipItems.length === 0) return '';
@@ -252,9 +256,12 @@ class TimelineController {
                 },
                 onClick: async (event, elements) => {
                     // Click on bar to filter by time range and zoom in
+                    // With intersect:true, elements will only be populated if clicking directly on a bar
                     if (elements.length > 0) {
                         const element = elements[0];
                         const index = element.index;
+
+                        console.log('[Timeline] Bar clicked at index:', index);
 
                         // Use stored raw bucket time instead of parsed chart label
                         const bucketTime = this.rawBucketTimes[index];
@@ -483,7 +490,9 @@ class TimelineController {
                     data: bucketTimes.map(time => buckets[time][source] || 0),
                     backgroundColor: color,
                     borderColor: borderColor,
-                    borderWidth: 1
+                    borderWidth: 1,
+                    barPercentage: 1.0, // Fill entire bucket width
+                    categoryPercentage: 1.0 // No gap between consecutive buckets
                 };
             });
 
@@ -492,9 +501,7 @@ class TimelineController {
 
             // Update chart
             this.chart.data.labels = bucketTimes;
-            this.chart.data.datasets = datasets;
-
-            try {
+            this.chart.data.datasets = datasets; try {
                 this.chart.update();
             } catch (chartError) {
                 console.error('[Timeline] Chart update error:', chartError);
