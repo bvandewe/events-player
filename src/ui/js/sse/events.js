@@ -110,6 +110,12 @@ export const sseEventsController = (() => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent accordion toggle
 
+                // Hide the tooltip immediately
+                const tooltip = bootstrap.Tooltip.getInstance(btn);
+                if (tooltip) {
+                    tooltip.hide();
+                }
+
                 // Clear existing filters and apply the new one
                 const filters = {
                     type: filterType === 'type' ? value : '',
@@ -119,6 +125,12 @@ export const sseEventsController = (() => {
                 };
 
                 appState.updateFilters(filters);
+
+                // Immediately update filtered count after applying filter
+                // This ensures the page title updates right away
+                setTimeout(() => {
+                    updateFilteredCount();
+                }, 50);
 
                 // Show a subtle toast notification
                 toastController.showToast({

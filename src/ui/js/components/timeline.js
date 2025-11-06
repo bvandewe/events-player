@@ -127,6 +127,9 @@ class TimelineController {
         // Setup event listeners
         this.setupEventListeners();
 
+        // Setup enlarge button
+        this.setupEnlargeButton();
+
         console.log('[Timeline] Initialized');
     }
 
@@ -678,12 +681,72 @@ class TimelineController {
     }
 
     /**
+     * Setup enlarge button handler
+     */
+    setupEnlargeButton() {
+        const button = document.getElementById('timelineEnlargeBtn');
+        if (button) {
+            button.addEventListener('click', () => this.enlargeChart());
+        }
+    }
+
+    /**
+     * Enlarge the timeline chart in the modal
+     */
+    async enlargeChart() {
+        if (!this.chart) {
+            console.warn('[Timeline] Chart not initialized');
+            return;
+        }
+
+        // Set modal title
+        const modalLabel = document.getElementById('chartEnlargeModalLabel');
+        if (modalLabel) {
+            modalLabel.textContent = 'Timeline';
+        }
+
+        // Get enlarged canvas
+        const enlargedCanvas = document.getElementById('enlargedChart');
+        if (!enlargedCanvas) {
+            console.error('[Timeline] Enlarged chart canvas not found');
+            return;
+        }
+
+        // Destroy existing enlarged chart if any
+        if (this.enlargedChart) {
+            this.enlargedChart.destroy();
+        }
+
+        // Import Chart.js
+        const { Chart } = await import('chart.js');
+
+        // Clone the chart configuration
+        const ctx = enlargedCanvas.getContext('2d');
+        this.enlargedChart = new Chart(ctx, {
+            type: this.chart.config.type,
+            data: JSON.parse(JSON.stringify(this.chart.data)),
+            options: JSON.parse(JSON.stringify(this.chart.options))
+        });
+
+        // Show modal
+        const modalElement = document.getElementById('chartEnlargeModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    }
+
+    /**
      * Cleanup
      */
     destroy() {
         if (this.chart) {
             this.chart.destroy();
             this.chart = null;
+        }
+        if (this.enlargedChart) {
+            this.enlargedChart.destroy();
+            this.enlargedChart = null;
         }
         // Clear any pending refresh timers
         if (this.refreshTimer) {

@@ -19,28 +19,28 @@
 
 <div class="offcanvas offcanvas-bottom p-4 shadow-lg" data-bs-scroll="true" data-bs-backdrop="true" data-bs-keyboard="true" tabindex="-1"
     id="generatorPanel" aria-labelledby="staticBackdropLabel">
-    <div class="offcanvas-header justify-content-center position-relative">
-        <div class="position-absolute start-0 ms-3 d-flex gap-2 align-items-center">
-            <button type="button" class="btn btn-sm btn-outline-secondary" 
+    <div class="offcanvas-header position-relative" style="display: flex; align-items: center; justify-content: space-between;">
+        <div class="d-flex gap-2 align-items-center flex-shrink-1" style="min-width: 0; overflow: hidden;">
+            <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" 
                     id="resetFormBtn" 
                     data-bs-toggle="tooltip" 
                     data-bs-title="Reset form to default values"
                     title="Reset to defaults">
                 <i class="bi bi-arrow-counterclockwise"></i> Reset
             </button>
-            <button type="button" class="btn btn-sm btn-outline-info" 
+            <button type="button" class="btn btn-sm btn-outline-info flex-shrink-0" 
                     data-bs-toggle="modal" 
                     data-bs-target="#operationsHistoryModal"
                     data-bs-title="View operations history"
                     title="View history">
                 <i class="bi bi-clock-history"></i> History
             </button>
-            <select class="form-select form-select-sm" id="operationHistory" aria-label="Select previous operation" style="width: auto; min-width: 200px;">
+            <select class="form-select form-select-sm" id="operationHistory" aria-label="Select previous operation" style="min-width: 100px; max-width: 250px;">
                 <option value="" selected>New Operation</option>
             </select>
         </div>
-        <h4 class="offcanvas-title text-primary title" id="generatorPanelLabel">Generate CloudEvents</h4>
-        <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        <h4 class="offcanvas-title text-primary title flex-shrink-0 mx-3" id="generatorPanelLabel" style="text-align: center;">Generate CloudEvents</h4>
+        <button type="button" class="btn-close flex-shrink-0" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">        
         <div>
