@@ -1,6 +1,6 @@
 {
   "name": "event-viewer",
-  "version": "1.0.0",
+  "version": "0.4.10",
   "description": "This micro-app can be used as a test subscriber and/or emitter of [CloudEvents](https://cloudevents.io/).",
   "scripts": {
     "start": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html src/ui/html/components/*.html --public-url /static/ --dist-dir static",
