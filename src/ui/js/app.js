@@ -95,10 +95,6 @@ toastController.init(bootstrap);
 // Make it globally available
 window.toastController = toastController;
 
-// Initialize tab limit detector
-import { tabLimitDetector } from "./utils/tabLimitDetector";
-tabLimitDetector.init();
-
 import { initializeCollapseState } from "./ui/collapseState";
 // Initialize collapse state on DOM ready
 if (document.readyState === 'loading') {
