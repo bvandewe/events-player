@@ -57,6 +57,29 @@
     - Fixed interaction mode to prevent false triggers on empty buckets
     - Improved user experience with precise click targeting
 
+- **Timeline Full Screen Button**
+    - Fixed "View full screen" button functionality
+    - Timeline chart can now be enlarged in modal view like analytics charts
+
+- **Page Title Update**
+    - Fixed page title not updating to X/Y notation when filtering via event filter buttons
+    - Page title now consistently shows filtered count across all filter methods
+
+- **Filter Button Tooltips**
+    - Fixed tooltips persisting after clicking event filter buttons
+    - Tooltips now hide immediately when filter buttons are clicked
+
+#### UI Layout
+
+- **Main Container Padding**
+    - Removed top and bottom padding from main tag for better space utilization
+    - Maintains horizontal padding for proper content spacing
+
+- **Generator Panel Header**
+    - Fixed operation history dropdown overlapping title on narrow viewports
+    - Improved responsive layout with proper flexbox structure
+    - Dropdown now scales appropriately with viewport width
+
 ### Changed
 
 #### UI Components
