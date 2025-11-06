@@ -51,6 +51,12 @@
     - Prevents confusing state where narrow time filter is active with new bucket size
     - Clears custom start/end times when bucket size changes
 
+- **Click Interaction Behavior**
+    - Timeline only responds to clicks on actual bars with data, not empty space
+    - Tooltips only appear when hovering over actual bars
+    - Fixed interaction mode to prevent false triggers on empty buckets
+    - Improved user experience with precise click targeting
+
 ### Changed
 
 #### UI Components
