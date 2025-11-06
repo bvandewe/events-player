@@ -16,6 +16,7 @@
 import * as bootstrap from 'bootstrap';
 import EventStorageManager from '../storage/eventStorage.js';
 import { toastController } from '../ui/toast.js';
+import { actionsController } from '../ui/actions.js';
 
 class AuthManager {
     constructor() {
@@ -382,7 +383,11 @@ class AuthManager {
 
         if (error) {
             console.error('[Auth] OAuth error:', error, urlParams.get('error_description'));
-            alert(`Login failed: ${error}`);
+            actionsController.showError({
+                title: 'Login Failed',
+                message: `Login failed: ${error}`,
+                details: urlParams.get('error_description')
+            });
             // Clean URL
             window.history.replaceState({}, document.title, '/');
             return;
@@ -398,7 +403,11 @@ class AuthManager {
         const savedState = sessionStorage.getItem('oauth_state');
         if (state !== savedState) {
             console.error('[Auth] OAuth state mismatch - possible CSRF attack');
-            alert('Login failed: security check failed');
+            actionsController.showError({
+                title: 'Login Failed',
+                message: 'Login failed: security check failed',
+                details: 'OAuth state mismatch - possible CSRF attack'
+            });
             window.history.replaceState({}, document.title, '/');
             return;
         }
@@ -407,7 +416,11 @@ class AuthManager {
         const codeVerifier = sessionStorage.getItem('oauth_code_verifier');
         if (!codeVerifier) {
             console.error('[Auth] Code verifier not found - PKCE flow incomplete');
-            alert('Login failed: security check failed');
+            actionsController.showError({
+                title: 'Login Failed',
+                message: 'Login failed: security check failed',
+                details: 'Code verifier not found - PKCE flow incomplete'
+            });
             window.history.replaceState({}, document.title, '/');
             return;
         }
@@ -469,7 +482,11 @@ class AuthManager {
 
         } catch (error) {
             console.error('[Auth] OAuth callback failed:', error);
-            alert(`Login failed: ${error.message}`);
+            actionsController.showError({
+                title: 'Login Failed',
+                message: `Login failed: ${error.message}`,
+                error: error
+            });
             window.history.replaceState({}, document.title, '/');
         }
     }
@@ -508,7 +525,10 @@ class AuthManager {
         const modalElement = document.getElementById('clearStorageModal');
         if (!modalElement) {
             console.error('[Auth] Clear storage modal not found');
-            alert('Modal not found. Please refresh the page.');
+            actionsController.showError({
+                title: 'Error',
+                message: 'Modal not found. Please refresh the page.'
+            });
             return;
         }
 

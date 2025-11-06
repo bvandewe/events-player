@@ -6,6 +6,7 @@
  */
 
 import * as bootstrap from 'bootstrap';
+import { actionsController } from '../ui/actions.js';
 
 class AuthorizationManager {
     constructor() {
@@ -241,8 +242,11 @@ class AuthorizationManager {
                     type: 'authorization_error'
                 }]
             });
-        } else {
-            alert(message || 'You do not have permission to perform this action');
+        } else if (actionsController) {
+            actionsController.showError({
+                title: 'Authorization Error',
+                message: message || 'You do not have permission to perform this action'
+            });
         }
     }
 }

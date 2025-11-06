@@ -32,7 +32,23 @@
     - Tooltips indicate "(click to filter)" for user guidance
     - Unified filtering UX across all charts
 
+#### Admin Features
+
+- **Client Disconnect Functionality**
+    - Admins can now forcefully disconnect SSE clients from the Clients modal
+    - New "Actions" column with disconnect button in client table (admin-only)
+    - Confirmation dialog before disconnecting a client
+    - Backend endpoint `/api/sse/disconnect/{client_id}` with admin authorization
+    - Automatic table refresh after disconnect
+
 ### Fixed
+
+#### Authentication & Authorization
+
+- **Client Disconnect Authorization**
+    - Fixed 401 Unauthorized error when disconnecting SSE clients
+    - Now uses `apiFetch` wrapper that properly includes Bearer token
+    - Authentication credentials correctly sent with admin API calls
 
 #### Timeline
 
@@ -83,6 +99,14 @@
 ### Changed
 
 #### UI Components
+
+- **Confirmation Dialogs Replaced with Bootstrap Modals**
+    - Replaced all native browser `confirm()` and `alert()` dialogs with Bootstrap modals
+    - New `showInfo()` method in actionsController for success/info messages
+    - Updated confirmations in clientsModal, tasksModal, auth, and authorization modules
+    - Consistent UX with themed buttons (danger for destructive actions, success for completions)
+    - Better accessibility and more professional appearance
+    - Info/success modals hide header close button, show only footer OK button
 
 - **Global Filters Panel**
     - Custom time range inputs now properly show/hide based on selection
