@@ -7,6 +7,7 @@ import * as bootstrap from 'bootstrap';
 import { apiGet, apiPost } from '../utils/apiClient.js';
 import { toastController } from './toast.js';
 import { metadataSSE } from '../sse/metadata.js';
+import { actionsController } from './actions.js';
 
 export const tasksModalController = (() => {
     let modal = null;
@@ -449,43 +450,47 @@ export const tasksModalController = (() => {
      * Handle cancel all tasks
      */
     const handleCancelAll = async () => {
-        try {
-            if (!confirm('Are you sure you want to cancel all active tasks?')) {
-                return;
+        actionsController.showConfirm({
+            title: 'Cancel All Tasks',
+            message: 'Are you sure you want to cancel all active tasks?',
+            confirmText: 'Cancel All',
+            confirmClass: 'btn-danger',
+            onConfirm: async () => {
+                try {
+                    console.log('[TasksModal] Cancelling all tasks...');
+
+                    const response = await apiPost('/api/tasks/cancel-all', {});
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to cancel tasks');
+                    }
+
+                    const result = await response.json();
+
+                    toastController.showToast({
+                        detail: [{
+                            loc: ['tasks'],
+                            msg: result.message || 'All tasks cancelled successfully',
+                            type: 'success'
+                        }]
+                    });
+
+                    // Reload tasks to show updated status
+                    loadActiveTasks();
+
+                } catch (error) {
+                    console.error('[TasksModal] Failed to cancel all tasks:', error);
+                    toastController.showToast({
+                        detail: [{
+                            loc: ['tasks'],
+                            msg: error.message || 'Failed to cancel tasks',
+                            type: 'error'
+                        }]
+                    });
+                }
             }
-
-            console.log('[TasksModal] Cancelling all tasks...');
-
-            const response = await apiPost('/api/tasks/cancel-all', {});
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to cancel tasks');
-            }
-
-            const result = await response.json();
-
-            toastController.showToast({
-                detail: [{
-                    loc: ['tasks'],
-                    msg: result.message || 'All tasks cancelled successfully',
-                    type: 'success'
-                }]
-            });
-
-            // Reload tasks to show updated status
-            loadActiveTasks();
-
-        } catch (error) {
-            console.error('[TasksModal] Failed to cancel all tasks:', error);
-            toastController.showToast({
-                detail: [{
-                    loc: ['tasks'],
-                    msg: error.message || 'Failed to cancel tasks',
-                    type: 'error'
-                }]
-            });
-        }
+        });
     };
 
     /**

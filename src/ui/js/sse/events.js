@@ -739,7 +739,8 @@ export const sseEventsController = (() => {
     return {
         init,
         resetEventsCount,
-        loadEventsFromStorage  // Expose for manual refresh
+        loadEventsFromStorage,  // Expose for manual refresh
+        updateFilteredCount     // Expose for external filter updates
     }
 
 })();

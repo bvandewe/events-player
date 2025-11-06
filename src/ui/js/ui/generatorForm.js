@@ -4,6 +4,7 @@ import { authManager, authorizationManager } from "../app";
 import { apiPost } from "../utils/apiClient.js";
 import { actionsController } from "./actions";
 import { tasksModalController } from "./tasksModal";
+import { eventController } from "../sse/events.js";
 import * as bootstrap from 'bootstrap';
 
 export const generatorForm = (() => {
@@ -1052,6 +1053,11 @@ export const generatorForm = (() => {
                 timeRange: 'all'
             });
 
+            // Update filtered count to reflect X/Y notation in page title
+            setTimeout(() => {
+                eventController.updateFilteredCount();
+            }, 50);
+
             // Close the modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('operationsHistoryModal'));
             if (modal) modal.hide();
@@ -1077,6 +1083,11 @@ export const generatorForm = (() => {
                 timeRange: 'all'
             });
 
+            // Update filtered count to reflect X/Y notation in page title
+            setTimeout(() => {
+                eventController.updateFilteredCount();
+            }, 50);
+
             // Close the modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('operationsHistoryModal'));
             if (modal) modal.hide();
@@ -1101,6 +1112,11 @@ export const generatorForm = (() => {
                 subject: subject,
                 timeRange: 'all'
             });
+
+            // Update filtered count to reflect X/Y notation in page title
+            setTimeout(() => {
+                eventController.updateFilteredCount();
+            }, 50);
 
             // Close the modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('operationsHistoryModal'));

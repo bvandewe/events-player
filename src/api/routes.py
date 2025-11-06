@@ -429,6 +429,43 @@ async def get_sse_stats():
     }
 
 
+# Disconnect SSE Client (Admin only)
+@router.post(
+    path="/api/sse/disconnect/{client_id}",
+    tags=["System"],
+    operation_id="disconnect_sse_client",
+)
+async def disconnect_sse_client(
+    client_id: str,
+    user: Dict = Depends(require_admin),
+):
+    """
+    Forcefully disconnect a specific SSE client by removing it from the clients dictionary.
+    This endpoint requires admin privileges.
+
+    The disconnected client will need to reconnect to continue receiving events.
+    """
+    if client_id not in sse_clients:
+        raise HTTPException(
+            status_code=404, detail=f"Client {client_id} not found or already disconnected"
+        )
+
+    try:
+        # Remove the client from the dictionary
+        # The SSE stream will be broken and the client will receive a connection close
+        del sse_clients[client_id]
+        log.info(f"Admin '{user.get('username', 'unknown')}' disconnected SSE client: {client_id}")
+
+        return {
+            "success": True,
+            "message": f"Client {client_id} has been disconnected",
+            "disconnected_by": user.get("username", "admin"),
+        }
+    except Exception as e:
+        log.error(f"Error disconnecting client {client_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to disconnect client: {str(e)}") from e
+
+
 # Subscriber Route
 @router.post(path="/events/pub", tags=["CloudEvents Subscriber"], operation_id="handle_events")
 async def handle_events(

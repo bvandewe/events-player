@@ -110,7 +110,7 @@ export const actionsController = (() => {
 
         // Set content
         titleEl.textContent = title;
-        messageEl.textContent = message;
+        messageEl.innerHTML = message.replace(/\n/g, '<br>');
         actionBtn.textContent = confirmText;
 
         // Update button class
@@ -216,6 +216,67 @@ export const actionsController = (() => {
         }, { once: true });
     };
 
+    /**
+     * Show an info/success modal with custom message
+     * @param {Object} options - Configuration object
+     * @param {string} options.title - Modal title (default: "Information")
+     * @param {string} options.message - Info/success message
+     * @param {string} options.variant - 'success' or 'info' (default: 'info')
+     */
+    const showInfo = (options) => {
+        const {
+            title = 'Information',
+            message = '',
+            variant = 'info'
+        } = options;
+
+        // Use the confirm modal but style it as info/success
+        const modalEl = document.getElementById('confirmModal');
+        const titleEl = document.getElementById('confirmModalLabel');
+        const messageEl = document.getElementById('confirmModalMessage');
+        const actionBtn = document.getElementById('confirmModalActionBtn');
+        const cancelBtn = modalEl?.querySelector('.modal-footer [data-bs-dismiss="modal"]');
+        const closeBtn = modalEl?.querySelector('.btn-close');
+
+        if (!modalEl || !titleEl || !messageEl || !actionBtn) {
+            console.error('[Actions] Info modal elements not found');
+            console.log('[Info]', message);
+            return;
+        }
+
+        // Set content
+        titleEl.textContent = title;
+        messageEl.innerHTML = message.replace(/\n/g, '<br>');
+
+        // Hide action button and close X button, show only OK button in footer
+        actionBtn.style.display = 'none';
+        if (closeBtn) {
+            closeBtn.style.display = 'none';
+        }
+
+        // Update cancel button to say "OK"
+        if (cancelBtn) {
+            cancelBtn.textContent = 'OK';
+            cancelBtn.className = variant === 'success' ? 'btn btn-success' : 'btn btn-primary';
+        }
+
+        // Show modal
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Reset button visibility when modal is hidden
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            actionBtn.style.display = '';
+            if (closeBtn) {
+                closeBtn.style.display = '';
+            }
+            if (cancelBtn) {
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.className = 'btn btn-secondary';
+            }
+        }, { once: true });
+    };
+
     const init = (bs) => {
         bootstrap = bs;
 
@@ -245,7 +306,8 @@ export const actionsController = (() => {
     return {
         init,
         showConfirm,
-        showError
+        showError,
+        showInfo
     }
 
 })();

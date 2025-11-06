@@ -5,6 +5,9 @@
 
 import * as bootstrap from 'bootstrap';
 import { metadataSSE } from '../sse/metadata.js';
+import { authorizationManager } from '../auth/authorization.js';
+import { apiFetch } from '../utils/apiClient.js';
+import { actionsController } from './actions.js';
 
 export const clientsModalController = (() => {
     let modal = null;
@@ -73,6 +76,12 @@ export const clientsModalController = (() => {
 
         // Subscribe to metadata stream for client updates
         setupMetadataSubscription();
+
+        // Hide admin-only columns if user is not admin
+        if (!authorizationManager.isAdmin()) {
+            const adminOnlyElements = document.querySelectorAll('.admin-only');
+            adminOnlyElements.forEach(el => el.style.display = 'none');
+        }
 
         console.log('[ClientsModal] Initialized');
     };
@@ -171,9 +180,11 @@ export const clientsModalController = (() => {
         if (!elements.tableBody) return;
 
         if (!clients || clients.length === 0) {
+            const isAdmin = authorizationManager.isAdmin();
+            const colspan = isAdmin ? "5" : "4";
             elements.tableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="text-center text-muted py-4">
+                    <td colspan="${colspan}" class="text-center text-muted py-4">
                         <i class="bi bi-inbox me-2"></i>
                         No clients connected
                     </td>
@@ -182,6 +193,7 @@ export const clientsModalController = (() => {
             return;
         }
 
+        const isAdmin = authorizationManager.isAdmin();
         const rows = clients.map(client => {
             const statusClass = client.is_slow ? 'danger' :
                 client.utilization_pct > 50 ? 'warning' : 'success';
@@ -189,6 +201,17 @@ export const clientsModalController = (() => {
                 client.utilization_pct > 50 ? 'exclamation-triangle' : 'check-circle';
             const statusText = client.is_slow ? 'Slow' :
                 client.utilization_pct > 50 ? 'Busy' : 'Normal';
+
+            const disconnectButton = isAdmin ? `
+                <td class="text-center admin-only">
+                    <button class="btn btn-sm btn-outline-danger disconnect-client-btn" 
+                            data-client-id="${escapeHtml(client.client_id)}"
+                            data-bs-toggle="tooltip"
+                            data-bs-title="Disconnect this client">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </td>
+            ` : '';
 
             return `
                 <tr class="${client.is_slow ? 'table-danger' : ''}">
@@ -218,11 +241,83 @@ export const clientsModalController = (() => {
                             <i class="bi bi-${statusIcon} me-1"></i>${statusText}
                         </span>
                     </td>
+                    ${disconnectButton}
                 </tr>
             `;
         }).join('');
 
         elements.tableBody.innerHTML = rows;
+
+        // Initialize tooltips for disconnect buttons
+        if (isAdmin) {
+            const tooltipElements = elements.tableBody.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipElements.forEach(el => new bootstrap.Tooltip(el));
+
+            // Add click handlers for disconnect buttons
+            const disconnectButtons = elements.tableBody.querySelectorAll('.disconnect-client-btn');
+            disconnectButtons.forEach(btn => {
+                btn.addEventListener('click', () => handleDisconnectClient(btn.dataset.clientId));
+            });
+        }
+    };
+
+    /**
+     * Handle disconnect client button click
+     */
+    const handleDisconnectClient = async (clientId) => {
+        console.log('[ClientsModal] Disconnect requested for client:', clientId);
+
+        // Show Bootstrap confirmation modal
+        actionsController.showConfirm({
+            title: 'Disconnect Client',
+            message: `Are you sure you want to disconnect client?\n\nClient ID: ${clientId}\n\nThis will force the client to reconnect.`,
+            confirmText: 'Disconnect',
+            confirmClass: 'btn-danger',
+            onConfirm: async () => {
+                try {
+                    const response = await apiFetch(`/api/sse/disconnect/${encodeURIComponent(clientId)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('[ClientsModal] Disconnect result:', result);
+
+                    // Show success modal
+                    actionsController.showInfo({
+                        title: 'Client Disconnected',
+                        message: `Client disconnected successfully.\n\nClient ID: ${clientId}\nStatus: ${result.message}`,
+                        variant: 'success'
+                    });
+
+                    // Refresh the table
+                    if (latestData) {
+                        // Remove the disconnected client from cached data
+                        if (latestData.clients) {
+                            latestData.clients = latestData.clients.filter(c => c.client_id !== clientId);
+                            latestData.total_clients = latestData.clients.length;
+                        }
+                        updateUI(latestData);
+                    } else {
+                        fetchInitialStats();
+                    }
+                } catch (error) {
+                    console.error('[ClientsModal] Error disconnecting client:', error);
+                    actionsController.showError({
+                        title: 'Disconnect Failed',
+                        message: `Failed to disconnect client: ${error.message}`,
+                        error: error
+                    });
+                }
+            }
+        });
     };
 
     /**
