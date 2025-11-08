@@ -47,6 +47,9 @@
 }
 
 .timeline-auto-refresh-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     border-radius: 999px;
     padding: 0.1rem 0.75rem;
     transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
@@ -64,6 +67,24 @@
         .form-check-input {
             border-color: var(--bs-warning) !important;
             background-color: var(--bs-body-bg);
+        }
+    }
+}
+
+.timeline-controls {
+    gap: 0.75rem;
+
+    .timeline-bucket-control {
+        gap: 0.5rem;
+
+        label {
+            white-space: nowrap;
+            margin-bottom: 0;
+        }
+
+        .form-select {
+            width: auto;
+            min-width: 120px;
         }
     }
 }
