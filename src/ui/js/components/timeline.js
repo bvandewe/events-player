@@ -23,6 +23,9 @@ import { appState } from '../state/appState';
 import { actionsController } from '../ui/actions';
 
 const AUTO_REFRESH_STORAGE_KEY = 'timeline_auto_refresh_enabled';
+const DEFAULT_VISIBLE_BUCKETS = 60;
+const VIEWPORT_RETRY_DELAY_MS = 250;
+const SCROLL_PIN_THRESHOLD = 16;
 
 // Register Chart.js components
 Chart.register(
@@ -82,6 +85,16 @@ class TimelineController {
         // Store raw bucket times for click handling
         this.rawBucketTimes = [];
 
+        // Maintain stable bucket widths by capping the visible bucket window
+        this.visibleBucketCount = DEFAULT_VISIBLE_BUCKETS;
+        this.chartScrollArea = null;
+        this.chartScrollContent = null;
+        this.viewportRetryTimer = null;
+        this.boundHandleWindowResize = this.handleWindowResize.bind(this);
+        this.timelineTabTrigger = null;
+        this.timelineTabHandler = null;
+        this.lastBucketCount = 0;
+
         // DOM elements (will be initialized in init())
         this.bucketSizeSelect = null;
         this.autoRefreshToggle = null;
@@ -108,6 +121,27 @@ class TimelineController {
             quietPeriods: document.getElementById('statQuietPeriods'),
             quietPeriodsSize: document.getElementById('statQuietPeriodsSize')
         };
+
+        this.chartScrollArea = document.getElementById('timelineChartBody');
+        this.chartScrollContent = document.getElementById('timelineChartScroll');
+
+        if (this.chartScrollArea && this.chartScrollArea.dataset && this.chartScrollArea.dataset.visibleBuckets) {
+            const parsedBuckets = parseInt(this.chartScrollArea.dataset.visibleBuckets, 10);
+            if (!Number.isNaN(parsedBuckets) && parsedBuckets > 0) {
+                this.visibleBucketCount = parsedBuckets;
+            }
+        }
+
+        window.addEventListener('resize', this.boundHandleWindowResize);
+
+        this.timelineTabTrigger = document.querySelector('[data-bs-target="#timeline-pane"]');
+        if (this.timelineTabTrigger) {
+            this.timelineTabHandler = () => {
+                const wasPinned = this.isScrollPinnedToEnd();
+                requestAnimationFrame(() => this.adjustChartViewport(this.lastBucketCount, wasPinned));
+            };
+            this.timelineTabTrigger.addEventListener('shown.bs.tab', this.timelineTabHandler);
+        }
 
         // Subscribe to new events via appState
         appState.subscribe('newEvent', () => {
@@ -446,11 +480,13 @@ class TimelineController {
                 this.chart.data.labels = [];
                 this.chart.data.datasets = []; // Clear all datasets
                 this.rawBucketTimes = []; // Clear raw bucket times
+                this.lastBucketCount = 0;
                 try {
                     this.chart.update();
                 } catch (chartError) {
                     console.error('[Timeline] Chart update error (no events):', chartError);
                 }
+                requestAnimationFrame(() => this.adjustChartViewport(0, false));
                 this.updateStats([]);
                 return;
             }
@@ -504,12 +540,16 @@ class TimelineController {
                 };
             });
 
+            const wasPinnedToEnd = this.isScrollPinnedToEnd();
+
             // Store raw bucket times for onClick handler
             this.rawBucketTimes = bucketTimes;
 
             // Update chart
             this.chart.data.labels = bucketTimes;
-            this.chart.data.datasets = datasets; try {
+            this.chart.data.datasets = datasets;
+
+            try {
                 this.chart.update();
             } catch (chartError) {
                 console.error('[Timeline] Chart update error:', chartError);
@@ -547,6 +587,9 @@ class TimelineController {
 
                 return; // Don't update stats if chart update failed
             }
+
+            this.lastBucketCount = bucketTimes.length;
+            requestAnimationFrame(() => this.adjustChartViewport(bucketTimes.length, wasPinnedToEnd));
 
             // Prepare bucket data for stats (convert to sortedBuckets format)
             const sortedBuckets = bucketTimes.map(time => {
@@ -629,6 +672,67 @@ class TimelineController {
             this.statElements.quietPeriodsSize.textContent =
                 `${bucketInfo.value} ${bucketInfo.unit}${bucketInfo.value > 1 ? 's' : ''}`;
         }
+    }
+
+    handleWindowResize() {
+        const wasPinned = this.isScrollPinnedToEnd();
+        this.adjustChartViewport(this.lastBucketCount, wasPinned);
+    }
+
+    adjustChartViewport(bucketCount = this.rawBucketTimes.length, maintainEndPosition = false) {
+        if (!this.chartScrollArea || !this.chartScrollContent) {
+            return;
+        }
+
+        const containerWidth = this.chartScrollArea.clientWidth;
+        if (!containerWidth) {
+            if (!this.viewportRetryTimer) {
+                this.viewportRetryTimer = setTimeout(() => {
+                    this.viewportRetryTimer = null;
+                    this.adjustChartViewport(bucketCount, maintainEndPosition);
+                }, VIEWPORT_RETRY_DELAY_MS);
+            }
+            return;
+        }
+
+        if (this.viewportRetryTimer) {
+            clearTimeout(this.viewportRetryTimer);
+            this.viewportRetryTimer = null;
+        }
+
+        const effectiveBucketCount = Math.max(bucketCount, 1);
+        const visibleBuckets = Math.max(this.visibleBucketCount, 1);
+        const bucketWidth = containerWidth / visibleBuckets;
+        const desiredWidth = Math.max(containerWidth, Math.ceil(effectiveBucketCount * bucketWidth));
+
+        this.chartScrollContent.style.width = `${desiredWidth}px`;
+        this.chartScrollContent.style.minWidth = `${containerWidth}px`;
+
+        if (this.chart) {
+            this.chart.resize();
+        }
+
+        if (maintainEndPosition) {
+            requestAnimationFrame(() => {
+                if (this.chartScrollArea) {
+                    this.chartScrollArea.scrollLeft = this.chartScrollArea.scrollWidth;
+                }
+            });
+        }
+    }
+
+    isScrollPinnedToEnd() {
+        if (!this.chartScrollArea) {
+            return true;
+        }
+
+        const { scrollLeft, scrollWidth, clientWidth } = this.chartScrollArea;
+
+        if (scrollWidth <= clientWidth) {
+            return true;
+        }
+
+        return (scrollWidth - (scrollLeft + clientWidth)) <= SCROLL_PIN_THRESHOLD;
     }
 
     /**
@@ -784,6 +888,20 @@ class TimelineController {
             this.refreshTimer = null;
         }
         this.pendingRefresh = false;
+
+        if (this.viewportRetryTimer) {
+            clearTimeout(this.viewportRetryTimer);
+            this.viewportRetryTimer = null;
+        }
+
+        window.removeEventListener('resize', this.boundHandleWindowResize);
+
+        if (this.timelineTabTrigger && this.timelineTabHandler) {
+            this.timelineTabTrigger.removeEventListener('shown.bs.tab', this.timelineTabHandler);
+        }
+
+        this.timelineTabTrigger = null;
+        this.timelineTabHandler = null;
     }
 }
 
