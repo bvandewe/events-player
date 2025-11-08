@@ -186,7 +186,11 @@ class MainDashboardController {
             await this.components.analytics.update();
         }
         if (this.components.timeline && this.activeTab === 'timeline') {
-            await this.components.timeline.refreshChart();
+            if (this.components.timeline.autoRefreshEnabled) {
+                await this.components.timeline.refreshChart();
+            } else {
+                console.log('[MainDashboard] Timeline auto-refresh disabled; skipping real-time chart update');
+            }
         }
 
         // Reload streams if on streams tab
@@ -244,7 +248,11 @@ class MainDashboardController {
             await this.components.analytics.update();
         }
         if (this.components.timeline && this.activeTab === 'timeline') {
-            await this.components.timeline.refreshChart();
+            if (this.components.timeline.autoRefreshEnabled) {
+                await this.components.timeline.refreshChart();
+            } else {
+                console.log('[MainDashboard] Timeline auto-refresh disabled; skipping throttled chart update');
+            }
         }
     }
 
