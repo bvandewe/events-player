@@ -11,7 +11,7 @@ def call() {
         agent any
         //tools {
         //    jdk 'JDK11'
-        //}        
+        //}
         /*
         * Uncomment this section if you want to use specific deploy or artifact record for build
         * 'codectl get deploy' and 'codectl get artifact' gives you the list of respective IDs
@@ -33,7 +33,7 @@ def call() {
                         script{
                             codeQualityUtils.softwareCompositionAnalysisScan(env.GIT_URL)
                         }
-                    }  
+                    }
                 }
             }
             stage ('Secrets Scan'){
@@ -42,12 +42,12 @@ def call() {
                         script{
                             codeQualityUtils.secretsAnalysisScan(env.GIT_URL)
                         }
-                    }  
+                    }
                 }
             }
 
             /* In this stage, the Docker image is being created and tagged.
-            */ 
+            */
             stage('Build') {
                 steps {
                     script {
@@ -59,7 +59,7 @@ def call() {
                     }
                 }
             }
-           
+
             /* This steps runs your unit tests, and your SonarQube scan.
             * This stage may vary heavily depending on your project language and structure.
             */
@@ -69,11 +69,11 @@ def call() {
             //             CURRENT_STAGE = "Test/Sonar"
             //             withSonarQubeEnv('BMS SonarQube') {
             //                     sh '/bms/tools/sonar-runner/sonar-scanner-current/bin/sonar-scanner ' +
-            //                     '-Dsonar.projectKey=lcp-${BUILD_NAME} ' + 
+            //                     '-Dsonar.projectKey=lcp-${BUILD_NAME} ' +
             //                     '-Dsonar.projectName=lcp-${BUILD_NAME} ' +
             //                     '-Dsonar.projectVersion=${IMAGE_TAG} ' +
             //                     '-Dsonar.branch.name=${BRANCH_NAME} ' +
-            //                     '-Dsonar.sources=$(pwd) ' + 
+            //                     '-Dsonar.sources=$(pwd) ' +
             //                     '-Dsonar.language=py ' +
             //                     '-Dsonar.sourceEncoding=UTF-8 ' +
             //                     '-Dsonar.exclusions=config/**/*.yaml,*.md,*.txt,Dockerfile*,report.json,coverage.out,report.xml,values.yaml,Jenkinsfile,templates/**/*.yaml,*.yaml,Makefile,resources/ '
@@ -95,20 +95,20 @@ def call() {
                         branch 'development';
                         branch 'main';
                         branch 'master'
-                    } 
+                    }
                 }
                 steps{
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE'){
                         script{
                             codeQualityUtils.updateCodeCovToHub(env.GIT_URL)
                         }
-                    }  
+                    }
                 }
             }
 
-            /* 
+            /*
             * In this stage, the docker image is being pushed to the internal container registry (containers.cisco.com)
-            */ 
+            */
             stage ('Push/Quay') {
                 when {
                     anyOf {
@@ -125,7 +125,7 @@ def call() {
                         docker.withRegistry("${LCP_REGISTRY_URL}/${BUILD_NAME}", 'LEARNING-PLATFORM-QUAY') {
                             dockerImage.push("${IMAGE_TAG}")
                             dockerImage.push("latest")
-                        } 
+                        }
                     }
                 }
             }
@@ -144,7 +144,7 @@ def call() {
                     script {
                         CURRENT_STAGE = "Tag Repository"
                         echo "Tagging ${BUILD_NAME} Repository with image tag ${IMAGE_TAG}"
-                        try {   
+                        try {
                             withCredentials([usernamePassword(credentialsId: '386fd8ce-11bc-4765-9384-b3adb033e789', passwordVariable: 'token', usernameVariable: 'username')]){
                                 sh 'git config --local url."https://${username}:${token}@wwwin-github.cisco.com".insteadOf "https://wwwin-github.cisco.com"'
                                 //create tag
@@ -165,12 +165,12 @@ def call() {
                 generateBuildDetails()
                 script {
                     withCredentials([
-                        usernamePassword(credentialsId: '386fd8ce-11bc-4765-9384-b3adb033e789', passwordVariable: 'token', usernameVariable: 'username'), 
+                        usernamePassword(credentialsId: '386fd8ce-11bc-4765-9384-b3adb033e789', passwordVariable: 'token', usernameVariable: 'username'),
                         usernamePassword(credentialsId: 'LEARNING-PLATFORM-QUAY', passwordVariable: 'quayToken', usernameVariable: 'quayUser'),
                         usernamePassword(credentialsId: 'ROUGAROU_WEBEX_APP', passwordVariable: 'botToken', usernameVariable: 'botId')
                     ]) {
                             sh 'docker login -u $quayUser -p $quayToken $LCP_QUAY_SERVER'
-                            
+
                             sh 'docker run -e WEBEX_SPACE_ID=$WEBEX_SPACE_ID -e WEBEX_TOKEN=$botToken -v $(pwd):/build $BUILD_NOTIFICATION_IMAGE'
                     }
                 }
@@ -185,7 +185,7 @@ def generateBuildDetails() {
         buildName : env.BUILD_NAME,
         buildNumber: env.BUILD_NUMBER,
         buildStatus: "${currentBuild.currentResult}",
-        failedStage: "${CURRENT_STAGE}", 
+        failedStage: "${CURRENT_STAGE}",
         buildTime: new Date().format("yyyy-MMM-dd HH:mm:ss z", TimeZone.getTimeZone('UTC')),
         buildUrl: env.BUILD_URL,
         gitHubDetails : [
