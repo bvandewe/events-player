@@ -89,6 +89,26 @@
     }
 }
 
+.timeline-chart-body {
+    position: relative;
+    height: 400px;
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    .timeline-chart-scroll {
+        position: relative;
+        height: 100%;
+        min-width: 100%;
+        display: block;
+    }
+
+    canvas {
+        display: block;
+        height: 100% !important;
+        max-width: none;
+    }
+}
+
 // Collapsible sections
 .collapse-header {
     cursor: pointer;
