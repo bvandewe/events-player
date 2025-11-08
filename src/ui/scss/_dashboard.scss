@@ -1,152 +1,159 @@
 // Dashboard-specific styles
 // Flexbox layout for full-height streams
 .dashboard-container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 120px); // Account for nav and padding
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px); // Account for nav and padding
 }
 
 .metrics-section,
 .analytics-section,
 .storage-section,
 .charts-section {
-    flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 .streams-section {
-    flex: 1;
-    min-height: 300px;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
 .streams-content {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: auto;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 #search-form {
-    .form-control.search-active {
-        border-color: var(--bs-warning) !important;
-        background-color: rgba(255, 193, 7, 0.18) !important;
-        color: var(--bs-body-color) !important;
-        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
-        transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  .form-control.search-active {
+    border-color: var(--bs-warning) !important;
+    background-color: rgba(255, 193, 7, 0.18) !important;
+    color: var(--bs-body-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    transition:
+      box-shadow 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
 
-        &::placeholder {
-            color: rgba(0, 0, 0, 0.6) !important;
-        }
+    &::placeholder {
+      color: rgba(0, 0, 0, 0.6) !important;
     }
+  }
 
-    .search-active-badge {
-        font-size: 0.7rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-    }
+  .search-active-badge {
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
 }
 
 .timeline-auto-refresh-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-radius: 999px;
-    padding: 0.1rem 0.75rem;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.75rem;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 
-    &.highlighted {
-        border: 1px solid var(--bs-warning) !important;
-        background-color: rgba(255, 193, 7, 0.18) !important;
-        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+  &.highlighted {
+    border: 1px solid var(--bs-warning) !important;
+    background-color: rgba(255, 193, 7, 0.18) !important;
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
 
-        .form-check-label {
-            color: var(--bs-body-color) !important;
-            font-weight: 600;
-        }
-
-        .form-check-input {
-            border-color: var(--bs-warning) !important;
-            background-color: var(--bs-body-bg);
-        }
+    .form-check-label {
+      color: var(--bs-body-color) !important;
+      font-weight: 600;
     }
+
+    .form-check-input {
+      border-color: var(--bs-warning) !important;
+      background-color: var(--bs-body-bg);
+    }
+  }
 }
 
 .timeline-controls {
-    gap: 0.75rem;
+  gap: 0.75rem;
 
-    .timeline-bucket-control {
-        gap: 0.5rem;
+  .timeline-bucket-control {
+    gap: 0.5rem;
 
-        label {
-            white-space: nowrap;
-            margin-bottom: 0;
-        }
-
-        .form-select {
-            width: auto;
-            min-width: 120px;
-        }
+    label {
+      white-space: nowrap;
+      margin-bottom: 0;
     }
 
-    .timeline-auto-fit-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
+    .form-select {
+      width: auto;
+      min-width: 120px;
     }
+  }
+
+  .timeline-auto-fit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
 }
 
 .timeline-chart-body {
+  position: relative;
+  height: 400px;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  &.is-scrollable {
+    cursor: grab;
+  }
+
+  &.drag-scrolling {
+    cursor: grabbing;
+    user-select: none;
+  }
+
+  .timeline-chart-scroll {
     position: relative;
-    height: 400px;
-    overflow-x: auto;
-    overflow-y: hidden;
+    height: 100%;
+    min-width: 100%;
+    display: block;
+  }
 
-    &.is-scrollable {
-        cursor: grab;
-    }
-
-    &.drag-scrolling {
-        cursor: grabbing;
-        user-select: none;
-    }
-
-    .timeline-chart-scroll {
-        position: relative;
-        height: 100%;
-        min-width: 100%;
-        display: block;
-    }
-
-    canvas {
-        display: block;
-        height: 100% !important;
-        max-width: none;
-        cursor: inherit;
-    }
+  canvas {
+    display: block;
+    height: 100% !important;
+    max-width: none;
+    cursor: inherit;
+  }
 }
 
 // Collapsible sections
 .collapse-header {
-    cursor: pointer;
-    user-select: none;
+  cursor: pointer;
+  user-select: none;
 
-    &:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-    }
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
 }
 
 // Clickable metrics
 .metric-clickable {
-    cursor: pointer;
-    transition: transform 0.1s ease, opacity 0.2s ease;
-    
-    &:hover {
-        transform: scale(1.05);
-        opacity: 0.8;
-    }
-    
-    &:active {
-        transform: scale(0.98);
-    }
-}
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    opacity 0.2s ease;
 
+  &:hover {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
