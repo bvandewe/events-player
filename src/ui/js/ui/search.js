@@ -2,6 +2,7 @@ export const searchController = (() => {
 
     const STORAGE_KEY = 'cloudevents-player-search-term';
     let currentSearchTerm = '';
+    const DEFAULT_ARIA_LABEL = 'Search events';
 
     /**
      * Save search term to localStorage
@@ -58,8 +59,8 @@ export const searchController = (() => {
      * Apply search filter to all events in the stream
      */
     const applySearch = (searchTerm) => {
-        currentSearchTerm = searchTerm;
-        const lowerSearchTerm = searchTerm.toLowerCase().trim();
+        const trimmedTerm = (searchTerm || '').trim();
+        currentSearchTerm = trimmedTerm;
 
         const eventsStackDiv = document.getElementById('events-stack');
         if (!eventsStackDiv) {
@@ -72,7 +73,7 @@ export const searchController = (() => {
         let hiddenCount = 0;
 
         for (let i = 0; i < eventMessages.length; i++) {
-            const matches = searchEventData(eventMessages[i], lowerSearchTerm);
+            const matches = searchEventData(eventMessages[i], trimmedTerm);
             if (matches) {
                 eventMessages[i].style.display = '';
                 visibleCount++;
@@ -82,13 +83,14 @@ export const searchController = (() => {
             }
         }
 
-        console.log(`[Search] Applied search "${searchTerm}": ${visibleCount} visible, ${hiddenCount} hidden`);
+        console.log(`[Search] Applied search "${trimmedTerm}": ${visibleCount} visible, ${hiddenCount} hidden`);
 
         // Update clear button visibility
-        updateClearButton(searchTerm);
+        updateClearButton(trimmedTerm);
+        updateSearchActiveState(trimmedTerm);
 
         // Save search term
-        saveSearchTerm(searchTerm);
+        saveSearchTerm(trimmedTerm);
     };
 
     /**
@@ -105,10 +107,38 @@ export const searchController = (() => {
     /**
      * Update visibility of clear button
      */
+    const updateSearchActiveState = (searchTerm) => {
+        const trimmedTerm = (searchTerm || '').trim();
+        const isActive = trimmedTerm.length > 0;
+
+        const filterInput = document.getElementById('search-input');
+        if (filterInput) {
+            filterInput.classList.toggle('search-active', isActive);
+            filterInput.setAttribute('aria-label', isActive ? `Search events (filtering for "${trimmedTerm}")` : DEFAULT_ARIA_LABEL);
+        }
+
+        const badge = document.getElementById('search-active-badge');
+        if (badge) {
+            if (isActive) {
+                const displayTerm = trimmedTerm.length > 24 ? `${trimmedTerm.slice(0, 21)}...` : trimmedTerm;
+                badge.classList.remove('d-none');
+                badge.textContent = `Filter active: ${displayTerm}`;
+                badge.setAttribute('title', trimmedTerm);
+            } else {
+                badge.classList.add('d-none');
+                badge.textContent = 'Filter active';
+                badge.removeAttribute('title');
+            }
+        }
+    };
+
     const updateClearButton = (searchTerm) => {
         const clearBtn = document.getElementById('search-clear-btn');
         if (clearBtn) {
-            clearBtn.style.display = searchTerm ? 'block' : 'none';
+            const isActive = (searchTerm || '').trim().length > 0;
+            clearBtn.style.display = isActive ? 'block' : 'none';
+            clearBtn.classList.toggle('btn-outline-warning', isActive);
+            clearBtn.classList.toggle('btn-outline-secondary', !isActive);
         }
     };
 
@@ -151,7 +181,7 @@ export const searchController = (() => {
             const savedTerm = loadSearchTerm();
             if (savedTerm) {
                 filterInput.value = savedTerm;
-                currentSearchTerm = savedTerm;
+                currentSearchTerm = savedTerm.trim();
                 // Apply search after a short delay to ensure DOM is ready
                 setTimeout(() => applySearch(savedTerm), 500);
             }
@@ -175,7 +205,13 @@ export const searchController = (() => {
         // Setup clear button
         const clearBtn = document.getElementById('search-clear-btn');
         if (clearBtn) {
-            clearBtn.addEventListener('click', clearSearch);
+            clearBtn.addEventListener('click', () => {
+                clearSearch();
+                updateSearchActiveState('');
+                if (filterInput) {
+                    filterInput.focus();
+                }
+            });
         }
 
         // Prevent form submission
@@ -185,6 +221,9 @@ export const searchController = (() => {
                 event.preventDefault();
             });
         }
+
+        updateSearchActiveState(currentSearchTerm);
+        updateClearButton(currentSearchTerm);
 
         console.log('[Search] Initialized');
     };
