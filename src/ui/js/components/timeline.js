@@ -784,15 +784,18 @@ class TimelineController {
             this.viewportRetryTimer = null;
         }
 
+        const horizontalPadding = this.getHorizontalPadding(this.chartScrollArea);
+        const availableWidth = Math.max(containerWidth - horizontalPadding, 0);
         const effectiveBucketCount = Math.max(bucketCount, 1);
         const visibleBuckets = Math.max(this.visibleBucketCount, 1);
-        const bucketWidth = containerWidth / visibleBuckets;
-        const desiredWidth = Math.max(containerWidth, Math.ceil(effectiveBucketCount * bucketWidth));
+        const safeAvailableWidth = Math.max(availableWidth, 1);
+        const bucketWidth = safeAvailableWidth / visibleBuckets;
+        const desiredWidth = Math.max(safeAvailableWidth, Math.ceil(effectiveBucketCount * bucketWidth));
 
         this.chartScrollContent.style.width = `${desiredWidth}px`;
-        this.chartScrollContent.style.minWidth = `${containerWidth}px`;
+        this.chartScrollContent.style.minWidth = `${safeAvailableWidth}px`;
 
-        const requiresScroll = desiredWidth > containerWidth + 1;
+        const requiresScroll = desiredWidth > safeAvailableWidth + 1;
         if (requiresScroll) {
             this.chartScrollArea.classList.add('is-scrollable');
         } else {
@@ -827,6 +830,17 @@ class TimelineController {
         }
 
         return (scrollWidth - (scrollLeft + clientWidth)) <= SCROLL_PIN_THRESHOLD;
+    }
+
+    getHorizontalPadding(element) {
+        if (!element) {
+            return 0;
+        }
+
+        const styles = window.getComputedStyle(element);
+        const left = parseFloat(styles.paddingLeft) || 0;
+        const right = parseFloat(styles.paddingRight) || 0;
+        return left + right;
     }
 
     async setBucketSize(newIndex) {
