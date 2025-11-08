@@ -255,6 +255,26 @@ export const sseEventsController = (() => {
                 // var eventData = JSON.parse(event.data);
                 var cloudEventData = eventData.cloudevent;
 
+                const isValidCloudEvent = cloudEventData && typeof cloudEventData === 'object'
+                    && typeof cloudEventData.specversion === 'string'
+                    && typeof cloudEventData.type === 'string'
+                    && typeof cloudEventData.source === 'string'
+                    && typeof cloudEventData.id === 'string'
+                    && typeof cloudEventData.time === 'string';
+
+                if (!isValidCloudEvent) {
+                    console.info('[Events] Ignoring non-CloudEvent payload from SSE stream', { payload: cloudEventData });
+                    return;
+                }
+
+                const isHandshakeEvent = cloudEventData && typeof cloudEventData.system === 'string'
+                    && (!cloudEventData.type || cloudEventData.type === 'system.connected');
+
+                if (isHandshakeEvent) {
+                    console.info('[Events] Ignoring handshake/system event from SSE stream', { payload: cloudEventData });
+                    return;
+                }
+
                 if (typeof cloudEventData.data === 'object') {
                     if (Object.keys(cloudEventData.data).length == 1 && cloudEventData.data.hasOwnProperty('error')) {
                         hasError = "backend-error";
@@ -286,6 +306,30 @@ export const sseEventsController = (() => {
                 // Adding the raw string back as "data"
                 cloudEventData.data = eventDataStr.substring(9);
             }
+            if (!cloudEventData || typeof cloudEventData !== 'object') {
+                console.warn('[Events] No CloudEvent data found after parsing SSE payload, skipping event');
+                return;
+            }
+
+            const hasRequiredFields = typeof cloudEventData.specversion === 'string'
+                && typeof cloudEventData.type === 'string'
+                && typeof cloudEventData.source === 'string'
+                && typeof cloudEventData.id === 'string'
+                && typeof cloudEventData.time === 'string';
+
+            if (!hasRequiredFields) {
+                console.warn('[Events] CloudEvent missing required attributes after parse, skipping event', cloudEventData);
+                return;
+            }
+
+            const isSystemEvent = typeof cloudEventData.system === 'string'
+                && (!cloudEventData.type || cloudEventData.type === 'system.connected');
+
+            if (isSystemEvent) {
+                console.info('[Events] Ignoring system Cloudevent after parse validation', cloudEventData);
+                return;
+            }
+
             const uuid = uuidv4();
 
             // Store event in storage manager (both tiers) first to get sequence number

@@ -167,24 +167,42 @@ class EventStorageManager {
             return false;
         }
 
-        // Increment totalReceived BEFORE assigning to event (so first event is #1, not #0)
-        this.stats.totalReceived++;
-        const sequenceNumber = this.stats.totalReceived;
-
-        // Persist totalReceived every 10 events to reduce localStorage writes
-        if (this.stats.totalReceived % 10 === 0) {
-            this.persistStats();
-        }
-
         try {
+            if (!fullEvent || !fullEvent.id) {
+                console.warn('[EventStorage] Ignoring event without id field', fullEvent);
+                return false;
+            }
+
             // Check for duplicates
             if (this.recentEventIds.has(fullEvent.id)) {
                 console.log(`[EventStorage] Duplicate event ignored: ${fullEvent.id}`);
                 return false;
             }
 
-            // Extract lightweight metadata
-            const metadata = this.extractMetadata(fullEvent);
+            let metadata;
+            try {
+                metadata = this.extractMetadata(fullEvent);
+            } catch (metadataError) {
+                console.warn('[EventStorage] Metadata extraction threw error, skipping event', {
+                    error: metadataError,
+                    event: fullEvent
+                });
+                return false;
+            }
+
+            if (!metadata) {
+                console.warn('[EventStorage] Skipping event due to invalid metadata', fullEvent);
+                return false;
+            }
+
+            // Increment totalReceived AFTER validation (so first valid event is #1)
+            this.stats.totalReceived++;
+            const sequenceNumber = this.stats.totalReceived;
+
+            // Persist totalReceived every 10 events to reduce localStorage writes
+            if (this.stats.totalReceived % 10 === 0) {
+                this.persistStats();
+            }
 
             // Add insertion order, storage timestamp, and sequence number for preserving sequence
             // Use metadata.timestamp which has timezone correction applied
@@ -243,6 +261,11 @@ class EventStorageManager {
     extractMetadata(event) {
         const dataString = JSON.stringify(event.data || {});
 
+        if (!event.time) {
+            console.warn('[EventStorage] Event missing time field, cannot extract metadata', event);
+            return null;
+        }
+
         // Handle timezone: if timestamp doesn't end with Z, assume UTC
         let eventTime = event.time;
         if (eventTime && !eventTime.endsWith('Z') && !eventTime.includes('+') && !eventTime.includes('-', 10)) {
@@ -252,11 +275,18 @@ class EventStorageManager {
 
         const timestamp = new Date(eventTime).getTime();
 
+        if (Number.isNaN(timestamp)) {
+            console.warn('[EventStorage] Unable to parse event timestamp', { eventTime, event });
+            return null;
+        }
+
+        const isoTimestamp = new Date(timestamp).toISOString();
+
         console.log('[EventStorage] Extracting metadata:', {
             originalEventTime: event.time,
             correctedEventTime: eventTime,
             timestamp: timestamp,
-            timestampDate: new Date(timestamp).toISOString(),
+            timestampDate: isoTimestamp,
             now: Date.now(),
             nowDate: new Date().toISOString()
         });
