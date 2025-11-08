@@ -181,6 +181,10 @@ class TimelineController {
         // Load initial data
         await this.refreshChart();
 
+        if (this.autoRefreshEnabled) {
+            this.scheduleRefresh();
+        }
+
         // Setup event listeners
         this.setupEventListeners();
 
@@ -451,7 +455,15 @@ class TimelineController {
                 this.refreshTimer = null;
             }
             this.pendingRefresh = false;
-            this.refreshChart();
+            this.refreshChart()
+                .catch((error) => {
+                    console.error('[Timeline] Immediate refresh error:', error);
+                })
+                .finally(() => {
+                    if (this.autoRefreshEnabled) {
+                        this.scheduleRefresh();
+                    }
+                });
             return;
         }
 
@@ -461,17 +473,21 @@ class TimelineController {
             return;
         }
 
-        // Schedule a refresh in 2 seconds
+        const refreshInterval = this.autoRefreshEnabled
+            ? Math.max(this.getBucketSizeMs(), 500)
+            : 2000;
+
         this.refreshTimer = setTimeout(async () => {
             this.refreshTimer = null;
             await this.refreshChart();
 
-            // If another refresh was requested while we were waiting, do one more
-            if (this.pendingRefresh) {
-                this.pendingRefresh = false;
+            const hadPending = this.pendingRefresh;
+            this.pendingRefresh = false;
+
+            if (this.autoRefreshEnabled || hadPending) {
                 this.scheduleRefresh();
             }
-        }, 2000);
+        }, refreshInterval);
     }
 
     /**
@@ -489,11 +505,11 @@ class TimelineController {
             // Get filter options
             const filters = appState.get('filters');
             const filterOptions = this.buildFilterOptions(filters);
-
             // Get events from storage
             const events = await this.storageManager.getRecentEvents({ ...filterOptions, limit: 100000 });
 
             if (!events || events.length === 0) {
+                const emptyBucketSize = this.getBucketSizeMs();
                 console.log('[Timeline] No events to display');
                 this.chart.data.labels = [];
                 this.chart.data.datasets = []; // Clear all datasets
@@ -510,11 +526,10 @@ class TimelineController {
                     console.error('[Timeline] Chart update error (no events):', chartError);
                 }
                 requestAnimationFrame(() => this.adjustChartViewport(0, false));
-                this.updateStats([], 0, null, null, bucketSizeMs);
+                this.updateStats([], 0, null, null, emptyBucketSize);
                 return;
             }
 
-            // Get bucket size
             const bucketSizeMs = this.getBucketSizeMs();
 
             let minEventTimestamp = Number.POSITIVE_INFINITY;
@@ -560,8 +575,9 @@ class TimelineController {
 
             if (minEventTimestamp !== Number.POSITIVE_INFINITY && maxEventTimestamp !== Number.NEGATIVE_INFINITY) {
                 this.autoFitMinTimestamp = minEventTimestamp;
-                this.autoFitMaxTimestamp = maxEventTimestamp;
-                this.timelineRangeMs = Math.max(maxEventTimestamp - minEventTimestamp, 0);
+                const nowTimestamp = Date.now();
+                this.autoFitMaxTimestamp = this.autoRefreshEnabled ? Math.max(maxEventTimestamp, nowTimestamp) : maxEventTimestamp;
+                this.timelineRangeMs = Math.max(this.autoFitMaxTimestamp - this.autoFitMinTimestamp, 0);
             } else {
                 this.autoFitMinTimestamp = null;
                 this.autoFitMaxTimestamp = null;
@@ -569,22 +585,22 @@ class TimelineController {
             }
 
             let firstBucketTime = null;
-            let lastBucketTime = null;
+            let finalBucketTime = null;
             let bucketSpanCount = 0;
             let renderBucketTimes = bucketTimes.slice();
 
             if (bucketTimes.length > 0) {
                 firstBucketTime = bucketTimes[0];
-                lastBucketTime = bucketTimes[bucketTimes.length - 1];
-                const rawSpan = lastBucketTime - firstBucketTime;
-                bucketSpanCount = Math.floor(rawSpan / bucketSizeMs) + 1;
+                finalBucketTime = bucketTimes[bucketTimes.length - 1];
+                const rawSpan = finalBucketTime - firstBucketTime;
+                const expectedBucketCount = Math.floor(rawSpan / bucketSizeMs) + 1;
 
-                const shouldFillMissingBuckets = bucketSpanCount > bucketTimes.length && bucketSpanCount <= MAX_BUCKET_FILL_COUNT;
+                const shouldFillMissingBuckets = expectedBucketCount > bucketTimes.length && expectedBucketCount <= MAX_BUCKET_FILL_COUNT;
 
                 if (shouldFillMissingBuckets) {
                     renderBucketTimes = [];
                     let currentTime = firstBucketTime;
-                    const expectedEndTime = lastBucketTime + bucketSizeMs; // Exclusive upper bound
+                    const expectedEndTime = finalBucketTime + bucketSizeMs; // Exclusive upper bound
 
                     while (currentTime < expectedEndTime) {
                         renderBucketTimes.push(currentTime);
@@ -593,10 +609,34 @@ class TimelineController {
                         }
                         currentTime += bucketSizeMs;
                     }
+                    finalBucketTime = renderBucketTimes[renderBucketTimes.length - 1];
                 }
 
+                if (this.autoRefreshEnabled) {
+                    const currentBucketTime = Math.floor(Date.now() / bucketSizeMs) * bucketSizeMs;
+                    if (renderBucketTimes.length === 0) {
+                        renderBucketTimes = [currentBucketTime];
+                        firstBucketTime = currentBucketTime;
+                        buckets[currentBucketTime] = buckets[currentBucketTime] || {};
+                        finalBucketTime = currentBucketTime;
+                    } else if (currentBucketTime > finalBucketTime) {
+                        let filler = finalBucketTime + bucketSizeMs;
+                        while (filler <= currentBucketTime) {
+                            renderBucketTimes.push(filler);
+                            if (!buckets[filler]) {
+                                buckets[filler] = {};
+                            }
+                            filler += bucketSizeMs;
+                        }
+                        finalBucketTime = currentBucketTime;
+                    }
+                }
+
+                bucketSpanCount = renderBucketTimes.length;
                 this.lastBucketStartTime = firstBucketTime;
-                this.lastBucketEndTime = lastBucketTime + bucketSizeMs;
+                this.lastBucketEndTime = finalBucketTime !== null
+                    ? finalBucketTime + bucketSizeMs
+                    : null;
             } else {
                 this.lastBucketStartTime = null;
                 this.lastBucketEndTime = null;
@@ -629,6 +669,13 @@ class TimelineController {
             // Update chart
             this.chart.data.labels = renderBucketTimes;
             this.chart.data.datasets = datasets;
+
+            if (renderBucketTimes.length > 0 && this.chart.options?.scales?.x) {
+                const xScale = this.chart.options.scales.x;
+                xScale.min = firstBucketTime !== null ? firstBucketTime : undefined;
+                const lastRenderBucket = renderBucketTimes[renderBucketTimes.length - 1];
+                xScale.max = lastRenderBucket !== undefined ? lastRenderBucket + bucketSizeMs : undefined;
+            }
 
             try {
                 this.chart.update();
@@ -681,7 +728,7 @@ class TimelineController {
             });
 
             // Update stats
-            this.updateStats(sortedBuckets, effectiveBucketSpan, firstBucketTime, lastBucketTime, bucketSizeMs);
+            this.updateStats(sortedBuckets, effectiveBucketSpan, firstBucketTime, finalBucketTime, bucketSizeMs);
 
             console.log('[Timeline] Chart refreshed with', events.length, 'events across', renderBucketTimes.length, 'rendered buckets (span:', effectiveBucketSpan, ') and', sourceArray.length, 'sources');
         } catch (error) {
@@ -867,6 +914,12 @@ class TimelineController {
             this.bucketSizeSelect.value = String(this.currentZoomIndex);
         }
 
+        if (this.refreshTimer) {
+            clearTimeout(this.refreshTimer);
+            this.refreshTimer = null;
+        }
+        this.pendingRefresh = false;
+
         if (this.chart) {
             this.chart.destroy();
         }
@@ -883,6 +936,10 @@ class TimelineController {
             });
         } else {
             await this.refreshChart();
+        }
+
+        if (this.autoRefreshEnabled) {
+            this.scheduleRefresh();
         }
     }
 
