@@ -73,17 +73,17 @@ export const sseEventsController = (() => {
         const span3 = document.createElement('span');
         span3.classList.add('mx-auto', 'align-middle', 'text-info-emphasis', 'd-flex', 'gap-3', 'justify-content-between', 'flex-grow-1');
 
-        // create type badge (left-aligned)
-        const typeBadge = document.createElement('span');
-        typeBadge.classList.add('badge', 'text-bg-success', 'p-1', 'text-truncate', 'me-auto', 'ms-2');
-        typeBadge.textContent = eventType;
-        typeBadge.style.maxWidth = '33%';
-
-        // create source badge (centered)
+        // create source badge (left-aligned)
         const sourceBadge = document.createElement('span');
-        sourceBadge.classList.add('badge', 'bg-secondary', 'p-1', 'text-truncate', 'mx-auto');
+        sourceBadge.classList.add('badge', 'bg-secondary', 'p-1', 'text-truncate', 'ms-2', 'me-auto');
         sourceBadge.textContent = eventSource;
         sourceBadge.style.maxWidth = '33%';
+
+        // create type badge (center-aligned)
+        const typeBadge = document.createElement('span');
+        typeBadge.classList.add('badge', 'text-bg-success', 'p-1', 'text-truncate', 'mx-auto');
+        typeBadge.textContent = eventType;
+        typeBadge.style.maxWidth = '33%';
 
         // create subject badge (right-aligned)
         const subjectBadge = document.createElement('span');
@@ -92,8 +92,8 @@ export const sseEventsController = (() => {
         subjectBadge.style.maxWidth = '33%';
 
         // append badges to span3
-        span3.appendChild(typeBadge);
         span3.appendChild(sourceBadge);
+        span3.appendChild(typeBadge);
         span3.appendChild(subjectBadge);
 
         // Helper function to create filter button
@@ -147,12 +147,12 @@ export const sseEventsController = (() => {
         filterButtonsContainer.classList.add('d-flex', 'gap-1', 'ms-2', 'align-middle');
 
         // Create individual filter buttons
-        const typeButton = createFilterButton('type', eventType, 'funnel', `Filter by type: ${eventType}`);
         const sourceButton = createFilterButton('source', eventSource, 'geo-alt', `Filter by source: ${eventSource}`);
+        const typeButton = createFilterButton('type', eventType, 'funnel', `Filter by type: ${eventType}`);
         const subjectButton = createFilterButton('subject', eventSubject || '', 'tag', `Filter by subject: ${eventSubject || '(none)'}`);
 
-        filterButtonsContainer.appendChild(typeButton);
         filterButtonsContainer.appendChild(sourceButton);
+        filterButtonsContainer.appendChild(typeButton);
         filterButtonsContainer.appendChild(subjectButton);
 
         // Initialize Bootstrap tooltips for the filter buttons with quick hide
