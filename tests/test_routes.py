@@ -2,8 +2,6 @@
 Unit tests for API routes and endpoints.
 """
 
-import pytest
-
 
 class TestHealthEndpoint:
     """Test suite for the health check endpoint."""
@@ -140,11 +138,8 @@ class TestEventGenerator:
         }
 
         response = client.post("/api/generate", json=request)
-
-        # Should accept the request (validation happens in background)
-        assert response.status_code == 200
-        data = response.json()
-        assert "task_id" in data
+        # Validator should reject invalid JSON payloads
+        assert response.status_code == 422
 
     def test_generate_events_valid_request(self, client, sample_generator_request):
         """Test generating events with valid request."""
