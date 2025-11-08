@@ -3,9 +3,6 @@ Integration tests for SSE streaming functionality.
 """
 
 import pytest
-import json
-import asyncio
-from fastapi.testclient import TestClient
 
 
 class TestSSEStreaming:
@@ -22,8 +19,12 @@ class TestSSEStreaming:
         with client.stream("GET", "/stream") as response:
             # Read a few chunks to get keepalive messages
             chunks = []
+            line_iter = response.iter_lines()
             for _ in range(3):
-                chunk = next(response.iter_lines())
+                try:
+                    chunk = next(line_iter)
+                except StopIteration:
+                    break
                 if chunk:
                     chunks.append(chunk)
 
@@ -59,7 +60,7 @@ class TestEventPublishSubscribe:
     def test_publish_and_receive_event(self, client, sample_cloudevent):
         """Test publishing an event and verifying it's queued for SSE clients."""
         # First, establish an SSE connection to create a client
-        with client.stream("GET", "/stream") as stream:
+        with client.stream("GET", "/stream"):
             # Publish an event
             response = client.post(
                 "/events/pub",
@@ -110,8 +111,6 @@ class TestEventGeneration:
         data = response.json()
         assert "task_id" in data
 
-        task_id = data["task_id"]
-
         # Check task status
         response = client.get("/api/tasks")
         tasks = response.json()
@@ -138,6 +137,22 @@ class TestEventGeneration:
         data = response.json()
         assert "task_id" in data
 
+    def test_generate_events_invalid_json_data(self, client):
+        """Invalid event_data payloads should fail validation immediately."""
+        request = {
+            "event_gateway": "http://localhost:8884/events/pub",
+            "event_source": "test",
+            "event_type": "com.test.invalid-json",
+            "event_subject": "test",
+            "event_data": "not valid json {",
+            "iterations": 1,
+            "delay": 100,
+        }
+
+        response = client.post("/api/generate", json=request)
+
+        assert response.status_code == 422
+
 
 class TestEndToEndWorkflow:
     """End-to-end integration tests."""
@@ -145,7 +160,7 @@ class TestEndToEndWorkflow:
     def test_full_event_lifecycle(self, client):
         """Test the complete event lifecycle from generation to delivery."""
         # 1. Connect as an SSE client
-        with client.stream("GET", "/stream") as stream:
+        with client.stream("GET", "/stream"):
             # 2. Generate an event that posts to our own subscriber
             request = {
                 "event_gateway": "http://localhost:8884/events/pub",

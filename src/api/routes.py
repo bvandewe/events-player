@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import uuid
-from typing import Optional, Dict
+from typing import Optional, Dict, cast
 
 from fastapi import (
     APIRouter,
@@ -20,14 +20,18 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from .settings import settings
-from .globals import active_tasks, sse_clients
+from .globals import (
+    active_tasks,
+    active_tasks_lock,
+    sse_clients,
+    sse_clients_lock,
+)
 from .models import EventGeneratorRequest, EventGeneratorTask, CloudEvent
 from .background_tasks import handle_event, handle_generator_request
 from .validator import validate_cloud_event
 from .constants import MAX_QUEUE_SIZE, SLOW_CLIENT_THRESHOLD
 from .auth import (
     get_current_user_optional,
-    get_current_user_required,
     require_admin,
     require_operator,
     exchange_oauth_code,
@@ -303,7 +307,8 @@ async def generate_events(
         current_task = EventGeneratorTask(
             id=task_id, status="Creating", progress=0, client_id=client_id
         )
-        active_tasks[task_id] = current_task
+        async with active_tasks_lock:
+            active_tasks[task_id] = current_task
         log.info("Adding background task for task_id: %s", task_id)
         background_tasks.add_task(handle_generator_request, generator_request, task=current_task)
         result = {
@@ -330,7 +335,23 @@ async def get_active_tasks(current_user: dict = Depends(require_admin)):
     Get list of all active generator tasks.
     Only accessible by admin users.
     """
-    return JSONResponse({"active_tasks": jsonable_encoder(active_tasks)})
+    async with active_tasks_lock:
+        tasks_snapshot = [task for task in active_tasks.values()]
+    return JSONResponse(jsonable_encoder(tasks_snapshot))
+
+
+async def _cancel_all_tasks(current_user: dict) -> dict:
+    async with active_tasks_lock:
+        count = len(active_tasks)
+
+        # Set cancelled flag on all tasks
+        for task in active_tasks.values():
+            task.cancelled = True
+            task.status = "Cancelling"
+
+    log.info(f"Admin user {current_user.get('username')} cancelled {count} active tasks")
+
+    return {"message": f"Cancelling {count} active task(s)", "tasks_cancelled": count}
 
 
 @router.post(
@@ -345,16 +366,18 @@ async def cancel_all_tasks(current_user: dict = Depends(require_admin)):
     Tasks will check this flag and stop gracefully.
     Only accessible by admin users.
     """
-    count = len(active_tasks)
+    return await _cancel_all_tasks(current_user)
 
-    # Set cancelled flag on all tasks
-    for task in active_tasks.values():
-        task.cancelled = True
-        task.status = "Cancelling"
 
-    log.info(f"Admin user {current_user.get('username')} cancelled {count} active tasks")
-
-    return {"message": f"Cancelling {count} active task(s)", "tasks_cancelled": count}
+@router.delete(
+    path="/api/tasks",
+    tags=["Background Tasks"],
+    operation_id="cancel_all_tasks_delete",
+    summary="Cancel all active generator tasks",
+)
+async def cancel_all_tasks_delete(current_user: dict = Depends(require_admin)):
+    """Compatibility endpoint for cancelling all active generator tasks."""
+    return await _cancel_all_tasks(current_user)
 
 
 @router.post(
@@ -369,11 +392,13 @@ async def cancel_task(task_id: str, current_user: dict = Depends(require_admin))
     The task will check this flag and stop gracefully.
     Only accessible by admin users.
     """
-    if task_id in active_tasks:
-        task = active_tasks[task_id]
-        task.cancelled = True
-        task.status = "Cancelling"
+    async with active_tasks_lock:
+        task = active_tasks.get(task_id)
+        if task:
+            task.cancelled = True
+            task.status = "Cancelling"
 
+    if task:
         log.info(f"Admin user {current_user.get('username')} cancelled task {task_id}")
 
         return {"message": f"Task {task_id} is being cancelled", "task_id": task_id}
@@ -385,11 +410,15 @@ async def cancel_task(task_id: str, current_user: dict = Depends(require_admin))
 @router.get(path="/health", tags=["System"], operation_id="health_check")
 async def health_check():
     """Health check endpoint for monitoring"""
+    async with active_tasks_lock:
+        active_task_count = len(active_tasks)
+    async with sse_clients_lock:
+        client_count = len(sse_clients)
     return {
         "status": "healthy",
         "timestamp": datetime.datetime.now().isoformat(),
-        "active_tasks": len(active_tasks),
-        "active_clients": len(sse_clients),
+        "active_tasks": active_task_count,
+        "active_clients": client_count,
         "version": settings.tag,
     }
 
@@ -404,7 +433,10 @@ async def get_sse_stats():
     stats = []
     total_queued = 0
 
-    for client_id, queue in sse_clients.items():
+    async with sse_clients_lock:
+        snapshot_items = list(sse_clients.items())
+
+    for client_id, queue in snapshot_items:
         queue_size = queue.qsize()
         total_queued += queue_size
         stats.append(
@@ -418,14 +450,15 @@ async def get_sse_stats():
         )
 
     return {
-        "total_clients": len(sse_clients),
+        "total_clients": len(snapshot_items),
         "total_queued_events": total_queued,
         "max_queue_size": MAX_QUEUE_SIZE,
         "slow_client_threshold": SLOW_CLIENT_THRESHOLD,
         "avg_utilization_pct": round(
-            (total_queued / (len(sse_clients) * MAX_QUEUE_SIZE) * 100) if sse_clients else 0, 1
+            (total_queued / (len(snapshot_items) * MAX_QUEUE_SIZE) * 100) if snapshot_items else 0,
+            1,
         ),
-        "clients": sorted(stats, key=lambda x: x["queue_size"], reverse=True),
+        "clients": sorted(stats, key=lambda x: cast(int, x["queue_size"]), reverse=True),
     }
 
 
@@ -445,25 +478,29 @@ async def disconnect_sse_client(
 
     The disconnected client will need to reconnect to continue receiving events.
     """
-    if client_id not in sse_clients:
-        raise HTTPException(
-            status_code=404, detail=f"Client {client_id} not found or already disconnected"
-        )
+    async with sse_clients_lock:
+        if client_id not in sse_clients:
+            raise HTTPException(
+                status_code=404, detail=f"Client {client_id} not found or already disconnected"
+            )
 
-    try:
-        # Remove the client from the dictionary
-        # The SSE stream will be broken and the client will receive a connection close
-        del sse_clients[client_id]
-        log.info(f"Admin '{user.get('username', 'unknown')}' disconnected SSE client: {client_id}")
+        try:
+            # Remove the client from the dictionary
+            # The SSE stream will be broken and the client will receive a connection close
+            del sse_clients[client_id]
+        except Exception as e:
+            log.error(f"Error disconnecting client {client_id}: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to disconnect client: {str(e)}"
+            ) from e
 
-        return {
-            "success": True,
-            "message": f"Client {client_id} has been disconnected",
-            "disconnected_by": user.get("username", "admin"),
-        }
-    except Exception as e:
-        log.error(f"Error disconnecting client {client_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to disconnect client: {str(e)}") from e
+    log.info(f"Admin '{user.get('username', 'unknown')}' disconnected SSE client: {client_id}")
+
+    return {
+        "success": True,
+        "message": f"Client {client_id} has been disconnected",
+        "disconnected_by": user.get("username", "admin"),
+    }
 
 
 # Subscriber Route
