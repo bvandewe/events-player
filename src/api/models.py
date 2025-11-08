@@ -51,14 +51,14 @@ class EventGeneratorRequest(BaseModel):
     @field_validator("event_data")
     @classmethod
     def validate_event_data_json(cls, value: str) -> str:
-        """Validate that event_data is valid JSON"""
+        """Validate that event_data contains valid JSON."""
         if not value or not value.strip():
             raise ValueError("event_data cannot be empty")
 
         try:
             json.loads(value)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"event_data must be valid JSON: {str(e)}")
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"event_data must be valid JSON: {exc}") from exc
 
         return value
 
