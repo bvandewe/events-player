@@ -7,14 +7,17 @@ from typing import cast
 from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse
 
+from .constants import (
+    ADAPTIVE_QUEUE_CHECK_INTERVAL,
+    MAX_QUEUE_SIZE,
+    SLOW_CLIENT_THRESHOLD,
+)
 from .globals import (
-    sse_clients,
-    sse_clients_lock,
     active_tasks,
     active_tasks_lock,
+    sse_clients,
+    sse_clients_lock,
 )
-from .constants import MAX_QUEUE_SIZE, SLOW_CLIENT_THRESHOLD, ADAPTIVE_QUEUE_CHECK_INTERVAL
-
 
 log = logging.getLogger(__name__)
 
@@ -41,11 +44,15 @@ async def build_sse_payload(payload: dict):
     return sse_event_payload
 
 
-async def event_generator(client_id: str | None, queue: asyncio.Queue | None, request: Request):
+async def event_generator(
+    client_id: str | None, queue: asyncio.Queue | None, request: Request
+):
     if client_id is not None and queue is not None:
         try:
             last_queue_check = asyncio.get_event_loop().time()
-            is_test_client = request.client is not None and request.client.host == "testclient"
+            is_test_client = (
+                request.client is not None and request.client.host == "testclient"
+            )
             # When running under the Starlette TestClient we need the generator to finish
             # promptly, otherwise the synchronous test harness blocks forever waiting for
             # the streaming coroutine to exit. We therefore limit the number of synthetic
@@ -75,7 +82,9 @@ async def event_generator(client_id: str | None, queue: asyncio.Queue | None, re
 
                 try:
                     # Use timeout to make the stream more responsive to server shutdown
-                    sse_message_payload = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    sse_message_payload = await asyncio.wait_for(
+                        queue.get(), timeout=1.0
+                    )
                     if sse_message_payload is None:
                         break
                     sse_message_payload = await build_sse_payload(sse_message_payload)
@@ -251,7 +260,9 @@ async def metadata_generator(request: Request):
 
             current_client_count = len(snapshot_items)
             current_client_ids = {client_id for client_id, _ in snapshot_items}
-            current_queue_sizes = {client_id: queue.qsize() for client_id, queue in snapshot_items}
+            current_queue_sizes = {
+                client_id: queue.qsize() for client_id, queue in snapshot_items
+            }
 
             queue_sizes_changed = current_queue_sizes != previous_queue_sizes
             clients_changed = current_client_count != previous_client_count
@@ -271,7 +282,9 @@ async def metadata_generator(request: Request):
                             "client_id": client_id,
                             "queue_size": queue_size,
                             "queue_full": queue.full(),
-                            "utilization_pct": round((queue_size / MAX_QUEUE_SIZE) * 100, 1),
+                            "utilization_pct": round(
+                                (queue_size / MAX_QUEUE_SIZE) * 100, 1
+                            ),
                             "is_slow": queue_size > SLOW_CLIENT_THRESHOLD,
                         }
                     )
@@ -283,7 +296,11 @@ async def metadata_generator(request: Request):
                     "slow_client_threshold": SLOW_CLIENT_THRESHOLD,
                     "avg_utilization_pct": round(
                         (
-                            (total_queued / (current_client_count * MAX_QUEUE_SIZE) * 100)
+                            (
+                                total_queued
+                                / (current_client_count * MAX_QUEUE_SIZE)
+                                * 100
+                            )
                             if current_client_count
                             else 0
                         ),
