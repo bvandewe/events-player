@@ -14,7 +14,7 @@
         </li>
         <!-- Search box in tabs -->
         <li class="ms-auto me-2">
-            <form id="search-form" class="d-flex align-items-center mt-1">
+            <form id="search-form" class="d-flex align-items-center gap-2 mt-1">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-dark border-secondary">
                         <i class="bi bi-search"></i>
@@ -37,6 +37,13 @@
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
+                <span 
+                    id="search-active-badge"
+                    class="badge rounded-pill bg-warning text-dark d-none align-self-center search-active-badge"
+                    aria-live="polite"
+                >
+                    Filter active
+                </span>
             </form>
         </li>
         <!-- Export button on the right side of tabs -->
@@ -58,10 +65,10 @@
                         <small>Timestamp <i class="bi bi-arrow-repeat"></i></small>
                     </span>
                     <span class="ms-auto text-secondary fw-lighter"><small>&nbsp;</small></span>
-                    <span class="d-flex gap-3 justify-content-evenly flex-grow-1">
+                    <span class="d-flex gap-3 justify-content-between flex-grow-1">
+                        <span class="text-secondary fw-lighter text-truncate ms-4" style="max-width: 33%;"><small>Source</small></span>
                         <span class="text-secondary fw-lighter text-truncate" style="max-width: 33%;"><small>Type</small></span>
-                        <span class="text-secondary fw-lighter text-truncate" style="max-width: 33%;"><small>Source</small></span>
-                        <span class="text-secondary fw-lighter text-truncate" style="max-width: 33%;"><small>Subject</small></span>
+                        <span class="text-secondary fw-lighter text-truncate me-4" style="max-width: 33%;"><small>Subject</small></span>
                     </span>
                     <span class="ms-auto text-secondary fw-lighter"><small>&nbsp;</small></span>
                     <span class="me-4 actionLink" id="expandCollapseLink">Expand all<i class="bi bi-caret-up-fill ms-2" id="expandCollapseIcon"></i></span>
