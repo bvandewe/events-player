@@ -1,0 +1,24 @@
+{
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 250,
+    "tabWidth": 4,
+    "useTabs": false,
+    "arrowParens": "avoid",
+    "endOfLine": "lf",
+    "overrides": [
+        {
+            "files": "*.html",
+            "options": {
+                "printWidth": 120
+            }
+        },
+        {
+            "files": ["*.scss", "*.css"],
+            "options": {
+                "singleQuote": false
+            }
+        }
+    ]
+}

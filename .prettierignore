@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+
+# Build outputs
+dist/
+build/
+
+# Version control
+.git/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (let markdownlint handle these)
+*.md
+
+# Helm charts (don't format Kubernetes YAML templates as they contain `{{}}` that shouldnt be reformatted to `{ { } }` )
+deployment/helm/**/*.yaml
+deployment/helm/**/*.yml
