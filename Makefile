@@ -43,6 +43,11 @@ test: install ## Run the full pytest suite in ./tests
 	@echo "Running tests..."
 	poetry run pytest ./tests
 
+install-hooks: ## Install pre-commit git hooks
+	@echo "$(BLUE)Installing pre-commit git hooks...$(NC)"
+	poetry run pre-commit install --install-hooks
+	@echo "$(GREEN)Git hooks installed successfully.$(NC)"
+
 # Docker targets
 .PHONY: docker-build docker-up docker-down docker-debug docker-debug-down docker-logs
 docker-build: ## Build Docker image
