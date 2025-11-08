@@ -87,6 +87,12 @@
             min-width: 120px;
         }
     }
+
+    .timeline-auto-fit-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
 }
 
 .timeline-chart-body {
@@ -94,6 +100,15 @@
     height: 400px;
     overflow-x: auto;
     overflow-y: hidden;
+
+    &.is-scrollable {
+        cursor: grab;
+    }
+
+    &.drag-scrolling {
+        cursor: grabbing;
+        user-select: none;
+    }
 
     .timeline-chart-scroll {
         position: relative;
@@ -106,6 +121,7 @@
         display: block;
         height: 100% !important;
         max-width: none;
+        cursor: inherit;
     }
 }
 

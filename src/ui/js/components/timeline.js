@@ -26,6 +26,7 @@ const AUTO_REFRESH_STORAGE_KEY = 'timeline_auto_refresh_enabled';
 const DEFAULT_VISIBLE_BUCKETS = 60;
 const VIEWPORT_RETRY_DELAY_MS = 250;
 const SCROLL_PIN_THRESHOLD = 16;
+const MAX_BUCKET_FILL_COUNT = 5000;
 
 // Register Chart.js components
 Chart.register(
@@ -93,11 +94,25 @@ class TimelineController {
         this.boundHandleWindowResize = this.handleWindowResize.bind(this);
         this.timelineTabTrigger = null;
         this.timelineTabHandler = null;
-        this.lastBucketCount = 0;
+        this.lastBucketSpanCount = 0;
+        this.timelineRangeMs = 0;
+        this.lastBucketStartTime = null;
+        this.lastBucketEndTime = null;
+        this.dragScrollCleanup = null;
+        this.dragScrollState = {
+            active: false,
+            moved: false,
+            startX: 0,
+            scrollLeft: 0
+        };
+        this.autoFitMinTimestamp = null;
+        this.autoFitMaxTimestamp = null;
 
         // DOM elements (will be initialized in init())
         this.bucketSizeSelect = null;
         this.autoRefreshToggle = null;
+        this.autoFitButton = null;
+        this.autoFitHandler = null;
         this.statElements = {};
     }
 
@@ -121,6 +136,7 @@ class TimelineController {
             quietPeriods: document.getElementById('statQuietPeriods'),
             quietPeriodsSize: document.getElementById('statQuietPeriodsSize')
         };
+        this.autoFitButton = document.getElementById('timelineAutoFitBtn');
 
         this.chartScrollArea = document.getElementById('timelineChartBody');
         this.chartScrollContent = document.getElementById('timelineChartScroll');
@@ -142,6 +158,8 @@ class TimelineController {
             };
             this.timelineTabTrigger.addEventListener('shown.bs.tab', this.timelineTabHandler);
         }
+
+        this.setupDragScroll();
 
         // Subscribe to new events via appState
         appState.subscribe('newEvent', () => {
@@ -480,19 +498,27 @@ class TimelineController {
                 this.chart.data.labels = [];
                 this.chart.data.datasets = []; // Clear all datasets
                 this.rawBucketTimes = []; // Clear raw bucket times
-                this.lastBucketCount = 0;
+                this.lastBucketSpanCount = 0;
+                this.timelineRangeMs = 0;
+                this.lastBucketStartTime = null;
+                this.lastBucketEndTime = null;
+                this.autoFitMinTimestamp = null;
+                this.autoFitMaxTimestamp = null;
                 try {
                     this.chart.update();
                 } catch (chartError) {
                     console.error('[Timeline] Chart update error (no events):', chartError);
                 }
                 requestAnimationFrame(() => this.adjustChartViewport(0, false));
-                this.updateStats([]);
+                this.updateStats([], 0, null, null, bucketSizeMs);
                 return;
             }
 
             // Get bucket size
             const bucketSizeMs = this.getBucketSizeMs();
+
+            let minEventTimestamp = Number.POSITIVE_INFINITY;
+            let maxEventTimestamp = Number.NEGATIVE_INFINITY;
 
             // Create buckets - track events by source per bucket
             const buckets = {}; // { bucketTime: { source1: count, source2: count, ... } }
@@ -505,10 +531,21 @@ class TimelineController {
                     eventTimeStr = eventTimeStr + 'Z'; // Treat as UTC
                 }
                 const timestamp = new Date(eventTimeStr).getTime();
+                if (Number.isNaN(timestamp)) {
+                    console.warn('[Timeline] Skipping event with invalid timestamp', event);
+                    return;
+                }
                 const bucketTime = Math.floor(timestamp / bucketSizeMs) * bucketSizeMs;
                 const source = event.source || 'unknown';
 
                 sources.add(source);
+
+                if (timestamp < minEventTimestamp) {
+                    minEventTimestamp = timestamp;
+                }
+                if (timestamp > maxEventTimestamp) {
+                    maxEventTimestamp = timestamp;
+                }
 
                 if (!buckets[bucketTime]) {
                     buckets[bucketTime] = {};
@@ -518,8 +555,52 @@ class TimelineController {
 
             // Get sorted bucket times
             const bucketTimes = Object.keys(buckets)
-                .map(t => parseInt(t))
+                .map(t => parseInt(t, 10))
                 .sort((a, b) => a - b);
+
+            if (minEventTimestamp !== Number.POSITIVE_INFINITY && maxEventTimestamp !== Number.NEGATIVE_INFINITY) {
+                this.autoFitMinTimestamp = minEventTimestamp;
+                this.autoFitMaxTimestamp = maxEventTimestamp;
+                this.timelineRangeMs = Math.max(maxEventTimestamp - minEventTimestamp, 0);
+            } else {
+                this.autoFitMinTimestamp = null;
+                this.autoFitMaxTimestamp = null;
+                this.timelineRangeMs = 0;
+            }
+
+            let firstBucketTime = null;
+            let lastBucketTime = null;
+            let bucketSpanCount = 0;
+            let renderBucketTimes = bucketTimes.slice();
+
+            if (bucketTimes.length > 0) {
+                firstBucketTime = bucketTimes[0];
+                lastBucketTime = bucketTimes[bucketTimes.length - 1];
+                const rawSpan = lastBucketTime - firstBucketTime;
+                bucketSpanCount = Math.floor(rawSpan / bucketSizeMs) + 1;
+
+                const shouldFillMissingBuckets = bucketSpanCount > bucketTimes.length && bucketSpanCount <= MAX_BUCKET_FILL_COUNT;
+
+                if (shouldFillMissingBuckets) {
+                    renderBucketTimes = [];
+                    let currentTime = firstBucketTime;
+                    const expectedEndTime = lastBucketTime + bucketSizeMs; // Exclusive upper bound
+
+                    while (currentTime < expectedEndTime) {
+                        renderBucketTimes.push(currentTime);
+                        if (!buckets[currentTime]) {
+                            buckets[currentTime] = {};
+                        }
+                        currentTime += bucketSizeMs;
+                    }
+                }
+
+                this.lastBucketStartTime = firstBucketTime;
+                this.lastBucketEndTime = lastBucketTime + bucketSizeMs;
+            } else {
+                this.lastBucketStartTime = null;
+                this.lastBucketEndTime = null;
+            }
 
             // Create datasets - one per source
             const sourceArray = Array.from(sources).sort();
@@ -531,7 +612,7 @@ class TimelineController {
 
                 return {
                     label: source,
-                    data: bucketTimes.map(time => buckets[time][source] || 0),
+                    data: renderBucketTimes.map(time => buckets[time][source] || 0),
                     backgroundColor: color,
                     borderColor: borderColor,
                     borderWidth: 1,
@@ -543,10 +624,10 @@ class TimelineController {
             const wasPinnedToEnd = this.isScrollPinnedToEnd();
 
             // Store raw bucket times for onClick handler
-            this.rawBucketTimes = bucketTimes;
+            this.rawBucketTimes = renderBucketTimes;
 
             // Update chart
-            this.chart.data.labels = bucketTimes;
+            this.chart.data.labels = renderBucketTimes;
             this.chart.data.datasets = datasets;
 
             try {
@@ -588,20 +669,21 @@ class TimelineController {
                 return; // Don't update stats if chart update failed
             }
 
-            this.lastBucketCount = bucketTimes.length;
-            requestAnimationFrame(() => this.adjustChartViewport(bucketTimes.length, wasPinnedToEnd));
+            const effectiveBucketSpan = bucketSpanCount || renderBucketTimes.length;
+            this.lastBucketSpanCount = effectiveBucketSpan;
+            requestAnimationFrame(() => this.adjustChartViewport(effectiveBucketSpan, wasPinnedToEnd));
 
             // Prepare bucket data for stats (convert to sortedBuckets format)
-            const sortedBuckets = bucketTimes.map(time => {
+            const sortedBuckets = renderBucketTimes.map(time => {
                 // Calculate total count for this bucket across all sources
                 const count = Object.values(buckets[time]).reduce((sum, c) => sum + c, 0);
                 return { time, count };
             });
 
             // Update stats
-            this.updateStats(sortedBuckets);
+            this.updateStats(sortedBuckets, effectiveBucketSpan, firstBucketTime, lastBucketTime, bucketSizeMs);
 
-            console.log('[Timeline] Chart refreshed with', events.length, 'events in', bucketTimes.length, 'buckets across', sourceArray.length, 'sources');
+            console.log('[Timeline] Chart refreshed with', events.length, 'events across', renderBucketTimes.length, 'rendered buckets (span:', effectiveBucketSpan, ') and', sourceArray.length, 'sources');
         } catch (error) {
             console.error('[Timeline] Error refreshing chart:', error);
 
@@ -617,8 +699,8 @@ class TimelineController {
     /**
      * Update statistics
      */
-    updateStats(buckets) {
-        if (!buckets || buckets.length === 0) {
+    updateStats(buckets, bucketSpanCount = 0, firstBucketTime = null, lastBucketTime = null, bucketSizeMs = this.getBucketSizeMs()) {
+        if (!buckets || buckets.length === 0 || bucketSpanCount === 0) {
             // Clear stats
             Object.values(this.statElements).forEach(el => {
                 if (el) el.textContent = '0';
@@ -633,9 +715,9 @@ class TimelineController {
         }
 
         // Time span
-        const firstTime = buckets[0].time;
-        const lastTime = buckets[buckets.length - 1].time;
-        const timeSpanMs = lastTime - firstTime;
+        const firstTime = firstBucketTime !== null ? firstBucketTime : buckets[0].time;
+        const lastTime = lastBucketTime !== null ? lastBucketTime : buckets[buckets.length - 1].time;
+        const timeSpanMs = Math.max(lastTime - firstTime + bucketSizeMs, bucketSizeMs);
 
         if (this.statElements.totalEventsTime) {
             this.statElements.totalEventsTime.textContent =
@@ -652,7 +734,7 @@ class TimelineController {
         }
 
         // Average rate
-        const avgRate = (totalEvents / buckets.length).toFixed(1);
+        const avgRate = (totalEvents / bucketSpanCount).toFixed(1);
         if (this.statElements.avgRate) {
             this.statElements.avgRate.textContent = avgRate;
         }
@@ -663,7 +745,9 @@ class TimelineController {
         }
 
         // Quiet periods (buckets with 0 events)
-        const quietCount = buckets.filter(b => b.count === 0).length;
+        const zeroBucketsInSet = buckets.filter(b => b.count === 0).length;
+        const nonZeroBuckets = buckets.length - zeroBucketsInSet;
+        const quietCount = Math.max(bucketSpanCount - nonZeroBuckets, 0);
         if (this.statElements.quietPeriods) {
             this.statElements.quietPeriods.textContent = quietCount.toLocaleString();
         }
@@ -708,6 +792,16 @@ class TimelineController {
         this.chartScrollContent.style.width = `${desiredWidth}px`;
         this.chartScrollContent.style.minWidth = `${containerWidth}px`;
 
+        const requiresScroll = desiredWidth > containerWidth + 1;
+        if (requiresScroll) {
+            this.chartScrollArea.classList.add('is-scrollable');
+        } else {
+            this.chartScrollArea.classList.remove('is-scrollable');
+            this.dragScrollState.active = false;
+            this.dragScrollState.moved = false;
+        }
+        this.chartScrollArea.classList.remove('drag-scrolling');
+
         if (this.chart) {
             this.chart.resize();
         }
@@ -735,6 +829,179 @@ class TimelineController {
         return (scrollWidth - (scrollLeft + clientWidth)) <= SCROLL_PIN_THRESHOLD;
     }
 
+    async setBucketSize(newIndex) {
+        if (Number.isNaN(newIndex)) {
+            return;
+        }
+
+        const clampedIndex = Math.min(Math.max(newIndex, 0), this.zoomLevels.length - 1);
+
+        if (clampedIndex === this.currentZoomIndex) {
+            // Ensure viewport reflects current range even if bucket size remains unchanged
+            requestAnimationFrame(() => {
+                const wasPinned = this.isScrollPinnedToEnd();
+                this.adjustChartViewport(this.lastBucketSpanCount, wasPinned);
+            });
+            return;
+        }
+
+        this.currentZoomIndex = clampedIndex;
+        localStorage.setItem('timeline_bucket_size', this.currentZoomIndex);
+        console.log('[Timeline] Bucket size changed to:', this.getBucketSize());
+
+        if (this.bucketSizeSelect && this.bucketSizeSelect.value !== String(this.currentZoomIndex)) {
+            this.bucketSizeSelect.value = String(this.currentZoomIndex);
+        }
+
+        if (this.chart) {
+            this.chart.destroy();
+        }
+        this.initChart();
+
+        const currentFilters = appState.get('filters') || {};
+        if (currentFilters.timeRange && currentFilters.timeRange !== 'all') {
+            console.log('[Timeline] Resetting time range filter due to bucket size change');
+            appState.set('filters', {
+                ...currentFilters,
+                timeRange: 'all',
+                customStartTime: null,
+                customEndTime: null
+            });
+        } else {
+            await this.refreshChart();
+        }
+    }
+
+    async handleAutoFit() {
+        if (!this.chartScrollArea) {
+            return;
+        }
+
+        if (this.autoFitMinTimestamp === null || this.autoFitMaxTimestamp === null) {
+            console.log('[Timeline] Auto-fit skipped: insufficient event history');
+            return;
+        }
+
+        const visibleBuckets = Math.max(this.visibleBucketCount, 1);
+        let targetIndex = null;
+        let fallbackIndex = this.currentZoomIndex;
+        let smallestBucketCount = Number.POSITIVE_INFINITY;
+        const minTimestamp = this.autoFitMinTimestamp;
+        const maxTimestamp = this.autoFitMaxTimestamp;
+
+        this.zoomLevels.forEach((level, index) => {
+            const bucketSizeMs = level.unit === 'second' ? level.value * 1000 : level.value * 60 * 1000;
+            const minBucketIndex = Math.floor(minTimestamp / bucketSizeMs);
+            const maxBucketIndex = Math.floor(maxTimestamp / bucketSizeMs);
+            const requiredBuckets = Math.max((maxBucketIndex - minBucketIndex) + 1, 1);
+
+            if (requiredBuckets <= visibleBuckets && targetIndex === null) {
+                targetIndex = index;
+            }
+
+            if (requiredBuckets < smallestBucketCount) {
+                smallestBucketCount = requiredBuckets;
+                fallbackIndex = index;
+            }
+        });
+
+        const finalIndex = targetIndex !== null ? targetIndex : fallbackIndex;
+
+        if (finalIndex === this.currentZoomIndex) {
+            console.log('[Timeline] Auto-fit retained current bucket size');
+            requestAnimationFrame(() => {
+                const wasPinned = this.isScrollPinnedToEnd();
+                this.adjustChartViewport(this.lastBucketSpanCount, wasPinned);
+            });
+            return;
+        }
+
+        await this.setBucketSize(finalIndex);
+    }
+
+    setupDragScroll() {
+        if (!this.chartScrollArea) {
+            return;
+        }
+
+        if (this.dragScrollCleanup) {
+            this.dragScrollCleanup();
+            this.dragScrollCleanup = null;
+        }
+
+        const container = this.chartScrollArea;
+        const state = this.dragScrollState;
+
+        const onMouseDown = (event) => {
+            if (event.button !== 0) {
+                return;
+            }
+
+            if (!container.classList.contains('is-scrollable')) {
+                return;
+            }
+
+            state.active = true;
+            state.moved = false;
+            state.startX = event.clientX;
+            state.scrollLeft = container.scrollLeft;
+            container.classList.add('drag-scrolling');
+        };
+
+        const onMouseMove = (event) => {
+            if (!state.active) {
+                return;
+            }
+
+            event.preventDefault();
+            const delta = event.clientX - state.startX;
+            if (!state.moved && Math.abs(delta) > 2) {
+                state.moved = true;
+            }
+            container.scrollLeft = state.scrollLeft - delta;
+        };
+
+        const endDrag = () => {
+            if (!state.active) {
+                return;
+            }
+            state.active = false;
+            state.startX = 0;
+            container.classList.remove('drag-scrolling');
+        };
+
+        const onMouseUp = (event) => {
+            if (state.moved) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            endDrag();
+        };
+
+        const onClick = (event) => {
+            if (state.moved) {
+                event.preventDefault();
+                event.stopPropagation();
+                state.moved = false;
+            }
+        };
+
+        container.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        container.addEventListener('click', onClick, true);
+
+        this.dragScrollCleanup = () => {
+            container.removeEventListener('mousedown', onMouseDown);
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            container.removeEventListener('click', onClick, true);
+            container.classList.remove('drag-scrolling');
+            state.active = false;
+            state.moved = false;
+        };
+    }
+
     /**
      * Setup event listeners
      */
@@ -753,29 +1020,9 @@ class TimelineController {
             });
 
             // Change handler
-            this.bucketSizeSelect.addEventListener('change', async (e) => {
-                this.currentZoomIndex = parseInt(e.target.value, 10);
-                localStorage.setItem('timeline_bucket_size', this.currentZoomIndex);
-                console.log('[Timeline] Bucket size changed to:', this.getBucketSize());
-
-                // Reset time range filter to "all" when manually changing bucket size
-                const currentFilters = appState.get('filters') || {};
-                if (currentFilters.timeRange && currentFilters.timeRange !== 'all') {
-                    console.log('[Timeline] Resetting time range filter due to bucket size change');
-                    appState.set('filters', {
-                        ...currentFilters,
-                        timeRange: 'all',
-                        customStartTime: null,
-                        customEndTime: null
-                    });
-                }
-
-                // Reinitialize chart with new bucket size
-                if (this.chart) {
-                    this.chart.destroy();
-                }
-                this.initChart();
-                await this.refreshChart();
+            this.bucketSizeSelect.addEventListener('change', (e) => {
+                const parsed = parseInt(e.target.value, 10);
+                this.setBucketSize(parsed);
             });
         }
 
@@ -801,6 +1048,11 @@ class TimelineController {
                     this.scheduleRefresh(true);
                 }
             });
+        }
+
+        if (this.autoFitButton) {
+            this.autoFitHandler = () => this.handleAutoFit();
+            this.autoFitButton.addEventListener('click', this.autoFitHandler);
         }
     }
 
@@ -902,6 +1154,18 @@ class TimelineController {
 
         this.timelineTabTrigger = null;
         this.timelineTabHandler = null;
+
+        if (this.dragScrollCleanup) {
+            this.dragScrollCleanup();
+            this.dragScrollCleanup = null;
+        }
+
+        if (this.autoFitButton && this.autoFitHandler) {
+            this.autoFitButton.removeEventListener('click', this.autoFitHandler);
+        }
+
+        this.autoFitButton = null;
+        this.autoFitHandler = null;
     }
 }
 

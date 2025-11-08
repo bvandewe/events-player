@@ -85,14 +85,21 @@
                         <h5 class="mb-0">
                             <i class="bi bi-activity text-primary"></i> Event Activity Over Time
                         </h5>
-                        <div class="timeline-controls d-flex align-items-center gap-2 flex-wrap justify-content-end">
-                            <div class="timeline-bucket-control d-flex align-items-center me-4 flex-shrink-0">
+                        <div class="timeline-controls d-flex align-items-center gap-3 flex-wrap justify-content-end">
+                            <div class="timeline-bucket-control d-flex align-items-center me-1 flex-shrink-0">
                                 <label for="timelineBucketSize" class="form-label mb-0">Bucket Size:</label>
                                 <select class="form-select form-select-sm w-auto" id="timelineBucketSize">
                                     <!-- Options are dynamically populated by TimelineController -->
                                 </select>
                             </div>
-                            <div class="form-check form-switch mb-0 flex-shrink-0 ms-4 timeline-auto-refresh-indicator">
+                            <button class="btn btn-sm btn-outline-primary flex-shrink-0 mx-3 timeline-auto-fit-btn ms-1" 
+                                    id="timelineAutoFitBtn"
+                                    type="button"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-title="Auto-fit bucket size to visible range">
+                                <i class="bi bi-magic"></i>
+                            </button>
+                            <div class="form-check form-switch mb-0 flex-shrink-0 mx-3 timeline-auto-refresh-indicator">
                                 <input class="form-check-input" type="checkbox" id="timelineAutoRefresh" checked>
                                 <label class="form-check-label small" for="timelineAutoRefresh">Auto-refresh</label>
                             </div>
