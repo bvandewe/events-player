@@ -1,124 +1,220 @@
 <!-- Streams/Timeline Tabs Section -->
 <div class="streams-section mb-3">
-    <!-- Tabs Header -->
-    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="streams-tab" data-bs-toggle="tab" data-bs-target="#streams-pane" type="button" role="tab" aria-controls="streams-pane" aria-selected="true">
-                <i class="bi bi-list-ul me-2"></i>Streams
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline-pane" type="button" role="tab" aria-controls="timeline-pane" aria-selected="false">
-                <i class="bi bi-activity me-2"></i>Timeline
-            </button>
-        </li>
-        <!-- Search box in tabs -->
-        <li class="ms-auto me-2">
-            <form id="search-form" class="d-flex align-items-center gap-2 mt-1">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-dark border-secondary">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input 
-                        type="text" 
-                        class="form-control form-control-sm bg-dark border-secondary text-white" 
-                        id="search-input" 
-                        placeholder="Search events..."
-                        aria-label="Search events"
-                        style="min-width: 200px;"
-                    />
-                    <button 
-                        class="btn btn-sm btn-outline-secondary" 
-                        type="button" 
-                        id="search-clear-btn"
-                        title="Clear search"
-                        style="display: none;"
-                    >
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-                <span 
-                    id="search-active-badge"
-                    class="badge rounded-pill bg-warning text-dark d-none align-self-center search-active-badge"
-                    aria-live="polite"
-                >
-                    Filter active
-                </span>
-            </form>
-        </li>
-        <!-- Export button on the right side of tabs -->
-        <li>
-            <button id="exportEventsBtn" class="btn btn-sm btn-outline-primary mt-1" data-bs-toggle="tooltip" data-bs-title="Export events to JSON file">
-                <i class="bi bi-download"></i> Export
-            </button>
-        </li>
-    </ul>
-
-    <!-- Tab Content -->
-    <div class="tab-content streams-content border border-top-0 rounded-bottom" id="dashboardTabsContent">
-        <!-- Streams Tab -->
-        <div class="tab-pane fade show active h-100" id="streams-pane" role="tabpanel" aria-labelledby="streams-tab">
-            <div class="container-fluid p-3 h-100" style="min-width: 1000px; background-color: var(--bs-body-bg);">
-                <div class="ms-3 d-flex justify-space-evenly">
-                    <span class="mx-2 align-middle text-secondary fw-lighter"><small>Event #</small></span>
-                    <span class="ms-4 align-middle text-secondary fw-lighter actionLink" id="timestampToggle" style="cursor: pointer;" title="Click to toggle between relative and absolute time">
-                        <small>Timestamp <i class="bi bi-arrow-repeat"></i></small>
-                    </span>
-                    <span class="ms-auto text-secondary fw-lighter"><small>&nbsp;</small></span>
-                    <span class="d-flex gap-3 justify-content-between flex-grow-1">
-                        <span class="text-secondary fw-lighter text-truncate ms-4" style="max-width: 33%;"><small>Source</small></span>
-                        <span class="text-secondary fw-lighter text-truncate" style="max-width: 33%;"><small>Type</small></span>
-                        <span class="text-secondary fw-lighter text-truncate me-4" style="max-width: 33%;"><small>Subject</small></span>
-                    </span>
-                    <span class="ms-auto text-secondary fw-lighter"><small>&nbsp;</small></span>
-                    <span class="me-4 actionLink" id="expandCollapseLink">Expand all<i class="bi bi-caret-up-fill ms-2" id="expandCollapseIcon"></i></span>
-                </div>
-                <div class="accordion p-3" id="events-stack"></div>
-            </div>
+  <!-- Tabs Header -->
+  <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button
+        class="nav-link active"
+        id="streams-tab"
+        data-bs-toggle="tab"
+        data-bs-target="#streams-pane"
+        type="button"
+        role="tab"
+        aria-controls="streams-pane"
+        aria-selected="true"
+      >
+        <i class="bi bi-list-ul me-2"></i>Streams
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button
+        class="nav-link"
+        id="timeline-tab"
+        data-bs-toggle="tab"
+        data-bs-target="#timeline-pane"
+        type="button"
+        role="tab"
+        aria-controls="timeline-pane"
+        aria-selected="false"
+      >
+        <i class="bi bi-activity me-2"></i>Timeline
+      </button>
+    </li>
+    <!-- Search box in tabs -->
+    <li class="ms-auto me-2">
+      <form id="search-form" class="d-flex align-items-center gap-2 mt-1">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-dark border-secondary">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control form-control-sm bg-dark border-secondary text-white"
+            id="search-input"
+            placeholder="Search events..."
+            aria-label="Search events"
+            style="min-width: 200px"
+          />
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            id="search-clear-btn"
+            title="Clear search"
+            style="display: none"
+          >
+            <i class="bi bi-x"></i>
+          </button>
         </div>
+        <span
+          id="search-active-badge"
+          class="badge rounded-pill bg-warning text-dark d-none align-self-center search-active-badge"
+          aria-live="polite"
+        >
+          Filter active
+        </span>
+      </form>
+    </li>
+    <!-- Export button on the right side of tabs -->
+    <li>
+      <button
+        id="exportEventsBtn"
+        class="btn btn-sm btn-outline-primary mt-1"
+        data-bs-toggle="tooltip"
+        data-bs-title="Export events to JSON file"
+      >
+        <i class="bi bi-download"></i> Export
+      </button>
+    </li>
+  </ul>
 
-        <!-- Timeline Tab -->
-        <div class="tab-pane fade h-100" id="timeline-pane" role="tabpanel" aria-labelledby="timeline-tab">
-            <div class="p-3 h-100" style="background-color: var(--bs-body-bg);">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="bi bi-activity text-primary"></i> Event Activity Over Time
-                        </h5>
-                        <div class="timeline-controls d-flex align-items-center gap-3 flex-wrap justify-content-end">
-                            <div class="timeline-bucket-control d-flex align-items-center me-1 flex-shrink-0">
-                                <label for="timelineBucketSize" class="form-label mb-0">Bucket Size:</label>
-                                <select class="form-select form-select-sm w-auto" id="timelineBucketSize">
-                                    <!-- Options are dynamically populated by TimelineController -->
-                                </select>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary flex-shrink-0 mx-3 timeline-auto-fit-btn ms-1" 
-                                    id="timelineAutoFitBtn"
-                                    type="button"
-                                    data-bs-toggle="tooltip"
-                                    data-bs-title="Auto-fit bucket size to visible range">
-                                <i class="bi bi-magic"></i>
-                            </button>
-                            <div class="form-check form-switch mb-0 flex-shrink-0 mx-3 timeline-auto-refresh-indicator">
-                                <input class="form-check-input" type="checkbox" id="timelineAutoRefresh" checked>
-                                <label class="form-check-label small" for="timelineAutoRefresh">Auto-refresh</label>
-                            </div>
-                            <button class="btn btn-sm btn-outline-secondary flex-shrink-0" 
-                                    id="timelineEnlargeBtn"
-                                    data-chart-enlarge="timelineChart"
-                                    data-bs-toggle="tooltip" 
-                                    data-bs-title="View full screen">
-                                <i class="bi bi-arrows-fullscreen"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body timeline-chart-body" id="timelineChartBody" data-visible-buckets="60">
-                        <div class="timeline-chart-scroll" id="timelineChartScroll">
-                            <canvas id="timelineChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <!-- Tab Content -->
+  <div
+    class="tab-content streams-content border border-top-0 rounded-bottom"
+    id="dashboardTabsContent"
+  >
+    <!-- Streams Tab -->
+    <div
+      class="tab-pane fade show active h-100"
+      id="streams-pane"
+      role="tabpanel"
+      aria-labelledby="streams-tab"
+    >
+      <div
+        class="container-fluid p-3 h-100"
+        style="min-width: 1000px; background-color: var(--bs-body-bg)"
+      >
+        <div class="ms-3 d-flex justify-space-evenly">
+          <span class="mx-2 align-middle text-secondary fw-lighter"
+            ><small>Event #</small></span
+          >
+          <span
+            class="ms-4 align-middle text-secondary fw-lighter actionLink"
+            id="timestampToggle"
+            style="cursor: pointer"
+            title="Click to toggle between relative and absolute time"
+          >
+            <small>Timestamp <i class="bi bi-arrow-repeat"></i></small>
+          </span>
+          <span class="ms-auto text-secondary fw-lighter"
+            ><small>&nbsp;</small></span
+          >
+          <span class="d-flex gap-3 justify-content-between flex-grow-1">
+            <span
+              class="text-secondary fw-lighter text-truncate ms-4"
+              style="max-width: 33%"
+              ><small>Source</small></span
+            >
+            <span
+              class="text-secondary fw-lighter text-truncate"
+              style="max-width: 33%"
+              ><small>Type</small></span
+            >
+            <span
+              class="text-secondary fw-lighter text-truncate me-4"
+              style="max-width: 33%"
+              ><small>Subject</small></span
+            >
+          </span>
+          <span class="ms-auto text-secondary fw-lighter"
+            ><small>&nbsp;</small></span
+          >
+          <span class="me-4 actionLink" id="expandCollapseLink"
+            >Expand all<i
+              class="bi bi-caret-up-fill ms-2"
+              id="expandCollapseIcon"
+            ></i
+          ></span>
         </div>
+        <div class="accordion p-3" id="events-stack"></div>
+      </div>
     </div>
+
+    <!-- Timeline Tab -->
+    <div
+      class="tab-pane fade h-100"
+      id="timeline-pane"
+      role="tabpanel"
+      aria-labelledby="timeline-tab"
+    >
+      <div class="p-3 h-100" style="background-color: var(--bs-body-bg)">
+        <div class="card h-100">
+          <div
+            class="card-header d-flex justify-content-between align-items-center"
+          >
+            <h5 class="mb-0">
+              <i class="bi bi-activity text-primary"></i> Event Activity Over
+              Time
+            </h5>
+            <div
+              class="timeline-controls d-flex align-items-center gap-3 flex-wrap justify-content-end"
+            >
+              <div
+                class="timeline-bucket-control d-flex align-items-center me-1 flex-shrink-0"
+              >
+                <label for="timelineBucketSize" class="form-label mb-0"
+                  >Bucket Size:</label
+                >
+                <select
+                  class="form-select form-select-sm w-auto"
+                  id="timelineBucketSize"
+                >
+                  <!-- Options are dynamically populated by TimelineController -->
+                </select>
+              </div>
+              <button
+                class="btn btn-sm btn-outline-primary flex-shrink-0 mx-3 timeline-auto-fit-btn ms-1"
+                id="timelineAutoFitBtn"
+                type="button"
+                data-bs-toggle="tooltip"
+                data-bs-title="Auto-fit bucket size to visible range"
+              >
+                <i class="bi bi-magic"></i>
+              </button>
+              <div
+                class="form-check form-switch mb-0 flex-shrink-0 mx-3 timeline-auto-refresh-indicator"
+              >
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="timelineAutoRefresh"
+                  checked
+                />
+                <label class="form-check-label small" for="timelineAutoRefresh"
+                  >Auto-refresh</label
+                >
+              </div>
+              <button
+                class="btn btn-sm btn-outline-secondary flex-shrink-0"
+                id="timelineEnlargeBtn"
+                data-chart-enlarge="timelineChart"
+                data-bs-toggle="tooltip"
+                data-bs-title="View full screen"
+              >
+                <i class="bi bi-arrows-fullscreen"></i>
+              </button>
+            </div>
+          </div>
+          <div
+            class="card-body timeline-chart-body"
+            id="timelineChartBody"
+            data-visible-buckets="60"
+          >
+            <div class="timeline-chart-scroll" id="timelineChartScroll">
+              <canvas id="timelineChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
