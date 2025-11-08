@@ -52,6 +52,10 @@ async def event_generator(client_id: str | None, queue: asyncio.Queue | None, re
             # keepalive messages before gracefully closing the stream in that scenario.
             test_keepalive_budget = 1 if is_test_client else None
 
+            # Emit an initial comment so HTTP clients receive an immediate chunk without
+            # creating a synthetic CloudEvent that would surface in the UI.
+            yield {"comment": "connected"}
+
             while True:
                 # If client closes connection, stop sending events
                 if await request.is_disconnected():
@@ -119,8 +123,6 @@ async def _build_events_stream_response(request: Request) -> EventSourceResponse
         queue = asyncio.Queue(MAX_QUEUE_SIZE)
         async with sse_clients_lock:
             sse_clients[client_id] = queue
-        # Seed the queue with a handshake message so clients receive an immediate chunk
-        queue.put_nowait({"system": "connected"})
     return EventSourceResponse(event_generator(client_id, queue, request), ping=1)
 
 
