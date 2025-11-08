@@ -22,6 +22,8 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { appState } from '../state/appState';
 import { actionsController } from '../ui/actions';
 
+const AUTO_REFRESH_STORAGE_KEY = 'timeline_auto_refresh_enabled';
+
 // Register Chart.js components
 Chart.register(
     CategoryScale,
@@ -73,7 +75,8 @@ class TimelineController {
         }
 
         // Auto-refresh state
-        this.autoRefreshEnabled = true; // Default to enabled
+        const savedAutoRefresh = localStorage.getItem(AUTO_REFRESH_STORAGE_KEY);
+        this.autoRefreshEnabled = savedAutoRefresh === null ? true : savedAutoRefresh === 'true';
 
         // Store raw bucket times for click handling
         this.rawBucketTimes = [];
@@ -675,7 +678,19 @@ class TimelineController {
             this.autoRefreshToggle.checked = this.autoRefreshEnabled;
             this.autoRefreshToggle.addEventListener('change', (e) => {
                 this.autoRefreshEnabled = e.target.checked;
-                console.log('[Timeline] Auto-refresh:', this.autoRefreshEnabled ? 'enabled' : 'disabled');
+                localStorage.setItem(AUTO_REFRESH_STORAGE_KEY, String(this.autoRefreshEnabled));
+
+                if (!this.autoRefreshEnabled) {
+                    console.log('[Timeline] Auto-refresh disabled by user');
+                    if (this.refreshTimer) {
+                        clearTimeout(this.refreshTimer);
+                        this.refreshTimer = null;
+                    }
+                    this.pendingRefresh = false;
+                } else {
+                    console.log('[Timeline] Auto-refresh enabled by user');
+                    this.scheduleRefresh(true);
+                }
             });
         }
     }
