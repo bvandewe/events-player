@@ -11,7 +11,12 @@ import httpx
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from .globals import sse_clients, active_tasks
+from .globals import (
+    sse_clients,
+    sse_clients_lock,
+    active_tasks,
+    active_tasks_lock,
+)
 from .models import EventGeneratorRequest, EventGeneratorTask, CloudEvent
 from .settings import settings
 
@@ -70,8 +75,9 @@ async def _send_to_client(client_id: str, queue: asyncio.Queue, payload: dict):
             f"Queue full for client {client_id}, dropping event and disconnecting slow client"
         )
         # Disconnect slow clients to protect system performance
-        if client_id in sse_clients:
-            del sse_clients[client_id]
+        async with sse_clients_lock:
+            removed = sse_clients.pop(client_id, None) is not None
+        if removed:
             log.info(f"Disconnected slow client {client_id}")
     except Exception as e:
         log.error(f"Error sending to client {client_id}: {e}")
@@ -83,16 +89,19 @@ async def handle_event(payload: dict):
     This prevents slow clients from blocking event distribution.
     """
     try:
-        if not sse_clients:
+        async with sse_clients_lock:
+            client_items = list(sse_clients.items())
+
+        if not client_items:
             log.debug("No SSE clients connected, skipping event broadcast")
             return
 
-        log.info("Broadcasting event to %s clients", len(sse_clients))
+        log.info("Broadcasting event to %s clients", len(client_items))
 
         # Create tasks for all clients in parallel (async fan-out)
         tasks: Set[asyncio.Task] = set()
 
-        for client_id, client_queue in list(sse_clients.items()):
+        for client_id, client_queue in client_items:
             task = asyncio.create_task(_send_to_client(client_id, client_queue, payload))
             tasks.add(task)
             # Clean up completed tasks to prevent memory leak
@@ -124,7 +133,8 @@ async def handle_generator_request(
             if task.cancelled:
                 log.info("Task %s was cancelled, stopping generation", task.id)
                 task.status = "Cancelled"
-                active_tasks.pop(task.id, None)
+                async with active_tasks_lock:
+                    active_tasks.pop(task.id, None)
                 return
 
             # Apply randomization if enabled for iterations > 1
@@ -178,7 +188,8 @@ async def handle_generator_request(
                 task.status = "Failed"
                 task.progress = -1
                 task.error = f"Bad Gateway: Failed to post event to {generator_request.event_gateway} - HTTP {exc.response.status_code}"
-                active_tasks[task.id] = task  # Update task with error info
+                async with active_tasks_lock:
+                    active_tasks[task.id] = task  # Update task with error info
                 return  # Exit gracefully without raising exception
             except httpx.ConnectError as exc:
                 log.error(
@@ -191,7 +202,8 @@ async def handle_generator_request(
                 task.error = (
                     f"Service Unavailable: Could not connect to {generator_request.event_gateway}"
                 )
-                active_tasks[task.id] = task  # Update task with error info
+                async with active_tasks_lock:
+                    active_tasks[task.id] = task  # Update task with error info
                 return  # Exit gracefully without raising exception
             except httpx.TimeoutException as exc:
                 log.error(
@@ -202,7 +214,8 @@ async def handle_generator_request(
                 task.error = (
                     f"Gateway Timeout: Request to {generator_request.event_gateway} timed out"
                 )
-                active_tasks[task.id] = task  # Update task with error info
+                async with active_tasks_lock:
+                    active_tasks[task.id] = task  # Update task with error info
                 return  # Exit gracefully without raising exception
             except httpx.RequestError as exc:
                 log.error(
@@ -213,7 +226,8 @@ async def handle_generator_request(
                 task.status = "Failed"
                 task.progress = -1
                 task.error = f"Bad Gateway: Error sending request to {generator_request.event_gateway} - {type(exc).__name__}"
-                active_tasks[task.id] = task  # Update task with error info
+                async with active_tasks_lock:
+                    active_tasks[task.id] = task  # Update task with error info
                 return  # Exit gracefully without raising exception
 
             progress = round((i + 1) / iterations * 100)
@@ -225,13 +239,21 @@ async def handle_generator_request(
                 task.status = "Completed"
 
             # Update current task progress
-            if task.id in active_tasks and task.progress >= 0:
-                active_tasks[task.id] = task
-            elif task.progress == -1:
+            async with active_tasks_lock:
+                task_exists = task.id in active_tasks
+                if task_exists and task.progress >= 0:
+                    active_tasks[task.id] = task
+                    task_state = "updated"
+                elif task.progress == -1:
+                    active_tasks.pop(task.id, None)
+                    task_state = "failed"
+                else:
+                    task_state = "missing"
+
+            if task_state == "failed":
                 log.error("Task %s failed!", task.id)
-                active_tasks.pop(task.id, None)
                 return  # Exit gracefully
-            else:
+            if task_state == "missing":
                 log.error("Task %s does not exist!", task.id)
                 return  # Exit gracefully
 
@@ -240,17 +262,20 @@ async def handle_generator_request(
 
         # Remove task from active tasks when completed
         log.info("Task %s is completed", task.id)
-        active_tasks.pop(task.id, None)
+        async with active_tasks_lock:
+            active_tasks.pop(task.id, None)
 
     except ValidationError as e:
         log.error("Validation error in task %s: %s", task.id, e)
         task.status = "Failed"
         task.progress = -1
         task.error = f"Validation error: {str(e)}"
-        active_tasks[task.id] = task
+        async with active_tasks_lock:
+            active_tasks[task.id] = task
     except Exception as e:
         log.error("Unexpected error in task %s: %s", task.id, e, exc_info=True)
         task.status = "Failed"
         task.progress = -1
         task.error = f"Internal server error: {str(e)}"
-        active_tasks[task.id] = task
+        async with active_tasks_lock:
+            active_tasks[task.id] = task

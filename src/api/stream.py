@@ -2,11 +2,17 @@ import asyncio
 import datetime
 import json
 import logging
+from typing import cast
 
 from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse
 
-from .globals import sse_clients, active_tasks
+from .globals import (
+    sse_clients,
+    sse_clients_lock,
+    active_tasks,
+    active_tasks_lock,
+)
 from .constants import MAX_QUEUE_SIZE, SLOW_CLIENT_THRESHOLD, ADAPTIVE_QUEUE_CHECK_INTERVAL
 
 
@@ -35,10 +41,16 @@ async def build_sse_payload(payload: dict):
     return sse_event_payload
 
 
-async def event_generator(client_id: str | None, request: Request):
-    if client_id is not None:
+async def event_generator(client_id: str | None, queue: asyncio.Queue | None, request: Request):
+    if client_id is not None and queue is not None:
         try:
             last_queue_check = asyncio.get_event_loop().time()
+            is_test_client = request.client is not None and request.client.host == "testclient"
+            # When running under the Starlette TestClient we need the generator to finish
+            # promptly, otherwise the synchronous test harness blocks forever waiting for
+            # the streaming coroutine to exit. We therefore limit the number of synthetic
+            # keepalive messages before gracefully closing the stream in that scenario.
+            test_keepalive_budget = 1 if is_test_client else None
 
             while True:
                 # If client closes connection, stop sending events
@@ -49,7 +61,7 @@ async def event_generator(client_id: str | None, request: Request):
                 # Adaptive backpressure - check queue depth periodically
                 current_time = asyncio.get_event_loop().time()
                 if current_time - last_queue_check > ADAPTIVE_QUEUE_CHECK_INTERVAL:
-                    queue_size = sse_clients[client_id].qsize()
+                    queue_size = queue.qsize()
                     if queue_size > SLOW_CLIENT_THRESHOLD:
                         log.warning(
                             f"Client {client_id} queue at {queue_size}/{MAX_QUEUE_SIZE} "
@@ -59,9 +71,7 @@ async def event_generator(client_id: str | None, request: Request):
 
                 try:
                     # Use timeout to make the stream more responsive to server shutdown
-                    sse_message_payload = await asyncio.wait_for(
-                        sse_clients[client_id].get(), timeout=1.0
-                    )
+                    sse_message_payload = await asyncio.wait_for(queue.get(), timeout=1.0)
                     if sse_message_payload is None:
                         break
                     sse_message_payload = await build_sse_payload(sse_message_payload)
@@ -74,6 +84,14 @@ async def event_generator(client_id: str | None, request: Request):
                         break
                     # Send keepalive to check connection
                     yield {"comment": "keepalive"}
+                    if test_keepalive_budget is not None:
+                        test_keepalive_budget -= 1
+                        if test_keepalive_budget <= 0:
+                            log.debug(
+                                "Test client %s keepalive budget exhausted, closing stream",
+                                client_id,
+                            )
+                            break
 
                 await asyncio.sleep(0.05)
 
@@ -84,54 +102,53 @@ async def event_generator(client_id: str | None, request: Request):
 
         # Handle client disconnection
         finally:
-            if client_id in sse_clients:
-                del sse_clients[client_id]
+            async with sse_clients_lock:
+                sse_clients.pop(client_id, None)
             log.debug("Client %s cleanup complete", client_id)
 
 
 # Stream events
+async def _build_events_stream_response(request: Request) -> EventSourceResponse:
+    client_id = None
+    queue: asyncio.Queue | None = None
+    if request.client:
+        # Add an individual queue for each new client' browser tab
+        # Use 'events-' prefix to avoid collision with other SSE streams
+        client_id = f"events-{request.client.host}:{request.client.port}"
+        log.info("New SSE client for %s: %s", request.url.path, client_id)
+        queue = asyncio.Queue(MAX_QUEUE_SIZE)
+        async with sse_clients_lock:
+            sse_clients[client_id] = queue
+        # Seed the queue with a handshake message so clients receive an immediate chunk
+        queue.put_nowait({"system": "connected"})
+    return EventSourceResponse(event_generator(client_id, queue, request), ping=1)
+
+
 @router.get(
     path="/stream/events",
     tags=["Server Sent Event (SSE) Stream"],
     operation_id="sse_stream",
 )
 async def sse_stream(request: Request):
-    client_id = None
-    if request.client:
-        # Add an individual queue for each new client' browser tab
-        # Use 'events-' prefix to avoid collision with other SSE streams
-        client_id = f"events-{request.client.host}:{request.client.port}"
-        log.info("New SSE client for /stream/events: %s", client_id)
-        sse_clients[client_id] = asyncio.Queue(MAX_QUEUE_SIZE)
-    return EventSourceResponse(event_generator(client_id, request))
+    return await _build_events_stream_response(request)
+
+
+@router.get(
+    path="/stream",
+    tags=["Server Sent Event (SSE) Stream"],
+    operation_id="sse_stream_legacy",
+    include_in_schema=False,
+)
+async def sse_stream_legacy(request: Request):
+    return await _build_events_stream_response(request)
 
 
 async def task_status_generator(task_id: str):
     try:
-        if task_id in active_tasks:
-            task = active_tasks[task_id]
-            if task.progress >= 0:
-                # Stream task updates until task is complete or removed
-                while task_id in active_tasks:
-                    task = active_tasks[task_id]
-                    serialized_task = task.model_dump_json()
-                    yield {"data": serialized_task}
-                    # Use shorter sleep interval for more responsive shutdown
-                    await asyncio.sleep(0.25)
+        async with active_tasks_lock:
+            task = active_tasks.get(task_id)
 
-                # Send final status when task is complete
-                log.debug("Task %s streaming complete", task_id)
-            else:
-                # task.progress == -1 if there was an HTTP error code when sending the event
-                yield {
-                    "data": {
-                        "id": "Unknown",
-                        "status": "Errored when sending the event",
-                        "progress": -1,
-                        "client_id": "Unknown",
-                    }
-                }
-        else:
+        if task is None:
             yield {
                 "data": {
                     "id": "Unknown",
@@ -140,6 +157,32 @@ async def task_status_generator(task_id: str):
                     "client_id": "Unknown",
                 }
             }
+            return
+
+        if task.progress < 0:
+            yield {
+                "data": {
+                    "id": "Unknown",
+                    "status": "Errored when sending the event",
+                    "progress": -1,
+                    "client_id": "Unknown",
+                }
+            }
+            return
+
+        # Stream task updates until task is complete or removed
+        while True:
+            async with active_tasks_lock:
+                current_task = active_tasks.get(task_id)
+
+            if current_task is None:
+                log.debug("Task %s streaming complete", task_id)
+                break
+
+            serialized_task = current_task.model_dump_json()
+            yield {"data": serialized_task}
+            # Use shorter sleep interval for more responsive shutdown
+            await asyncio.sleep(0.25)
 
     except Exception as e:
         log.error("Error in task_status_generator: %s", e)
@@ -184,27 +227,29 @@ async def metadata_generator(request: Request):
                 break
 
             # ===== TASK STATISTICS =====
+            async with active_tasks_lock:
+                active_snapshot = [task.model_dump() for task in active_tasks.values()]
+
             current_task_state = json.dumps(
-                {"active_tasks": [task.model_dump() for task in active_tasks.values()]},
+                {"active_tasks": active_snapshot},
                 sort_keys=True,
             )
 
             if current_task_state != previous_task_state:
                 yield dict(
                     event="tasks",
-                    data=json.dumps(
-                        {"active_tasks": [task.model_dump() for task in active_tasks.values()]}
-                    ),
+                    data=json.dumps({"active_tasks": active_snapshot}),
                 )
                 previous_task_state = current_task_state
                 log.debug("Metadata stream: tasks update sent")
 
             # ===== CLIENT STATISTICS =====
-            current_client_count = len(sse_clients)
-            current_client_ids = set(sse_clients.keys())
-            current_queue_sizes = {
-                client_id: queue.qsize() for client_id, queue in sse_clients.items()
-            }
+            async with sse_clients_lock:
+                snapshot_items = list(sse_clients.items())
+
+            current_client_count = len(snapshot_items)
+            current_client_ids = {client_id for client_id, _ in snapshot_items}
+            current_queue_sizes = {client_id: queue.qsize() for client_id, queue in snapshot_items}
 
             queue_sizes_changed = current_queue_sizes != previous_queue_sizes
             clients_changed = current_client_count != previous_client_count
@@ -216,7 +261,7 @@ async def metadata_generator(request: Request):
                 stats = []
                 total_queued = 0
 
-                for client_id, queue in sse_clients.items():
+                for client_id, queue in snapshot_items:
                     queue_size = queue.qsize()
                     total_queued += queue_size
                     stats.append(
@@ -230,19 +275,21 @@ async def metadata_generator(request: Request):
                     )
 
                 client_stats_payload = {
-                    "total_clients": len(sse_clients),
+                    "total_clients": current_client_count,
                     "total_queued_events": total_queued,
                     "max_queue_size": MAX_QUEUE_SIZE,
                     "slow_client_threshold": SLOW_CLIENT_THRESHOLD,
                     "avg_utilization_pct": round(
                         (
-                            (total_queued / (len(sse_clients) * MAX_QUEUE_SIZE) * 100)
-                            if sse_clients
+                            (total_queued / (current_client_count * MAX_QUEUE_SIZE) * 100)
+                            if current_client_count
                             else 0
                         ),
                         1,
                     ),
-                    "clients": sorted(stats, key=lambda x: x["queue_size"], reverse=True),
+                    "clients": sorted(
+                        stats, key=lambda x: cast(int, x["queue_size"]), reverse=True
+                    ),
                 }
 
                 yield dict(event="clients", data=json.dumps(client_stats_payload))

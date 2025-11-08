@@ -25,8 +25,11 @@ docs-deploy: ## Deploy documentation to GitHub Pages
 	@echo "Deploying documentation..."
 	poetry run mkdocs gh-deploy --force
 
-# Code quality targets
-.PHONY: lint format
+# Dependency & code quality targets
+.PHONY: install lint format test
+install: ## Install project dependencies (including dev tools)
+	@echo "Installing dependencies..."
+	poetry sync --with dev
 lint: ## Run linting checks
 	@echo "Running linting checks..."
 	poetry run flake8 src/api/ --max-line-length=100
@@ -35,6 +38,10 @@ lint: ## Run linting checks
 format: ## Format code using black
 	@echo "Formatting code..."
 	poetry run black src/api/ --line-length=100
+
+test: install ## Run the full pytest suite in ./tests
+	@echo "Running tests..."
+	poetry run pytest ./tests
 
 # Docker targets
 .PHONY: docker-build docker-up docker-down docker-debug docker-debug-down docker-logs
