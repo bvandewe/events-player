@@ -46,6 +46,28 @@
     }
 }
 
+.timeline-auto-refresh-indicator {
+    border-radius: 999px;
+    padding: 0.1rem 0.75rem;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+
+    &.highlighted {
+        border: 1px solid var(--bs-warning) !important;
+        background-color: rgba(255, 193, 7, 0.18) !important;
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+
+        .form-check-label {
+            color: var(--bs-body-color) !important;
+            font-weight: 600;
+        }
+
+        .form-check-input {
+            border-color: var(--bs-warning) !important;
+            background-color: var(--bs-body-bg);
+        }
+    }
+}
+
 // Collapsible sections
 .collapse-header {
     cursor: pointer;

@@ -77,6 +77,7 @@ class TimelineController {
         // Auto-refresh state
         const savedAutoRefresh = localStorage.getItem(AUTO_REFRESH_STORAGE_KEY);
         this.autoRefreshEnabled = savedAutoRefresh === null ? true : savedAutoRefresh === 'true';
+        this.autoRefreshContainer = null;
 
         // Store raw bucket times for click handling
         this.rawBucketTimes = [];
@@ -96,6 +97,7 @@ class TimelineController {
         // Initialize DOM element references
         this.bucketSizeSelect = document.getElementById('timelineBucketSize');
         this.autoRefreshToggle = document.getElementById('timelineAutoRefresh');
+        this.autoRefreshContainer = this.autoRefreshToggle?.closest('.timeline-auto-refresh-indicator') || null;
         this.statElements = {
             totalEvents: document.getElementById('statTotalEvents'),
             totalEventsTime: document.getElementById('statTotalEventsTime'),
@@ -676,6 +678,7 @@ class TimelineController {
         // Auto-refresh toggle
         if (this.autoRefreshToggle) {
             this.autoRefreshToggle.checked = this.autoRefreshEnabled;
+            this.updateAutoRefreshVisualState();
             this.autoRefreshToggle.addEventListener('change', (e) => {
                 this.autoRefreshEnabled = e.target.checked;
                 localStorage.setItem(AUTO_REFRESH_STORAGE_KEY, String(this.autoRefreshEnabled));
@@ -687,11 +690,23 @@ class TimelineController {
                         this.refreshTimer = null;
                     }
                     this.pendingRefresh = false;
+                    this.updateAutoRefreshVisualState();
                 } else {
                     console.log('[Timeline] Auto-refresh enabled by user');
+                    this.updateAutoRefreshVisualState();
                     this.scheduleRefresh(true);
                 }
             });
+        }
+    }
+
+    updateAutoRefreshVisualState() {
+        if (!this.autoRefreshContainer) {
+            this.autoRefreshContainer = this.autoRefreshToggle?.closest('.timeline-auto-refresh-indicator') || null;
+        }
+
+        if (this.autoRefreshContainer) {
+            this.autoRefreshContainer.classList.toggle('highlighted', !this.autoRefreshEnabled);
         }
     }
 
