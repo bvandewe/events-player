@@ -4,13 +4,14 @@
  */
 
 import { appState } from '../state/appState';
+import { authManager } from '../auth/auth.js';
 
 class SSEConnectionManager {
     constructor() {
         this.eventSource = null;
         this.eventCountSpan = null;
         this.eventListeners = [];
-        this.sseEventPath = '/stream/events';
+        this.sseEventPath = null;
     }
 
     /**
@@ -22,6 +23,9 @@ class SSEConnectionManager {
      * @param {number} options.initialCount - Initial event count from storage
      */
     init(options = {}) {
+        // Initialize path with base path from auth manager
+        this.sseEventPath = authManager.basePath + 'stream/events';
+
         // Close existing connection if any to prevent leaks
         if (this.eventSource) {
             console.log('[SSE] Closing existing connection before creating new one');
@@ -37,12 +41,12 @@ class SSEConnectionManager {
         }
 
         // Subscribe to event count changes from state
-        appState.subscribe('eventCount', (count) => {
+        appState.subscribe('eventCount', count => {
             this.updateCounter();
         });
 
         // Subscribe to filtered event count changes from state
-        appState.subscribe('filteredEventCount', (count) => {
+        appState.subscribe('filteredEventCount', count => {
             this.updateCounter();
         });
 
@@ -58,7 +62,7 @@ class SSEConnectionManager {
                 }
             });
 
-            this.eventSource.addEventListener('message', (event) => {
+            this.eventSource.addEventListener('message', event => {
                 console.log('[SSE] Received event');
 
                 // Don't increment counter here - let the view handle it after filtering
@@ -73,14 +77,13 @@ class SSEConnectionManager {
                 }
             });
 
-            this.eventSource.addEventListener('error', (error) => {
+            this.eventSource.addEventListener('error', error => {
                 console.error('[SSE] Connection error:', error);
                 appState.setConnectionStatus('error');
                 if (options.onError) {
                     options.onError(error);
                 }
             });
-
         } catch (error) {
             console.error('[SSE] Failed to setup connection:', error);
         }
