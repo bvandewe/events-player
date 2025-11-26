@@ -1,135 +1,139 @@
 services:
-  # http://localhost:8884
-  event-player:
-    image: event-player
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command:
-      [
-        "sh",
-        "-c",
-        "pip install debugpy -t /tmp && python /tmp/debugpy --listen 0.0.0.0:5678 -m uvicorn api.app:app --host 0.0.0.0 --port 8080 --reload --reload-delay 2 --timeout-graceful-shutdown 3",
-      ]
-    ports:
-      - 8884:8080
-      - 5675:5678
-    volumes:
-      - ./src:/app/src
-      - ./static:/app/static # Mount static for UI updates from ui-builder
-    environment:
-      PYTHONPATH: /app/src
+    # http://localhost:8884
+    event-player:
+        image: event-player
+        build:
+            context: .
+            dockerfile: Dockerfile
+        command:
+            - sh
+            - -c
+            - |
+                pip install debugpy -t /tmp &&
+                # yamllint disable-line rule:line-length
+                python /tmp/debugpy --listen 0.0.0.0:5678 -m uvicorn api.app:app --host 0.0.0.0 --port 8080 --reload --reload-delay 2 --timeout-graceful-shutdown 3
+        ports:
+            - 8884:8080
+            - 5675:5678
+        volumes:
+            - ./src:/app/src
+            - ./static:/app/static # Mount static for UI updates from ui-builder
+        environment:
+            PYTHONPATH: /app/src
 
-      # Application Settings
-      tag: "v0.4.10"
-      repository_url: "https://github.com/bvandewe/events-player"
+            # Application Settings
+            tag: 'v0.4.10'
+            repository_url: 'https://github.com/bvandewe/events-player'
 
-      # Logging Configuration
-      log_level: DEBUG
-      log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            # Logging Configuration
+            log_level: DEBUG
+            log_format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
-      # Default Generator Settings
-      default_generator_gateways: '{"urls": ["http://localhost:8080/events/pub", "http://event-player:8080/events/pub"]}'
-      default_generator_event: '{"event_source": "https://dummy.source.com/sys-admin", "event_type": "com.source.dummy.test.requested.v1", "event_subject": "some.interesting.concept.key_abcde12345", "event_data": {"foo": "bar"}}'
+            # Default Generator Settings
+            # yamllint disable-line rule:line-length
+            default_generator_gateways: '{"urls": ["http://localhost:8080/events/pub", "http://event-player:8080/events/pub"]}'
+            # yamllint disable-line rule:line-length
+            default_generator_event: '{"event_source": "https://dummy.source.com/sys-admin", "event_type": "com.source.dummy.test.requested.v1", "event_subject": "some.interesting.concept.key_abcde12345", "event_data": {"foo": "bar"}}'
 
-      # Frontend Display Configuration
-      browser_queue_size: 500
+            # Frontend Display Configuration
+            browser_queue_size: 500
 
-      # Frontend Storage Configuration (IndexedDB)
-      storage_max_recent_events: 1000 # Tier 1: Max full events (capacity-based FIFO)
-      storage_max_metadata_events: 20000 # Tier 2: Max metadata entries (capacity-based FIFO)
+            # Frontend Storage Configuration (IndexedDB)
+            storage_max_recent_events: 1000 # Tier 1: Max full events (capacity-based FIFO)
+            storage_max_metadata_events: 20000 # Tier 2: Max metadata entries (capacity-based FIFO)
 
-      # HTTP Client Configuration
-      http_client_timeout: 30.0
+            # HTTP Client Configuration
+            http_client_timeout: 30.0
 
-      # Authentication & Authorization
-      auth_required: "true" # Set to "true" to require authentication
-      auth_trust_mode: "false" # Set to "true" to skip JWT signature verification (use with Istio/service mesh)
-      # auth_jwks_url and auth_issuer are auto-derived from oauth_* settings below
-      # Only set these explicitly if using Istio/Service Mesh without OAuth
-      auth_audience: events-player-web
-      auth_algorithm: RS256
+            # Authentication & Authorization
+            auth_required: 'true' # Set to "true" to require authentication
+            auth_trust_mode: 'false' # Set to "true" to skip JWT signature verification (use with Istio/service mesh)
+            # auth_jwks_url and auth_issuer are auto-derived from oauth_* settings below
+            # Only set these explicitly if using Istio/Service Mesh without OAuth
+            auth_audience: events-player-web
+            auth_algorithm: RS256
 
-      # Role Mapping Configuration
-      auth_role_admin: "admin" # Role name in JWT that grants admin privileges
-      auth_role_operator: "operator" # Role name in JWT that grants operator privileges
-      auth_role_user: "user" # Role name in JWT that grants user privileges
+            # Role Mapping Configuration
+            auth_role_admin: 'admin' # Role name in JWT that grants admin privileges
+            auth_role_operator: 'operator' # Role name in JWT that grants operator privileges
+            auth_role_user: 'user' # Role name in JWT that grants user privileges
 
-      # OAuth/OIDC Configuration (works with any OIDC-compliant IDP like Keycloak, Auth0, Okta, etc.)
-      # Simplified: Single URL works for both backend and frontend
-      # auth_jwks_url and auth_issuer are automatically derived from these settings
-      oauth_server_url: http://localhost:8885 # OAuth server URL accessible from browser
-      oauth_server_url_backend: http://keycloak:8080 # OAuth server URL for backend (Docker internal)
-      oauth_legacy_keycloak: "false" # Set to "true" for Keycloak < v17 (adds /auth prefix)
-      oauth_realm: events-player # OAuth realm/tenant name
-      oauth_client_id: events-player-web # OAuth client ID
-      oauth_client_secret: "" # OAuth client secret (optional for public clients)
-    depends_on:
-      - ui-builder
-      - keycloak
+            # OAuth/OIDC Configuration (works with any OIDC-compliant IDP like Keycloak, Auth0, Okta, etc.)
+            # Simplified: Single URL works for both backend and frontend
+            # auth_jwks_url and auth_issuer are automatically derived from these settings
+            oauth_server_url: http://localhost:8885 # OAuth server URL accessible from browser
+            oauth_server_url_backend: http://keycloak:8080 # OAuth server URL for backend (Docker internal)
+            oauth_legacy_keycloak: 'false' # Set to "true" for Keycloak < v17 (adds /auth prefix)
+            oauth_realm: events-player # OAuth realm/tenant name
+            oauth_client_id: events-player-web # OAuth client ID
+            oauth_client_secret: '' # OAuth client secret (optional for public clients)
+        depends_on:
+            - ui-builder
+            - keycloak
 
-  # UI builder with hot reload
-  ui-builder:
-    image: node:20-alpine
-    working_dir: /app
-    command: npm run dev
-    volumes:
-      - .:/app
-      - /app/node_modules # Anonymous volume for node_modules
-    ports:
-      - 1234:1234 # Parcel HMR port
-    environment:
-      NODE_ENV: development
-    entrypoint: >
-      sh -c "
-      npm install &&
-      npm run dev
-      "
+    # UI builder with hot reload
+    ui-builder:
+        image: node:20-alpine
+        working_dir: /app
+        command: npm run dev
+        volumes:
+            - .:/app
+            - /app/node_modules # Anonymous volume for node_modules
+        ports:
+            - 1234:1234 # Parcel HMR port
+        environment:
+            NODE_ENV: development
+        entrypoint: >
+            sh -c "
+            npm install &&
+            npm run dev
+            "
 
-  # 🔐 Keycloak (Authentication & Authorization)
-  # http://localhost:8885 (admin/admin)
-  keycloak:
-    image: quay.io/keycloak/keycloak:22.0.5
-    entrypoint: ["/opt/keycloak/entrypoint-wrapper.sh"]
-    command:
-      - "start-dev"
-      - "--import-realm"
-      - "--spi-theme-welcome-theme=keycloak"
-      - "--spi-theme-admin-theme=keycloak"
-    ports:
-      - 8885:8080
-    environment:
-      # Admin credentials
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      # Development settings (no external DB, uses H2)
-      KC_HTTP_PORT: 8080
-      KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
-      KC_HTTP_ENABLED: "true"
-      KC_HEALTH_ENABLED: "true"
-      KC_METRICS_ENABLED: "true"
-      # Disable HTTPS requirement for admin console (development only!)
-      KC_HOSTNAME_URL: http://localhost:8885
-      KC_HOSTNAME_ADMIN_URL: http://localhost:8885
-      KC_PROXY: "none"
-    volumes:
-      # Persist H2 database to maintain Keycloak configuration across container restarts
-      - keycloak_data:/opt/keycloak/data
-      # Import realm configuration on first startup only
-      - ./deployments/keycloak/events-player-realm-export.json:/opt/keycloak/data/import/events-player-realm-export.json:ro
-      # Mount entrypoint wrapper to auto-configure master realm
-      - ./deployments/keycloak/entrypoint-wrapper.sh:/opt/keycloak/entrypoint-wrapper.sh:ro
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+    # 🔐 Keycloak (Authentication & Authorization)
+    # http://localhost:8885 (admin/admin)
+    keycloak:
+        image: quay.io/keycloak/keycloak:26.0.0
+        entrypoint: ['/opt/keycloak/entrypoint-wrapper.sh']
+        command:
+            - 'start-dev'
+            - '--import-realm'
+            - '--spi-theme-welcome-theme=keycloak'
+            - '--spi-theme-admin-theme=keycloak'
+        ports:
+            - 8885:8080
+        environment:
+            # Admin credentials
+            KC_BOOTSTRAP_ADMIN_USERNAME: admin
+            KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+            # Development settings (no external DB, uses H2)
+            KC_HTTP_PORT: 8080
+            KC_HOSTNAME_STRICT: 'false'
+            KC_HOSTNAME_STRICT_HTTPS: 'false'
+            KC_HTTP_ENABLED: 'true'
+            KC_HEALTH_ENABLED: 'true'
+            KC_METRICS_ENABLED: 'true'
+            # Disable HTTPS requirement for admin console (development only!)
+            KC_HOSTNAME: http://localhost:8885
+            KC_HOSTNAME_ADMIN: http://localhost:8885
+            KC_PROXY_HEADERS: 'xforwarded'
+        volumes:
+            # Persist H2 database to maintain Keycloak configuration across container restarts
+            - keycloak_data:/opt/keycloak/data
+            # Import realm configuration on first startup only
+            - ./deployments/keycloak/events-player-realm-export.json:/opt/keycloak/data/import/events-player-realm-export.json:ro
+            # Mount entrypoint wrapper to auto-configure master realm
+            - ./deployments/keycloak/entrypoint-wrapper.sh:/opt/keycloak/entrypoint-wrapper.sh:ro
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - |
+                    exec 3<>/dev/tcp/127.0.0.1/8080;
+                    echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;
+                    if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 60s
 
 volumes:
-  keycloak_data:
+    keycloak_data:
