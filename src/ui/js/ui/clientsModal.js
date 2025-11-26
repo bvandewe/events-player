@@ -25,7 +25,7 @@ export const clientsModalController = (() => {
         tableBody: null,
         noDataAlert: null,
         maxQueueSize: null,
-        slowThreshold: null
+        slowThreshold: null,
     };
 
     /**
@@ -80,7 +80,7 @@ export const clientsModalController = (() => {
         // Hide admin-only columns if user is not admin
         if (!authorizationManager.isAdmin()) {
             const adminOnlyElements = document.querySelectorAll('.admin-only');
-            adminOnlyElements.forEach(el => el.style.display = 'none');
+            adminOnlyElements.forEach(el => (el.style.display = 'none'));
         }
 
         console.log('[ClientsModal] Initialized');
@@ -93,7 +93,7 @@ export const clientsModalController = (() => {
         console.log('[ClientsModal] Subscribing to metadata stream...');
 
         // Subscribe to 'clients' events from the unified metadata stream
-        unsubscribe = metadataSSE.subscribe('clients', (data) => {
+        unsubscribe = metadataSSE.subscribe('clients', data => {
             console.log('[ClientsModal] Received clients update from metadata stream');
 
             // Cache the latest data
@@ -118,7 +118,7 @@ export const clientsModalController = (() => {
     const fetchInitialStats = async () => {
         console.log('[ClientsModal] Fetching initial stats from API...');
         try {
-            const response = await fetch('/api/sse/stats');
+            const response = await apiFetch('/api/sse/stats');
             console.log('[ClientsModal] Fetch response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -136,7 +136,7 @@ export const clientsModalController = (() => {
     /**
      * Update the UI with fetched data
      */
-    const updateUI = (data) => {
+    const updateUI = data => {
         // Update summary cards
         if (elements.totalCount) {
             elements.totalCount.textContent = data.total_clients || 0;
@@ -176,12 +176,12 @@ export const clientsModalController = (() => {
     /**
      * Update the clients table
      */
-    const updateTable = (clients) => {
+    const updateTable = clients => {
         if (!elements.tableBody) return;
 
         if (!clients || clients.length === 0) {
             const isAdmin = authorizationManager.isAdmin();
-            const colspan = isAdmin ? "5" : "4";
+            const colspan = isAdmin ? '5' : '4';
             elements.tableBody.innerHTML = `
                 <tr>
                     <td colspan="${colspan}" class="text-center text-muted py-4">
@@ -194,26 +194,26 @@ export const clientsModalController = (() => {
         }
 
         const isAdmin = authorizationManager.isAdmin();
-        const rows = clients.map(client => {
-            const statusClass = client.is_slow ? 'danger' :
-                client.utilization_pct > 50 ? 'warning' : 'success';
-            const statusIcon = client.is_slow ? 'hourglass-split' :
-                client.utilization_pct > 50 ? 'exclamation-triangle' : 'check-circle';
-            const statusText = client.is_slow ? 'Slow' :
-                client.utilization_pct > 50 ? 'Busy' : 'Normal';
+        const rows = clients
+            .map(client => {
+                const statusClass = client.is_slow ? 'danger' : client.utilization_pct > 50 ? 'warning' : 'success';
+                const statusIcon = client.is_slow ? 'hourglass-split' : client.utilization_pct > 50 ? 'exclamation-triangle' : 'check-circle';
+                const statusText = client.is_slow ? 'Slow' : client.utilization_pct > 50 ? 'Busy' : 'Normal';
 
-            const disconnectButton = isAdmin ? `
+                const disconnectButton = isAdmin
+                    ? `
                 <td class="text-center admin-only">
-                    <button class="btn btn-sm btn-outline-danger disconnect-client-btn" 
+                    <button class="btn btn-sm btn-outline-danger disconnect-client-btn"
                             data-client-id="${escapeHtml(client.client_id)}"
                             data-bs-toggle="tooltip"
                             data-bs-title="Disconnect this client">
                         <i class="bi bi-x-circle"></i>
                     </button>
                 </td>
-            ` : '';
+            `
+                    : '';
 
-            return `
+                return `
                 <tr class="${client.is_slow ? 'table-danger' : ''}">
                     <td>
                         <code class="text-truncate d-inline-block" style="max-width: 400px;">
@@ -226,11 +226,11 @@ export const clientsModalController = (() => {
                     </td>
                     <td class="text-end">
                         <div class="progress" style="height: 20px; min-width: 100px;">
-                            <div class="progress-bar bg-${statusClass}" 
-                                 role="progressbar" 
+                            <div class="progress-bar bg-${statusClass}"
+                                 role="progressbar"
                                  style="width: ${client.utilization_pct}%"
-                                 aria-valuenow="${client.utilization_pct}" 
-                                 aria-valuemin="0" 
+                                 aria-valuenow="${client.utilization_pct}"
+                                 aria-valuemin="0"
                                  aria-valuemax="100">
                                 ${client.utilization_pct}%
                             </div>
@@ -244,7 +244,8 @@ export const clientsModalController = (() => {
                     ${disconnectButton}
                 </tr>
             `;
-        }).join('');
+            })
+            .join('');
 
         elements.tableBody.innerHTML = rows;
 
@@ -264,7 +265,7 @@ export const clientsModalController = (() => {
     /**
      * Handle disconnect client button click
      */
-    const handleDisconnectClient = async (clientId) => {
+    const handleDisconnectClient = async clientId => {
         console.log('[ClientsModal] Disconnect requested for client:', clientId);
 
         // Show Bootstrap confirmation modal
@@ -278,8 +279,8 @@ export const clientsModalController = (() => {
                     const response = await apiFetch(`/api/sse/disconnect/${encodeURIComponent(clientId)}`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
-                        }
+                            'Content-Type': 'application/json',
+                        },
                     });
 
                     if (!response.ok) {
@@ -294,7 +295,7 @@ export const clientsModalController = (() => {
                     actionsController.showInfo({
                         title: 'Client Disconnected',
                         message: `Client disconnected successfully.\n\nClient ID: ${clientId}\nStatus: ${result.message}`,
-                        variant: 'success'
+                        variant: 'success',
                     });
 
                     // Refresh the table
@@ -313,10 +314,10 @@ export const clientsModalController = (() => {
                     actionsController.showError({
                         title: 'Disconnect Failed',
                         message: `Failed to disconnect client: ${error.message}`,
-                        error: error
+                        error: error,
                     });
                 }
-            }
+            },
         });
     };
 
@@ -339,7 +340,7 @@ export const clientsModalController = (() => {
     /**
      * Update the badge count in the menu
      */
-    const updateBadgeCount = (count) => {
+    const updateBadgeCount = count => {
         // Find or create the badge element
         if (!clientCountBadge) {
             const menuItem = document.querySelector('[data-clients-menu]');
@@ -369,7 +370,7 @@ export const clientsModalController = (() => {
     /**
      * Escape HTML to prevent XSS
      */
-    const escapeHtml = (text) => {
+    const escapeHtml = text => {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
@@ -409,6 +410,6 @@ export const clientsModalController = (() => {
         show,
         hide,
         updateBadgeCount,
-        cleanup
+        cleanup,
     };
 })();

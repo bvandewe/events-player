@@ -1,10 +1,10 @@
 /**
  * Authentication Manager for CloudEvents Player
- * 
+ *
  * Supports two authentication modes:
  * 1. Istio Mode: JWT pre-injected by Istio (auto-detected)
  * 2. OAuth Mode: OAuth 2.0 + OIDC flow with any OIDC-compliant IDP
- * 
+ *
  * Features:
  * - Auto-detection of authentication mode
  * - OAuth PKCE flow for security
@@ -28,11 +28,20 @@ class AuthManager {
         this.authRequired = false; // Track if auth is required from backend
         this.roleMappings = null; // Store role mappings from backend (admin, operator, user)
         this.initialized = false; // Track if already initialized
+
+        // Get base path from body attribute (injected by backend)
+        const bodyElement = document.body;
+        this.basePath = bodyElement.getAttribute('data-base-path') || '/';
+        // Ensure base path ends with /
+        if (!this.basePath.endsWith('/')) {
+            this.basePath += '/';
+        }
+        console.log('[Auth] Base path:', this.basePath);
     }
 
     /**
      * Initialize the authentication manager
-     * 
+     *
      * This method:
      * 1. Checks for existing token in sessionStorage
      * 2. Checks if server already has JWT (Istio mode)
@@ -88,8 +97,8 @@ class AuthManager {
             if (this.token) {
                 headers['Authorization'] = `Bearer ${this.token}`;
             }
-            const response = await fetch('/api/auth/info', {
-                headers: headers
+            const response = await fetch(this.basePath + 'api/auth/info', {
+                headers: headers,
             });
             if (response.ok) {
                 const data = await response.json();
@@ -190,10 +199,10 @@ class AuthManager {
      */
     async validateToken(token) {
         try {
-            const response = await fetch('/api/auth/info', {
+            const response = await fetch(this.basePath + 'api/auth/info', {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (response.ok) {
@@ -234,14 +243,14 @@ class AuthManager {
         console.log('[Auth] Attempting to refresh access token...');
 
         try {
-            const response = await fetch('/api/auth/refresh', {
+            const response = await fetch(this.basePath + 'api/auth/refresh', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    refresh_token: refreshToken
-                })
+                    refresh_token: refreshToken,
+                }),
             });
 
             if (!response.ok) {
@@ -263,7 +272,7 @@ class AuthManager {
 
             // Update token expiry time
             if (data.expires_in) {
-                const expiryTime = Date.now() + (data.expires_in * 1000);
+                const expiryTime = Date.now() + data.expires_in * 1000;
                 sessionStorage.setItem('token_expires_at', expiryTime.toString());
                 console.log('[Auth] Token refreshed, expires at:', new Date(expiryTime).toISOString());
             }
@@ -275,10 +284,10 @@ class AuthManager {
 
             // Re-fetch auth info to get updated role mappings
             try {
-                const authInfoResponse = await fetch('/api/auth/info', {
+                const authInfoResponse = await fetch(this.basePath + 'api/auth/info', {
                     headers: {
-                        'Authorization': `Bearer ${this.token}`
-                    }
+                        Authorization: `Bearer ${this.token}`,
+                    },
                 });
                 if (authInfoResponse.ok) {
                     const authInfo = await authInfoResponse.json();
@@ -295,7 +304,6 @@ class AuthManager {
 
             console.log('[Auth] Access token refreshed successfully');
             return true;
-
         } catch (error) {
             console.error('[Auth] Token refresh error:', error);
             return false;
@@ -359,11 +367,11 @@ class AuthManager {
         const params = new URLSearchParams({
             client_id: this.oauthConfig.client_id,
             response_type: 'code',
-            redirect_uri: window.location.origin + '/',
+            redirect_uri: window.location.origin + this.basePath,
             state: state,
             scope: 'openid profile email',
             code_challenge: codeChallenge,
-            code_challenge_method: 'S256'
+            code_challenge_method: 'S256',
         });
 
         const authUrl = `${this.oauthConfig.url}/realms/${this.oauthConfig.realm}/protocol/openid-connect/auth?${params}`;
@@ -386,10 +394,10 @@ class AuthManager {
             actionsController.showError({
                 title: 'Login Failed',
                 message: `Login failed: ${error}`,
-                details: urlParams.get('error_description')
+                details: urlParams.get('error_description'),
             });
             // Clean URL
-            window.history.replaceState({}, document.title, '/');
+            window.history.replaceState({}, document.title, this.basePath);
             return;
         }
 
@@ -406,9 +414,9 @@ class AuthManager {
             actionsController.showError({
                 title: 'Login Failed',
                 message: 'Login failed: security check failed',
-                details: 'OAuth state mismatch - possible CSRF attack'
+                details: 'OAuth state mismatch - possible CSRF attack',
             });
-            window.history.replaceState({}, document.title, '/');
+            window.history.replaceState({}, document.title, this.basePath);
             return;
         }
 
@@ -419,24 +427,24 @@ class AuthManager {
             actionsController.showError({
                 title: 'Login Failed',
                 message: 'Login failed: security check failed',
-                details: 'Code verifier not found - PKCE flow incomplete'
+                details: 'Code verifier not found - PKCE flow incomplete',
             });
-            window.history.replaceState({}, document.title, '/');
+            window.history.replaceState({}, document.title, this.basePath);
             return;
         }
 
         try {
             // Exchange code for token
-            const response = await fetch('/api/auth/callback', {
+            const response = await fetch(this.basePath + 'api/auth/callback', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     code: code,
-                    redirect_uri: window.location.origin + '/',
-                    code_verifier: codeVerifier
-                })
+                    redirect_uri: window.location.origin + this.basePath,
+                    code_verifier: codeVerifier,
+                }),
             });
 
             if (!response.ok) {
@@ -458,7 +466,7 @@ class AuthManager {
 
             // Store token expiry time for proactive refresh
             if (data.expires_in) {
-                const expiryTime = Date.now() + (data.expires_in * 1000);
+                const expiryTime = Date.now() + data.expires_in * 1000;
                 sessionStorage.setItem('token_expires_at', expiryTime.toString());
                 console.log('[Auth] Token expires at:', new Date(expiryTime).toISOString());
             }
@@ -475,19 +483,18 @@ class AuthManager {
             sessionStorage.removeItem('oauth_code_verifier');
 
             // Clean URL
-            window.history.replaceState({}, document.title, '/');
+            window.history.replaceState({}, document.title, this.basePath);
 
             // Render UI
             this.renderAuthUI();
-
         } catch (error) {
             console.error('[Auth] OAuth callback failed:', error);
             actionsController.showError({
                 title: 'Login Failed',
                 message: `Login failed: ${error.message}`,
-                error: error
+                error: error,
             });
-            window.history.replaceState({}, document.title, '/');
+            window.history.replaceState({}, document.title, this.basePath);
         }
     }
 
@@ -506,7 +513,7 @@ class AuthManager {
 
         if (this.mode === 'oauth' && this.oauthConfig) {
             // Redirect to OAuth logout
-            const logoutUrl = `${this.oauthConfig.url}/realms/${this.oauthConfig.realm}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(window.location.origin)}`;
+            const logoutUrl = `${this.oauthConfig.url}/realms/${this.oauthConfig.realm}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(window.location.origin + this.basePath)}`;
             window.location.href = logoutUrl;
         } else {
             // Just reload the page
@@ -527,7 +534,7 @@ class AuthManager {
             console.error('[Auth] Clear storage modal not found');
             actionsController.showError({
                 title: 'Error',
-                message: 'Modal not found. Please refresh the page.'
+                message: 'Modal not found. Please refresh the page.',
             });
             return;
         }
@@ -564,7 +571,7 @@ class AuthManager {
                 }
 
                 // Update event count
-                document.title = "CloudEvents Player (0)";
+                document.title = 'CloudEvents Player (0)';
                 const eventCountElement = document.getElementById('event-count');
                 if (eventCountElement) {
                     eventCountElement.textContent = '0';
@@ -585,7 +592,6 @@ class AuthManager {
                 setTimeout(() => {
                     window.location.reload();
                 }, 2000);
-
             } catch (error) {
                 console.error('[Auth] Error clearing storage:', error);
 
@@ -609,7 +615,7 @@ class AuthManager {
     getAuthHeaders() {
         if (this.token) {
             return {
-                'Authorization': `Bearer ${this.token}`
+                Authorization: `Bearer ${this.token}`,
             };
         }
         return {};
@@ -733,8 +739,10 @@ class AuthManager {
 
         if (!authContainer) {
             console.error('[Auth] ❌ authContainer NOT FOUND in DOM!');
-            console.log('[Auth] Available elements with id:',
-                Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+            console.log(
+                '[Auth] Available elements with id:',
+                Array.from(document.querySelectorAll('[id]')).map(el => el.id)
+            );
             return;
         }
 
@@ -831,7 +839,7 @@ class AuthManager {
             const clearStorageLink = document.createElement('a');
             clearStorageLink.className = 'dropdown-item';
             clearStorageLink.href = '#';
-            clearStorageLink.onclick = (e) => {
+            clearStorageLink.onclick = e => {
                 e.preventDefault();
                 this.clearStorage();
             };
@@ -850,7 +858,7 @@ class AuthManager {
                 clientsLink.className = 'dropdown-item';
                 clientsLink.href = '#';
                 clientsLink.setAttribute('data-clients-menu', 'true');
-                clientsLink.onclick = (e) => {
+                clientsLink.onclick = e => {
                     e.preventDefault();
                     // Show clients modal
                     if (window.clientsModalController) {
@@ -876,7 +884,7 @@ class AuthManager {
                 tasksLink.className = 'dropdown-item';
                 tasksLink.href = '#';
                 tasksLink.setAttribute('data-tasks-menu', 'true');
-                tasksLink.onclick = (e) => {
+                tasksLink.onclick = e => {
                     e.preventDefault();
                     // Show tasks modal (will be defined in tasksModal.js)
                     if (window.tasksModalController) {
@@ -907,7 +915,7 @@ class AuthManager {
             const logoutLink = document.createElement('a');
             logoutLink.className = 'dropdown-item';
             logoutLink.href = '#';
-            logoutLink.onclick = (e) => {
+            logoutLink.onclick = e => {
                 e.preventDefault();
                 this.logout();
             };
@@ -953,7 +961,7 @@ class AuthManager {
             const clearStorageLink = document.createElement('a');
             clearStorageLink.className = 'dropdown-item';
             clearStorageLink.href = '#';
-            clearStorageLink.onclick = (e) => {
+            clearStorageLink.onclick = e => {
                 e.preventDefault();
                 this.clearStorage();
             };
@@ -977,7 +985,7 @@ class AuthManager {
             const loginLink = document.createElement('a');
             loginLink.className = 'dropdown-item';
             loginLink.href = '#';
-            loginLink.onclick = (e) => {
+            loginLink.onclick = e => {
                 e.preventDefault();
                 this.login();
             };
@@ -1044,7 +1052,7 @@ class AuthManager {
         const clearStorageLink = document.createElement('a');
         clearStorageLink.className = 'dropdown-item';
         clearStorageLink.href = '#';
-        clearStorageLink.onclick = (e) => {
+        clearStorageLink.onclick = e => {
             e.preventDefault();
             this.clearStorage();
         };
@@ -1062,7 +1070,7 @@ class AuthManager {
         clientsLink.className = 'dropdown-item';
         clientsLink.href = '#';
         clientsLink.setAttribute('data-clients-menu', 'true');
-        clientsLink.onclick = (e) => {
+        clientsLink.onclick = e => {
             e.preventDefault();
             if (window.clientsModalController) {
                 window.clientsModalController.show();
@@ -1082,7 +1090,7 @@ class AuthManager {
         tasksLink.className = 'dropdown-item';
         tasksLink.href = '#';
         tasksLink.setAttribute('data-tasks-menu', 'true');
-        tasksLink.onclick = (e) => {
+        tasksLink.onclick = e => {
             e.preventDefault();
             if (window.tasksModalController) {
                 window.tasksModalController.show();
@@ -1110,9 +1118,9 @@ class AuthManager {
      */
     getRoleBadgeClass(role) {
         const roleClasses = {
-            'admin': 'bg-danger',
-            'operator': 'bg-warning text-dark',
-            'user': 'bg-info text-dark'
+            admin: 'bg-danger',
+            operator: 'bg-warning text-dark',
+            user: 'bg-info text-dark',
         };
         return roleClasses[role] || 'bg-secondary';
     }

@@ -3,15 +3,17 @@
  * Handles unified metadata stream (tasks + clients + stats)
  */
 
+import { authManager } from '../auth/auth.js';
+
 class MetadataSSEManager {
     constructor() {
         this.eventSource = null;
         this.listeners = {
             tasks: [],
             clients: [],
-            stats: []
+            stats: [],
         };
-        this.sseMetaPath = '/stream/meta';
+        this.sseMetaPath = authManager.basePath + 'stream/meta';
         this.isInitialized = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
@@ -53,7 +55,7 @@ class MetadataSSEManager {
             });
 
             // Listen for 'tasks' events
-            this.eventSource.addEventListener('tasks', (event) => {
+            this.eventSource.addEventListener('tasks', event => {
                 try {
                     const data = JSON.parse(event.data);
                     console.log('[MetadataSSE] Tasks update received:', data);
@@ -64,7 +66,7 @@ class MetadataSSEManager {
             });
 
             // Listen for 'clients' events
-            this.eventSource.addEventListener('clients', (event) => {
+            this.eventSource.addEventListener('clients', event => {
                 try {
                     const data = JSON.parse(event.data);
                     console.log('[MetadataSSE] Clients update received:', data);
@@ -74,7 +76,7 @@ class MetadataSSEManager {
                 }
             });
 
-            this.eventSource.addEventListener('error', (error) => {
+            this.eventSource.addEventListener('error', error => {
                 console.error('[MetadataSSE] Connection error:', error);
 
                 // Attempt reconnection with exponential backoff
@@ -90,7 +92,6 @@ class MetadataSSEManager {
                     console.error('[MetadataSSE] Max reconnection attempts reached');
                 }
             });
-
         } catch (error) {
             console.error('[MetadataSSE] Failed to setup connection:', error);
         }
@@ -105,7 +106,7 @@ class MetadataSSEManager {
     subscribe(eventType, callback) {
         if (!this.listeners[eventType]) {
             console.warn(`[MetadataSSE] Unknown event type: ${eventType}`);
-            return () => { };
+            return () => {};
         }
 
         this.listeners[eventType].push(callback);

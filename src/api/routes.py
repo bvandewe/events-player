@@ -2,42 +2,40 @@ import datetime
 import json
 import logging
 import uuid
-from typing import Optional, Dict, cast
+from typing import Dict, Optional, cast
 
 from fastapi import (
     APIRouter,
-    Request,
-    Response,
+    BackgroundTasks,
+    Depends,
     Header,
     HTTPException,
-    Depends,
-    BackgroundTasks,
+    Request,
+    Response,
 )
-
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from .settings import settings
+from .auth import (
+    exchange_oauth_code,
+    get_current_user_optional,
+    refresh_access_token,
+    require_admin,
+    require_operator,
+)
+from .background_tasks import handle_event, handle_generator_request
+from .constants import MAX_QUEUE_SIZE, SLOW_CLIENT_THRESHOLD
 from .globals import (
     active_tasks,
     active_tasks_lock,
     sse_clients,
     sse_clients_lock,
 )
-from .models import EventGeneratorRequest, EventGeneratorTask, CloudEvent
-from .background_tasks import handle_event, handle_generator_request
+from .models import CloudEvent, EventGeneratorRequest, EventGeneratorTask
+from .settings import settings
 from .validator import validate_cloud_event
-from .constants import MAX_QUEUE_SIZE, SLOW_CLIENT_THRESHOLD
-from .auth import (
-    get_current_user_optional,
-    require_admin,
-    require_operator,
-    exchange_oauth_code,
-    refresh_access_token,
-)
-
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +44,9 @@ router = APIRouter()
 
 
 # Root Route
-@router.get(path="/", tags=["Frontend"], operation_id="get_root", response_class=HTMLResponse)
+@router.get(
+    path="/", tags=["Frontend"], operation_id="get_root", response_class=HTMLResponse
+)
 async def get_ui(
     request: Request, current_user: Optional[dict] = Depends(get_current_user_optional)
 ):
@@ -54,7 +54,9 @@ async def get_ui(
     year = datetime.datetime.now().year
     default_events_settings = settings.default_generator_event.model_dump()
     # Convert event_data dict to JSON string to avoid Python True/False in template
-    default_events_settings["event_data"] = json.dumps(default_events_settings["event_data"])
+    default_events_settings["event_data"] = json.dumps(
+        default_events_settings["event_data"]
+    )
     default_events_gateways = settings.default_generator_gateways.model_dump()
     log.debug("Received request on root: %s", request)
 
@@ -67,6 +69,17 @@ async def get_ui(
         user_roles = current_user.get("roles", []) if current_user else []
         is_admin = settings.auth_role_admin in user_roles
         is_operator = settings.auth_role_operator in user_roles or is_admin
+
+    # Get base path from request state (set by proxy middleware)
+    base_path = getattr(request.state, "base_path", "")
+    # Ensure base path starts with / if present, and ends with /
+    if base_path:
+        if not base_path.startswith("/"):
+            base_path = "/" + base_path
+        if not base_path.endswith("/"):
+            base_path = base_path + "/"
+    else:
+        base_path = "/"
 
     return templates.TemplateResponse(
         "index.html",
@@ -86,6 +99,7 @@ async def get_ui(
             "oauth_url": settings.oauth_base_url,
             "oauth_realm": settings.oauth_realm,
             "oauth_client_id": settings.oauth_client_id,
+            "base_path": base_path,
             # User authorization info
             "user_authenticated": current_user is not None,
             "user_is_admin": is_admin,
@@ -117,7 +131,9 @@ class TokenRefreshRequest(BaseModel):
     operation_id="get_auth_info",
     summary="Get current authentication status",
 )
-async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional)):
+async def get_auth_info(
+    request: Request, user: Optional[Dict] = Depends(get_current_user_optional)
+):
     """
     Return current authentication status and user information.
 
@@ -126,10 +142,22 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
     - User information if authenticated
     - Whether to show login button
     """
+    # Get base path from request state (set by proxy middleware)
+    base_path = getattr(request.state, "base_path", "")
+    # Ensure base path starts with / if present, and ends with /
+    if base_path:
+        if not base_path.startswith("/"):
+            base_path = "/" + base_path
+        if not base_path.endswith("/"):
+            base_path = base_path + "/"
+    else:
+        base_path = "/"
+
     if user:
         return {
             "authenticated": True,
             "auth_required": settings.auth_required,
+            "base_path": base_path,
             "user": {
                 "user_id": user.get("user_id"),
                 "email": user.get("email"),
@@ -139,7 +167,9 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
                 "groups": user.get("groups", []),
             },
             "mode": (
-                "istio" if settings.auth_jwks_url and not settings.oauth_server_url else "unknown"
+                "istio"
+                if settings.auth_jwks_url and not settings.oauth_server_url
+                else "unknown"
             ),
             "role_mappings": {
                 "admin": settings.auth_role_admin,
@@ -151,6 +181,7 @@ async def get_auth_info(user: Optional[Dict] = Depends(get_current_user_optional
     return {
         "authenticated": False,
         "auth_required": settings.auth_required,
+        "base_path": base_path,
         "user": None,
         "mode": "oauth" if settings.oauth_server_url else "none",
         "oauth_config": (
@@ -240,7 +271,9 @@ async def refresh_token(refresh_request: TokenRefreshRequest):
         from .auth import jwt_validator
 
         try:
-            token_payload = await jwt_validator.validate_token(token_data["access_token"])
+            token_payload = await jwt_validator.validate_token(
+                token_data["access_token"]
+            )
             user_info = jwt_validator.extract_user_info(token_payload)
         except Exception as e:
             log.warning(f"Failed to validate refreshed token: {e}")
@@ -277,7 +310,9 @@ async def refresh_token(refresh_request: TokenRefreshRequest):
 
 
 # Publisher Route
-@router.post(path="/api/generate", tags=["CloudEvents Publisher"], operation_id="generate_events")
+@router.post(
+    path="/api/generate", tags=["CloudEvents Publisher"], operation_id="generate_events"
+)
 async def generate_events(
     request: Request,
     generator_request: EventGeneratorRequest,
@@ -285,7 +320,11 @@ async def generate_events(
     current_user: dict = Depends(require_operator),  # Require admin or operator role
 ):
     log.info("=== GENERATE EVENTS ENDPOINT CALLED ===")
-    log.info("User: %s with roles: %s", current_user.get("username"), current_user.get("roles"))
+    log.info(
+        "User: %s with roles: %s",
+        current_user.get("username"),
+        current_user.get("roles"),
+    )
     log.debug("Received request on generator: %s", generator_request)
 
     # Only admin can use iterations > 1 or custom delay (non-default)
@@ -310,7 +349,9 @@ async def generate_events(
         async with active_tasks_lock:
             active_tasks[task_id] = current_task
         log.info("Adding background task for task_id: %s", task_id)
-        background_tasks.add_task(handle_generator_request, generator_request, task=current_task)
+        background_tasks.add_task(
+            handle_generator_request, generator_request, task=current_task
+        )
         result = {
             "message": f"Ok. Working on it in the background... (task: {task_id})",
             "status": "success",
@@ -349,7 +390,9 @@ async def _cancel_all_tasks(current_user: dict) -> dict:
             task.cancelled = True
             task.status = "Cancelling"
 
-    log.info(f"Admin user {current_user.get('username')} cancelled {count} active tasks")
+    log.info(
+        f"Admin user {current_user.get('username')} cancelled {count} active tasks"
+    )
 
     return {"message": f"Cancelling {count} active task(s)", "tasks_cancelled": count}
 
@@ -403,7 +446,9 @@ async def cancel_task(task_id: str, current_user: dict = Depends(require_admin))
 
         return {"message": f"Task {task_id} is being cancelled", "task_id": task_id}
 
-    return JSONResponse(status_code=404, content={"message": "Task not found", "task_id": task_id})
+    return JSONResponse(
+        status_code=404, content={"message": "Task not found", "task_id": task_id}
+    )
 
 
 # Health Check
@@ -455,10 +500,16 @@ async def get_sse_stats():
         "max_queue_size": MAX_QUEUE_SIZE,
         "slow_client_threshold": SLOW_CLIENT_THRESHOLD,
         "avg_utilization_pct": round(
-            (total_queued / (len(snapshot_items) * MAX_QUEUE_SIZE) * 100) if snapshot_items else 0,
+            (
+                (total_queued / (len(snapshot_items) * MAX_QUEUE_SIZE) * 100)
+                if snapshot_items
+                else 0
+            ),
             1,
         ),
-        "clients": sorted(stats, key=lambda x: cast(int, x["queue_size"]), reverse=True),
+        "clients": sorted(
+            stats, key=lambda x: cast(int, x["queue_size"]), reverse=True
+        ),
     }
 
 
@@ -481,7 +532,8 @@ async def disconnect_sse_client(
     async with sse_clients_lock:
         if client_id not in sse_clients:
             raise HTTPException(
-                status_code=404, detail=f"Client {client_id} not found or already disconnected"
+                status_code=404,
+                detail=f"Client {client_id} not found or already disconnected",
             )
 
         try:
@@ -494,7 +546,9 @@ async def disconnect_sse_client(
                 status_code=500, detail=f"Failed to disconnect client: {str(e)}"
             ) from e
 
-    log.info(f"Admin '{user.get('username', 'unknown')}' disconnected SSE client: {client_id}")
+    log.info(
+        f"Admin '{user.get('username', 'unknown')}' disconnected SSE client: {client_id}"
+    )
 
     return {
         "success": True,
@@ -504,7 +558,9 @@ async def disconnect_sse_client(
 
 
 # Subscriber Route
-@router.post(path="/events/pub", tags=["CloudEvents Subscriber"], operation_id="handle_events")
+@router.post(
+    path="/events/pub", tags=["CloudEvents Subscriber"], operation_id="handle_events"
+)
 async def handle_events(
     payload: dict,
     background_tasks: BackgroundTasks,
@@ -520,7 +576,9 @@ async def handle_events(
         background_tasks.add_task(handle_event, normalized_payload)
         return Response(status_code=202)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {e}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Internal server error: {e}"
+        ) from e
 
 
 # Favicon
