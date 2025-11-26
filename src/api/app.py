@@ -1,19 +1,19 @@
-import uuid
 import logging
+import uuid
 from contextvars import ContextVar
 
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
+from .auth import auth_middleware
 from .description import description
 from .routes import router as api_router
-from .stream import router as streaming_router
 from .settings import settings
-from .auth import auth_middleware
+from .stream import router as streaming_router
 
 # Silence noisy SSE keepalive logs
 logging.getLogger("sse_starlette.sse").setLevel(logging.WARNING)
@@ -85,6 +85,22 @@ async def add_request_id(request: Request, call_next):
     return response
 
 
+# Middleware for Proxy Headers
+@app.middleware("http")
+async def proxy_middleware(request: Request, call_next):
+    """
+    Middleware to inspect standard proxy headers and adjust the application's base URL context.
+    """
+    # 1. Detect Prefix
+    prefix = request.headers.get("X-Forwarded-Prefix", "")
+
+    # 2. Store in request context
+    request.state.base_path = prefix
+
+    response = await call_next(request)
+    return response
+
+
 # Authentication middleware
 app.middleware("http")(auth_middleware)
 
@@ -103,9 +119,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
         # Provide more user-friendly messages for common validation errors
         if "event_data" in field and "json" in message.lower():
-            message = (
-                "The 'Event Data' field must contain valid JSON. Please check your JSON syntax."
-            )
+            message = "The 'Event Data' field must contain valid JSON. Please check your JSON syntax."
         elif error_type == "missing":
             message = f"The field '{field}' is required but was not provided."
 
@@ -131,7 +145,9 @@ async def pydantic_validation_exception_handler(request: Request, exc: Validatio
         field = " -> ".join(str(loc) for loc in error["loc"])
         errors.append({"field": field, "message": error["msg"], "type": error["type"]})
 
-    return JSONResponse(status_code=422, content={"detail": "Validation error", "errors": errors})
+    return JSONResponse(
+        status_code=422, content={"detail": "Validation error", "errors": errors}
+    )
 
 
 # Customize OpenAPI schema to include OAuth2 security
@@ -151,12 +167,8 @@ def custom_openapi():
 
     # Add security schemes if OAuth is configured
     if settings.oauth_server_url and settings.oauth_client_id:
-        auth_url = (
-            f"{settings.oauth_base_url}/realms/{settings.oauth_realm}/protocol/openid-connect/auth"
-        )
-        token_url = (
-            f"{settings.oauth_base_url}/realms/{settings.oauth_realm}/protocol/openid-connect/token"
-        )
+        auth_url = f"{settings.oauth_base_url}/realms/{settings.oauth_realm}/protocol/openid-connect/auth"
+        token_url = f"{settings.oauth_base_url}/realms/{settings.oauth_realm}/protocol/openid-connect/token"
 
         # Ensure components exists
         if "components" not in openapi_schema:
@@ -199,13 +211,25 @@ def custom_openapi():
                         if "security" in method:
                             # Append OAuth2 to existing security
                             method["security"].append(
-                                {"OAuth2AuthorizationCode": ["openid", "profile", "email"]}
+                                {
+                                    "OAuth2AuthorizationCode": [
+                                        "openid",
+                                        "profile",
+                                        "email",
+                                    ]
+                                }
                             )
                         else:
                             # Set both HTTPBearer and OAuth2
                             method["security"] = [
                                 {"HTTPBearer": []},
-                                {"OAuth2AuthorizationCode": ["openid", "profile", "email"]},
+                                {
+                                    "OAuth2AuthorizationCode": [
+                                        "openid",
+                                        "profile",
+                                        "email",
+                                    ]
+                                },
                             ]
 
     app.openapi_schema = openapi_schema

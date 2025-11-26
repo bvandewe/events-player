@@ -1,6 +1,6 @@
 /**
  * API Client with automatic token refresh on 401 errors
- * 
+ *
  * This module provides a wrapper around fetch() that automatically
  * handles token expiration by refreshing tokens and retrying requests.
  */
@@ -9,7 +9,7 @@ import { authManager } from '../auth/auth.js';
 
 /**
  * Fetch wrapper with automatic token refresh on 401 errors
- * 
+ *
  * @param {string} url - The URL to fetch
  * @param {RequestInit} options - Fetch options
  * @param {boolean} isRetry - Internal flag to prevent infinite retry loops
@@ -20,12 +20,19 @@ export async function apiFetch(url, options = {}, isRetry = false) {
         console.log(`[API] apiFetch called for ${url}, isRetry=${isRetry}`);
         console.log(`[API] Initial options:`, options);
 
+        // Prepend base path if URL starts with /
+        if (url.startsWith('/') && authManager.basePath) {
+            // authManager.basePath ends with /
+            url = authManager.basePath + url.substring(1);
+            console.log(`[API] Adjusted URL with base path: ${url}`);
+        }
+
         // Add authorization header if token is available
         if (authManager.token && !options.headers?.['Authorization']) {
             console.log(`[API] Adding authorization header with token`);
             options.headers = {
                 ...options.headers,
-                'Authorization': `Bearer ${authManager.token}`
+                Authorization: `Bearer ${authManager.token}`,
             };
         } else {
             console.log(`[API] No token available or auth header already present`);
@@ -55,7 +62,7 @@ export async function apiFetch(url, options = {}, isRetry = false) {
                 // Update authorization header with new token
                 options.headers = {
                     ...options.headers,
-                    'Authorization': `Bearer ${authManager.token}`
+                    Authorization: `Bearer ${authManager.token}`,
                 };
 
                 // Retry the request (with isRetry=true to prevent infinite loops)
@@ -69,7 +76,6 @@ export async function apiFetch(url, options = {}, isRetry = false) {
 
         console.log(`[API] Returning response from apiFetch`);
         return response;
-
     } catch (error) {
         console.error('[API] Request failed in apiFetch:', error);
         throw error;
@@ -78,7 +84,7 @@ export async function apiFetch(url, options = {}, isRetry = false) {
 
 /**
  * POST request with JSON body and automatic token refresh
- * 
+ *
  * @param {string} url - The URL to post to
  * @param {object} data - The data to send as JSON
  * @param {number} timeout - Request timeout in milliseconds (default: 30000)
@@ -97,9 +103,9 @@ export async function apiPost(url, data, timeout = 30000) {
         const response = await apiFetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
             // Removed signal: controller.signal temporarily
         });
 
@@ -114,12 +120,12 @@ export async function apiPost(url, data, timeout = 30000) {
 
 /**
  * GET request with automatic token refresh
- * 
+ *
  * @param {string} url - The URL to get
  * @returns {Promise<Response>} The fetch response
  */
 export async function apiGet(url) {
     return apiFetch(url, {
-        method: 'GET'
+        method: 'GET',
     });
 }
