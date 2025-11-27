@@ -17,6 +17,13 @@
   - Upgraded Keycloak to version 26.0.0 (Quarkus distribution)
   - Updated configuration for Hostname v2 and Bootstrap Admin features
 
+#### UI/UX
+
+- **Storage Management**
+  - Moved "Clear Storage" button to the main navigation bar for easier access
+  - Added storage utilization indicator with color-coding (Green/Yellow/Red)
+  - Added tooltip explaining that storage clearing is local and permanent
+
 ### Fixed
 
 #### Frontend
