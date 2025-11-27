@@ -27,3 +27,5 @@ Thumbs.db
 # Helm charts (don't format Kubernetes YAML templates as they contain `{{}}` that shouldnt be reformatted to `{ { } }` )
 deployment/helm/**/*.yaml
 deployment/helm/**/*.yml
+docker-compose.debug.yml
+docker-compose.yml

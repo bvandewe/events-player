@@ -22,7 +22,7 @@ services:
             PYTHONPATH: /app/src
 
             # Application Settings
-            tag: 'v0.4.10'
+            tag: 'v0.5.0'
             repository_url: 'https://github.com/bvandewe/events-player'
 
             # Logging Configuration
