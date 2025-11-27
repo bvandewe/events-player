@@ -97,6 +97,44 @@ services:
       - "traefik.http.services.event-player.loadbalancer.server.port=8080"
 ```
 
+#### Subpath Hosting (e.g., /events-player/)
+
+The application supports running under a subpath (e.g., `https://example.com/events-player/`). This is handled automatically by the backend middleware when the `X-Forwarded-Prefix` header is present.
+
+**Nginx Configuration:**
+
+```nginx
+location /events-player/ {
+    proxy_pass http://localhost:8884/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    
+    # Critical: Tell the app it's running under a subpath
+    proxy_set_header X-Forwarded-Prefix /events-player;
+
+    # SSE support
+    proxy_set_header Connection '';
+    proxy_http_version 1.1;
+    chunked_transfer_encoding off;
+    proxy_buffering off;
+    proxy_cache off;
+}
+```
+
+#### Traefik
+
+```yaml
+services:
+  event-player:
+    image: event-player:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.event-player.rule=Host(`cloudevent-player.example.com`) && PathPrefix(`/events-player`)"
+      - "traefik.http.services.event-player.loadbalancer.server.port=8080"
+```
+
 ## Kubernetes Deployment
 
 Deploy to Kubernetes using Helm charts.
