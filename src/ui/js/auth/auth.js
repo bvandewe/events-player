@@ -834,23 +834,6 @@ class AuthManager {
                 menu.appendChild(divider);
             }
 
-            // Clear Storage button (available to all authenticated users)
-            const clearStorageItem = document.createElement('li');
-            const clearStorageLink = document.createElement('a');
-            clearStorageLink.className = 'dropdown-item';
-            clearStorageLink.href = '#';
-            clearStorageLink.onclick = e => {
-                e.preventDefault();
-                this.clearStorage();
-            };
-
-            const clearIcon = document.createElement('i');
-            clearIcon.className = 'bi bi-trash3 me-2';
-            clearStorageLink.appendChild(clearIcon);
-            clearStorageLink.appendChild(document.createTextNode('Clear Storage'));
-            clearStorageItem.appendChild(clearStorageLink);
-            menu.appendChild(clearStorageItem);
-
             // Current Clients button (available to admin and operator users)
             if (this.userInfo.roles && (this.userInfo.roles.includes('admin') || this.userInfo.roles.includes('operator'))) {
                 const clientsItem = document.createElement('li');
@@ -955,30 +938,6 @@ class AuthManager {
             // Dropdown menu
             const menu = document.createElement('ul');
             menu.className = 'dropdown-menu dropdown-menu-end';
-
-            // Clear Storage button
-            const clearStorageItem = document.createElement('li');
-            const clearStorageLink = document.createElement('a');
-            clearStorageLink.className = 'dropdown-item';
-            clearStorageLink.href = '#';
-            clearStorageLink.onclick = e => {
-                e.preventDefault();
-                this.clearStorage();
-            };
-
-            const clearIcon = document.createElement('i');
-            clearIcon.className = 'bi bi-trash3 me-2';
-            clearStorageLink.appendChild(clearIcon);
-            clearStorageLink.appendChild(document.createTextNode('Clear Storage'));
-            clearStorageItem.appendChild(clearStorageLink);
-            menu.appendChild(clearStorageItem);
-
-            // Divider
-            const divider = document.createElement('li');
-            const hr = document.createElement('hr');
-            hr.className = 'dropdown-divider';
-            divider.appendChild(hr);
-            menu.appendChild(divider);
 
             // Login button
             const loginItem = document.createElement('li');

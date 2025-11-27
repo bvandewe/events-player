@@ -1,91 +1,87 @@
 <header class="p-3">
-  <nav class="navbar navbar-expand-lg navbar-dark" aria-label="CloudEvents Player Navigation">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="/">
-        <img class="mb-2" src="../img/favicon-400x400.ico" alt="CloudEvents Player" width="32" height="32"/>
-        <span class="fs-4 ms-2 title text-nowrap">CloudEvents Player (<span id="event-count">0</span>)</span>
-      </a>
-      <span id="dashboardFilterIndicator" class="d-none align-middle ms-3">
-        <span class="badge rounded-circle bg-danger p-2" style="width: 10px; height: 10px;" data-bs-toggle="tooltip" data-bs-title="Filters active"></span>
-        <button id="dashboardFilterClearBtn" class="btn btn-sm btn-danger fw-bold py-0 px-2 ms-1" data-bs-toggle="tooltip" data-bs-title="Clear all filters" style="font-size: 0.8rem;">
-          <i class="bi bi-x-circle"></i> Clear
-        </button>
-      </span>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbar">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="filtersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-funnel-fill"></i> Filters
-              <span class="badge bg-primary ms-1 d-none" id="activeFiltersCount">0</span>
+    <nav class="navbar navbar-expand-lg navbar-dark" aria-label="CloudEvents Player Navigation">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img class="mb-2" src="../img/favicon-400x400.ico" alt="CloudEvents Player" width="32" height="32" />
+                <span class="fs-4 ms-2 title text-nowrap">CloudEvents Player (<span id="event-count">0</span>)</span>
             </a>
-            <div class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="filtersDropdown" style="min-width: 400px;">
-              <div class="mb-3">
-                <label for="globalEventTypeFilter" class="form-label small">Event Type</label>
-                <select class="form-select form-select-sm" id="globalEventTypeFilter" aria-label="Filter by event type">
-                  <option value="">All Types</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="globalEventSourceFilter" class="form-label small">Event Source</label>
-                <select class="form-select form-select-sm" id="globalEventSourceFilter" aria-label="Filter by event source">
-                  <option value="">All Sources</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="globalEventSubjectFilter" class="form-label small">Event Subject</label>
-                <select class="form-select form-select-sm" id="globalEventSubjectFilter" aria-label="Filter by event subject">
-                  <option value="">All Subjects</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="globalEventTimeRange" class="form-label small">Time Range</label>
-                <select class="form-select form-select-sm" id="globalEventTimeRange" aria-label="Filter by time range">
-                  <option value="all">All Time</option>
-                  <option value="1h">Last Hour</option>
-                  <option value="6h">Last 6 Hours</option>
-                  <option value="24h">Last 24 Hours</option>
-                  <option value="7d">Last 7 Days</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-              </div>
-              <div class="mb-3 d-none" id="customTimeRangeInputs">
-                <label class="form-label small">Custom Time Range</label>
-                <div class="input-group input-group-sm mb-2">
-                  <span class="input-group-text">From</span>
-                  <input type="datetime-local" class="form-control form-control-sm" id="customStartTime" step="1">
-                </div>
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text">To</span>
-                  <input type="datetime-local" class="form-control form-control-sm" id="customEndTime" step="1">
-                </div>
-              </div>
-              <div class="d-grid">
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="globalClearFiltersBtn">
-                  <i class="bi bi-x-circle"></i> Clear All Filters
-                </button>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#generatorPanel" aria-controls="generatorPanel" href="#">
-              <i class="bi bi-lightning-fill"></i> Generator
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="modal" data-bs-target="#helpModal" href="#">
-              <i class="bi bi-question-circle"></i> Help
-            </a>
-          </li>
-        </ul>
+            <span id="dashboardFilterIndicator" class="d-none align-middle ms-3">
+                <span class="badge rounded-circle bg-danger p-2" style="width: 10px; height: 10px" data-bs-toggle="tooltip" data-bs-title="Filters active"></span>
+                <button id="dashboardFilterClearBtn" class="btn btn-sm btn-danger fw-bold py-0 px-2 ms-1" data-bs-toggle="tooltip" data-bs-title="Clear all filters" style="font-size: 0.8rem"><i class="bi bi-x-circle"></i> Clear</button>
+            </span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="filtersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-funnel-fill"></i> Filters
+                            <span class="badge bg-primary ms-1 d-none" id="activeFiltersCount">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="filtersDropdown" style="min-width: 400px">
+                            <div class="mb-3">
+                                <label for="globalEventTypeFilter" class="form-label small">Event Type</label>
+                                <select class="form-select form-select-sm" id="globalEventTypeFilter" aria-label="Filter by event type">
+                                    <option value="">All Types</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="globalEventSourceFilter" class="form-label small">Event Source</label>
+                                <select class="form-select form-select-sm" id="globalEventSourceFilter" aria-label="Filter by event source">
+                                    <option value="">All Sources</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="globalEventSubjectFilter" class="form-label small">Event Subject</label>
+                                <select class="form-select form-select-sm" id="globalEventSubjectFilter" aria-label="Filter by event subject">
+                                    <option value="">All Subjects</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="globalEventTimeRange" class="form-label small">Time Range</label>
+                                <select class="form-select form-select-sm" id="globalEventTimeRange" aria-label="Filter by time range">
+                                    <option value="all">All Time</option>
+                                    <option value="1h">Last Hour</option>
+                                    <option value="6h">Last 6 Hours</option>
+                                    <option value="24h">Last 24 Hours</option>
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                            <div class="mb-3 d-none" id="customTimeRangeInputs">
+                                <label class="form-label small">Custom Time Range</label>
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text">From</span>
+                                    <input type="datetime-local" class="form-control form-control-sm" id="customStartTime" step="1" />
+                                </div>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">To</span>
+                                    <input type="datetime-local" class="form-control form-control-sm" id="customEndTime" step="1" />
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="globalClearFiltersBtn"><i class="bi bi-x-circle"></i> Clear All Filters</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#generatorPanel" aria-controls="generatorPanel" href="#"> <i class="bi bi-lightning-fill"></i> Generator </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="modal" data-bs-target="#helpModal" href="#"> <i class="bi bi-question-circle"></i> Help </a>
+                    </li>
+                </ul>
 
-        <span class="badge me-3 p-2" id="connectionStatusIndicator" data-bs-toggle="tooltip" data-bs-title="Connection Status" data-bs-placement="bottom"><i class="bi bi-plug-fill text-white"></i></span>
-        
-        <!-- Authentication UI -->
-        <div id="authContainer" class="d-none"></div>
-      </div>
-    </div>
-  </nav>
+                <button class="btn btn-success btn-sm me-2" id="storageStatusBtn" data-bs-toggle="tooltip" data-bs-title="Clear Storage (Permanent) - Affects only browser data" data-bs-placement="bottom">
+                    <i class="bi bi-trash3-fill"></i> <span id="storageUtilization">0%</span>
+                </button>
+
+                <span class="badge me-3 p-2" id="connectionStatusIndicator" data-bs-toggle="tooltip" data-bs-title="Connection Status" data-bs-placement="bottom"><i class="bi bi-plug-fill text-white"></i></span>
+
+                <!-- Authentication UI -->
+                <div id="authContainer" class="d-none"></div>
+            </div>
+        </div>
+    </nav>
 </header>
