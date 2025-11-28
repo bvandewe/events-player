@@ -96,4 +96,4 @@ repos:
             exclude: 'package-lock\.json|poetry\.lock'
 
 # Configure pre-commit to run only on changed files by default
-default_install_hook_types: [pre-commit, pre-push]
+default_install_hook_types: [pre-commit]
