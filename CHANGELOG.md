@@ -12,6 +12,7 @@
   - Improved audience (`aud`) claim validation to handle missing claims gracefully
 - **Dependency Update**
   - Upgraded `python-multipart` to version `0.0.20` to resolve DoS vulnerability (GHSA-2x9c-qwgf-94xg)
+  - Upgraded `starlette` to version `0.50.0` (via `fastapi` update) to resolve O(n^2) DoS vulnerability in `FileResponse` (GHSA-74m5-2c7w-9w3x)
 
 ### Changed
 
