@@ -2,7 +2,7 @@
 
 <!-- markdownlint-disable MD024 -->
 
-## 0.5.1 - 2025-11-28
+## Unreleased
 
 ### Security
 
@@ -10,6 +10,8 @@
   - Replaced `python-jose` with `PyJWT` to resolve `python-ecdsa` timing attack vulnerability
   - Updated JWT validation logic to use `PyJWT` library
   - Improved audience (`aud`) claim validation to handle missing claims gracefully
+- **Dependency Update**
+  - Upgraded `python-multipart` to version `0.0.20` to resolve DoS vulnerability (GHSA-2x9c-qwgf-94xg)
 
 ### Changed
 
