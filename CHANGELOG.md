@@ -2,6 +2,25 @@
 
 <!-- markdownlint-disable MD024 -->
 
+## 0.5.1 - 2025-11-28
+
+### Security
+
+- **Dependency Replacement**
+  - Replaced `python-jose` with `PyJWT` to resolve `python-ecdsa` timing attack vulnerability
+  - Updated JWT validation logic to use `PyJWT` library
+  - Improved audience (`aud`) claim validation to handle missing claims gracefully
+
+### Changed
+
+#### Development
+
+- **Pre-commit Configuration**
+  - Relaxed `flake8` rules for test files
+  - Disabled `pre-push` hooks (now runs only on `pre-commit`)
+  - Excluded Helm charts and `mkdocs.yml` from strict YAML checks
+  - Relaxed `markdownlint` rules for list numbering
+
 ## 0.5.0 - 2025-11-26
 
 ### Added
