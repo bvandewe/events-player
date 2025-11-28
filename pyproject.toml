@@ -32,7 +32,7 @@ sse-starlette = "^3.0.0"
 starlette = ">=0.49.1"
 tomli = "^2.0.0"
 typing-extensions = ">=4.9.0"
-urllib3 = ">=1.26.18"
+urllib3 = ">=2.5.0"
 uvicorn = "^0.38.0"
 pre-commit = "^4.3.0"
 pyjwt = {extras = ["crypto"], version = "^2.10.1"}
