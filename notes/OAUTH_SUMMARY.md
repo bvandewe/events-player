@@ -297,6 +297,7 @@ services:
    - Protect existing endpoints with dependencies
 
 6. **Test backend:**
+
    ```bash
    pytest tests/test_auth.py
    ```

@@ -115,12 +115,14 @@ Meanwhile, the backend includes a `mode` field in the response for **information
 ### 1. **Resilient to Configuration Mistakes**
 
 The frontend doesn't rely on backend configuration. It only cares about:
+
 - "Am I already authenticated?" → Istio mode
 - "Do I need to log in?" → OAuth mode
 
 ### 2. **Works Regardless of Backend Settings**
 
 Even if backend has:
+
 - No `AUTH_JWKS_URL` set
 - No `OAUTH_SERVER_URL` set
 - Misconfigured settings
@@ -130,6 +132,7 @@ Even if backend has:
 ### 3. **Simpler Logic**
 
 Frontend logic is incredibly simple:
+
 ```javascript
 // Authenticated? → Someone handled auth (Istio/proxy)
 // Has OAuth config? → I handle auth (OAuth flow)
@@ -139,6 +142,7 @@ Frontend logic is incredibly simple:
 ## The Production Case
 
 ### Configuration
+
 ```bash
 # Backend environment
 AUTH_REQUIRED=false  # or true
@@ -148,6 +152,7 @@ AUTH_TRUST_MODE=true
 ```
 
 ### Backend Response
+
 ```json
 GET /api/auth/info
 {
@@ -161,6 +166,7 @@ GET /api/auth/info
 ```
 
 ### Frontend Behavior
+
 ```javascript
 // Frontend ignores mode: "unknown"
 // Frontend sees: data.authenticated === true
@@ -181,9 +187,11 @@ But **NOT** for frontend decision-making!
 ## Implications for Documentation
 
 ### ❌ Incorrect Statement (Previous)
+>
 > "The frontend detects Istio mode by checking `settings.auth_jwks_url` on the backend"
 
 ### ✅ Correct Statement
+>
 > "The frontend detects Istio mode when `/api/auth/info` returns `authenticated: true`, regardless of backend configuration"
 
 ## Backend Configuration vs Frontend Behavior
@@ -200,6 +208,7 @@ But **NOT** for frontend decision-making!
 ## Code References
 
 ### Frontend Mode Detection
+
 **File:** `src/ui/js/auth/auth.js`  
 **Lines:** 80-130  
 **Method:** `init()`
@@ -221,6 +230,7 @@ if (data.authenticated) {
 ```
 
 ### Backend Mode Field (Informational Only)
+
 **File:** `src/api/routes.py`  
 **Lines:** 110-165  
 **Endpoint:** `GET /api/auth/info`
@@ -235,17 +245,20 @@ return {
 ```
 
 ### Backend JWT Validation
+
 **File:** `src/api/auth.py`  
 **Lines:** 200-350  
 **Function:** `validate_token()`
 
 The backend validates JWT using `settings.get_auth_jwks_url()` (method, not property):
+
 - Checks `AUTH_JWKS_URL` if explicitly set
 - Auto-derives from `OAUTH_SERVER_URL_BACKEND + OAUTH_REALM` if not
 
 ## Testing Recommendations
 
 ### 1. Test with Minimal Configuration
+
 ```bash
 # No auth configuration at all
 AUTH_REQUIRED=false
@@ -254,6 +267,7 @@ AUTH_REQUIRED=false
 ```
 
 ### 2. Test with Trust Mode Only
+
 ```bash
 # Only trust mode, no JWKS URL
 AUTH_REQUIRED=true
@@ -264,6 +278,7 @@ AUTH_TRUST_MODE=true
 ```
 
 ### 3. Test with OAuth2 Proxy
+
 ```bash
 # No explicit JWKS URL
 AUTH_REQUIRED=true

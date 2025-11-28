@@ -28,12 +28,12 @@ class GlobalFilterController {
         this.filterIndicators = {
             events: null,
             timeline: null,
-            dashboard: null
+            dashboard: null,
         };
         this.filterClearButtons = {
             events: null,
             timeline: null,
-            dashboard: null
+            dashboard: null,
         };
 
         // Bootstrap instances
@@ -82,7 +82,7 @@ class GlobalFilterController {
             new bootstrap.Tooltip(this.clearButton, {
                 trigger: 'hover',
                 delay: { show: 300, hide: 0 },
-                animation: true
+                animation: true,
             });
         }
 
@@ -146,7 +146,6 @@ class GlobalFilterController {
 
             // Update UI
             this.updateFilterDropdowns();
-
         } catch (error) {
             console.error('[GlobalFilters] Error loading filter options:', error);
         }
@@ -161,37 +160,43 @@ class GlobalFilterController {
         if (this.typeSelect) {
             const currentValue = this.typeSelect.value || currentFilters.type;
             this.typeSelect.innerHTML = '<option value="">All Types</option>';
-            Array.from(this.types).sort().forEach(type => {
-                const option = document.createElement('option');
-                option.value = type;
-                option.textContent = type;
-                if (type === currentValue) option.selected = true;
-                this.typeSelect.appendChild(option);
-            });
+            Array.from(this.types)
+                .sort()
+                .forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    if (type === currentValue) option.selected = true;
+                    this.typeSelect.appendChild(option);
+                });
         }
 
         if (this.sourceSelect) {
             const currentValue = this.sourceSelect.value || currentFilters.source;
             this.sourceSelect.innerHTML = '<option value="">All Sources</option>';
-            Array.from(this.sources).sort().forEach(source => {
-                const option = document.createElement('option');
-                option.value = source;
-                option.textContent = source;
-                if (source === currentValue) option.selected = true;
-                this.sourceSelect.appendChild(option);
-            });
+            Array.from(this.sources)
+                .sort()
+                .forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source;
+                    option.textContent = source;
+                    if (source === currentValue) option.selected = true;
+                    this.sourceSelect.appendChild(option);
+                });
         }
 
         if (this.subjectSelect) {
             const currentValue = this.subjectSelect.value || currentFilters.subject;
             this.subjectSelect.innerHTML = '<option value="">All Subjects</option>';
-            Array.from(this.subjects).sort().forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject;
-                option.textContent = subject || '(empty)';
-                if (subject === currentValue) option.selected = true;
-                this.subjectSelect.appendChild(option);
-            });
+            Array.from(this.subjects)
+                .sort()
+                .forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject;
+                    option.textContent = subject || '(empty)';
+                    if (subject === currentValue) option.selected = true;
+                    this.subjectSelect.appendChild(option);
+                });
         }
     }
 
@@ -282,18 +287,22 @@ class GlobalFilterController {
                 const button = indicator.querySelector('button');
 
                 if (badge) {
-                    this.indicatorTooltips.push(new bootstrap.Tooltip(badge, {
-                        trigger: 'hover',
-                        delay: { show: 300, hide: 0 },
-                        animation: true
-                    }));
+                    this.indicatorTooltips.push(
+                        new bootstrap.Tooltip(badge, {
+                            trigger: 'hover',
+                            delay: { show: 300, hide: 0 },
+                            animation: true,
+                        })
+                    );
                 }
                 if (button) {
-                    this.indicatorTooltips.push(new bootstrap.Tooltip(button, {
-                        trigger: 'hover',
-                        delay: { show: 300, hide: 0 },
-                        animation: true
-                    }));
+                    this.indicatorTooltips.push(
+                        new bootstrap.Tooltip(button, {
+                            trigger: 'hover',
+                            delay: { show: 300, hide: 0 },
+                            animation: true,
+                        })
+                    );
                 }
             }
         });
@@ -323,12 +332,7 @@ class GlobalFilterController {
      */
     hasActiveFilters() {
         const filters = appState.get('filters');
-        return !!(
-            filters.type ||
-            filters.source ||
-            filters.subject !== null ||
-            (filters.timeRange && filters.timeRange !== 'all')
-        );
+        return !!(filters.type || filters.source || filters.subject !== null || (filters.timeRange && filters.timeRange !== 'all'));
     }
 
     /**
@@ -340,7 +344,7 @@ class GlobalFilterController {
                 type: this.typeSelect.value,
                 source: this.sourceSelect.value,
                 subject: this.subjectSelect.value || null,
-                timeRange: this.timeRangeSelect.value
+                timeRange: this.timeRangeSelect.value,
             };
 
             // Add custom date range if selected
@@ -587,7 +591,7 @@ class GlobalFilterController {
                         break;
                 }
 
-                if (rangeMs > 0 && (now - eventTime) > rangeMs) {
+                if (rangeMs > 0 && now - eventTime > rangeMs) {
                     return false;
                 }
             }

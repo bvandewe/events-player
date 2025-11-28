@@ -1,33 +1,33 @@
 <style>
-  /* Ensure error modal is always on top of other modals */
-  #errorModal {
-    z-index: 1070; /* Higher than confirm modal */
-  }
-  #errorModal .modal-backdrop {
-    z-index: 1069;
-  }
+    /* Ensure error modal is always on top of other modals */
+    #errorModal {
+        z-index: 1070; /* Higher than confirm modal */
+    }
+    #errorModal .modal-backdrop {
+        z-index: 1069;
+    }
 </style>
 
 <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h1 class="modal-title fs-5" id="errorModalLabel">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          <span id="errorModalTitle">Error</span>
-        </h1>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p id="errorModalMessage" class="mb-2"></p>
-        <div id="errorModalDetails" class="mt-3 p-2 bg-dark rounded" style="display: none;">
-          <small class="text-muted d-block mb-1">Technical Details:</small>
-          <code id="errorModalDetailsText" class="text-danger small"></code>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h1 class="modal-title fs-5" id="errorModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="errorModalTitle">Error</span>
+                </h1>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorModalMessage" class="mb-2"></p>
+                <div id="errorModalDetails" class="mt-3 p-2 bg-dark rounded" style="display: none">
+                    <small class="text-muted d-block mb-1">Technical Details:</small>
+                    <code id="errorModalDetailsText" class="text-danger small"></code>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
     </div>
-  </div>
 </div>

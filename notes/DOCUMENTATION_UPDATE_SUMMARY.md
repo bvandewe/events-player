@@ -11,11 +11,13 @@ During production troubleshooting, we discovered that the frontend does NOT use 
 ## Key Discovery
 
 **Previous Understanding (Incorrect):**
+
 - Frontend reads `mode` field from backend API response
 - Backend determines mode from `AUTH_JWKS_URL` and `OAUTH_SERVER_URL` settings
 - System requires proper backend configuration to work
 
 **Actual Behavior (Correct):**
+
 - Frontend determines mode from authentication state (`authenticated: true/false`)
 - Backend's `mode` field is informational only
 - System works even with minimal backend configuration
@@ -90,9 +92,11 @@ if (data.authenticated) {
 ## Key Messages Updated
 
 ### Before
+>
 > "The frontend detects Istio mode by checking `settings.auth_jwks_url` on the backend"
 
 ### After
+>
 > "The frontend detects Istio mode when `/api/auth/info` returns `authenticated: true`, regardless of backend configuration"
 
 ## Benefits of Corrected Documentation

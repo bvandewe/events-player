@@ -2,8 +2,10 @@
 Tests for SSE JSON serialization (ensuring proper true/false/null types).
 """
 
-import pytest
 import json
+
+import pytest
+
 from api.stream import build_sse_payload
 
 

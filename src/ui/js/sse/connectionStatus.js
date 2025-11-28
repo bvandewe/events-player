@@ -1,6 +1,6 @@
 /**
  * ConnectionStatusManager - Manages SSE connection status indicator updates
- * 
+ *
  * Provides visual feedback for SSE connection states:
  * - open: Connected (green)
  * - connect: Receiving events (blue glow for 10s)
@@ -32,7 +32,7 @@ class ConnectionStatusManager {
             this.tooltipInstance = new bootstrap.Tooltip(this.statusElement, {
                 trigger: 'hover',
                 delay: { show: 300, hide: 0 },
-                animation: true
+                animation: true,
             });
         }
         return this;
@@ -48,10 +48,7 @@ class ConnectionStatusManager {
         // Refresh the open status every 15 seconds
         this.heartbeatTimer = setInterval(() => {
             // Only update if we're in the base "open" state (green, no glow, no blink)
-            if (this.statusElement &&
-                this.statusElement.style.backgroundColor === 'green' &&
-                !this.statusElement.classList.contains('glow') &&
-                !this.statusElement.classList.contains('blink')) {
+            if (this.statusElement && this.statusElement.style.backgroundColor === 'green' && !this.statusElement.classList.contains('glow') && !this.statusElement.classList.contains('blink')) {
                 console.log('[ConnectionStatus] Heartbeat refresh');
                 this.updateStatus('open');
             }
@@ -78,58 +75,58 @@ class ConnectionStatusManager {
         }
 
         switch (status) {
-            case "open":
-                console.log("Connection opened");
-                this.statusElement.style.backgroundColor = "green";
-                this.statusElement.style.color = "";
+            case 'open':
+                console.log('Connection opened');
+                this.statusElement.style.backgroundColor = 'green';
+                this.statusElement.style.color = '';
                 this.statusElement.classList.remove('glow');
                 this.statusElement.classList.remove('blink');
-                this.statusElement.setAttribute("data-bs-title", "Connected - its quiet here though!");
+                this.statusElement.setAttribute('data-bs-title', 'Connected - its quiet here though!');
                 if (this.tooltipInstance) {
-                    this.tooltipInstance.setContent({ '.tooltip-inner': "Connected - its quiet here though!" });
+                    this.tooltipInstance.setContent({ '.tooltip-inner': 'Connected - its quiet here though!' });
                 }
                 // Start heartbeat to refresh every 15s
                 this.startHeartbeat();
                 break;
 
-            case "connect":
-                this.statusElement.style.backgroundColor = "#4DCEF3";
-                this.statusElement.style.color = "#1a1d20";
+            case 'connect':
+                this.statusElement.style.backgroundColor = '#4DCEF3';
+                this.statusElement.style.color = '#1a1d20';
                 this.statusElement.classList.add('glow');
                 this.statusElement.classList.remove('blink');
-                this.statusElement.setAttribute("data-bs-title", "Connected - happy to see some traffic here!");
+                this.statusElement.setAttribute('data-bs-title', 'Connected - happy to see some traffic here!');
                 if (this.tooltipInstance) {
-                    this.tooltipInstance.setContent({ '.tooltip-inner': "Connected - happy to see some traffic here!" });
+                    this.tooltipInstance.setContent({ '.tooltip-inner': 'Connected - happy to see some traffic here!' });
                 }
                 break;
 
-            case "error":
-                console.log("Connection error");
-                this.statusElement.style.backgroundColor = "#800000";
-                this.statusElement.style.color = "#FFF";
+            case 'error':
+                console.log('Connection error');
+                this.statusElement.style.backgroundColor = '#800000';
+                this.statusElement.style.color = '#FFF';
                 this.statusElement.classList.remove('glow');
                 this.statusElement.classList.add('blink');
-                this.statusElement.setAttribute("data-bs-title", "Disconnected... Trying to reconnect every 2s...");
+                this.statusElement.setAttribute('data-bs-title', 'Disconnected... Trying to reconnect every 2s...');
                 if (this.tooltipInstance) {
-                    this.tooltipInstance.setContent({ '.tooltip-inner': "Disconnected... Trying to reconnect every 2s..." });
+                    this.tooltipInstance.setContent({ '.tooltip-inner': 'Disconnected... Trying to reconnect every 2s...' });
                 }
                 // Stop heartbeat when connection is lost
                 this.stopHeartbeat();
                 break;
 
-            case "newtimer":
+            case 'newtimer':
                 this.timer = setTimeout(() => {
-                    this.statusElement.style.backgroundColor = "green";
-                    this.statusElement.style.color = "";
+                    this.statusElement.style.backgroundColor = 'green';
+                    this.statusElement.style.color = '';
                     this.statusElement.classList.remove('glow');
-                    this.statusElement.setAttribute("data-bs-title", "Connected - its quiet here though!");
+                    this.statusElement.setAttribute('data-bs-title', 'Connected - its quiet here though!');
                     if (this.tooltipInstance) {
-                        this.tooltipInstance.setContent({ '.tooltip-inner': "Connected - its quiet here though!" });
+                        this.tooltipInstance.setContent({ '.tooltip-inner': 'Connected - its quiet here though!' });
                     }
                 }, 10000);
                 break;
 
-            case "cleartimer":
+            case 'cleartimer':
                 clearTimeout(this.timer);
                 break;
 

@@ -9,128 +9,128 @@ site_dir: site
 dev_addr: 127.0.0.1:8884
 
 watch:
-  - docs/
-  - mkdocs.yml
+    - docs/
+    - mkdocs.yml
 
 nav:
-  - Home:
-    - Welcome: index.md
-    - Changelog: changelog.md
-  - Getting Started:
-    - Quick Start: quick-start.md
-    - Installation: installation.md
-  - Usage:
-    - User Guide: usage.md
-    - Configuration: configuration.md
-  - Features:
-    - Overview: features/index.md
-    - Multiple Views: features/views.md
-    - Filtering System: features/filtering.md
-    - Client-Side Storage: features/storage.md
-    - Server-Sent Events: features/sse.md
-    - Background Tasks: features/tasks.md
-    - Role-Based Access Control: features/rbac.md
-    - Keyboard Shortcuts: features/keyboard-shortcuts.md
-    - State Management: features/state-management.md
-    - Performance: features/performance.md
-  - Security:
-    - Authentication & Authorization: authentication.md
-    - RBAC Configuration Guide: rbac-guide.md
-  - Deployment:
-    - Deployment Guide: deployment.md
+    - Home:
+          - Welcome: index.md
+          - Changelog: changelog.md
+    - Getting Started:
+          - Quick Start: quick-start.md
+          - Installation: installation.md
+    - Usage:
+          - User Guide: usage.md
+          - Configuration: configuration.md
+    - Features:
+          - Overview: features/index.md
+          - Multiple Views: features/views.md
+          - Filtering System: features/filtering.md
+          - Client-Side Storage: features/storage.md
+          - Server-Sent Events: features/sse.md
+          - Background Tasks: features/tasks.md
+          - Role-Based Access Control: features/rbac.md
+          - Keyboard Shortcuts: features/keyboard-shortcuts.md
+          - State Management: features/state-management.md
+          - Performance: features/performance.md
+    - Security:
+          - Authentication & Authorization: authentication.md
+          - RBAC Configuration Guide: rbac-guide.md
+    - Deployment:
+          - Deployment Guide: deployment.md
 
 theme:
-  name: material
-  logo: assets/images/logo.png
-  favicon: assets/images/logo.png
-  features:
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - navigation.sections
-    - navigation.top
-    - navigation.tracking
-    - navigation.path
-    - search.highlight
-    - search.share
-    - search.suggest
-    - content.code.copy
-    - content.code.annotate
-    - content.tags
+    name: material
+    logo: assets/images/logo.png
+    favicon: assets/images/logo.png
+    features:
+        - navigation.tabs
+        - navigation.tabs.sticky
+        - navigation.sections
+        - navigation.top
+        - navigation.tracking
+        - navigation.path
+        - search.highlight
+        - search.share
+        - search.suggest
+        - content.code.copy
+        - content.code.annotate
+        - content.tags
 
-  palette:
-    - scheme: default
-      primary: black
-      accent: orange
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - scheme: slate
-      primary: black
-      accent: orange
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
+    palette:
+        - scheme: default
+          primary: black
+          accent: orange
+          toggle:
+              icon: material/brightness-7
+              name: Switch to dark mode
+        - scheme: slate
+          primary: black
+          accent: orange
+          toggle:
+              icon: material/brightness-4
+              name: Switch to light mode
 
 markdown_extensions:
-  - tables
-  - admonition
-  - attr_list  # Enable grid
-  - md_in_html
-  - toc:
-      permalink: true
-      title: On this page
-  - pymdownx.details
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets:
-      base_path: .
-  - pymdownx.tabbed:
-      alternate_style: true
-      combine_header_slug: true
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - pymdownx.keys
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - footnotes
-  - pymdownx.keys
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - footnotes
+    - tables
+    - admonition
+    - attr_list # Enable grid
+    - md_in_html
+    - toc:
+          permalink: true
+          title: On this page
+    - pymdownx.details
+    - pymdownx.superfences:
+          custom_fences:
+              - name: mermaid
+                class: mermaid
+                format: !!python/name:pymdownx.superfences.fence_code_format
+    - pymdownx.highlight:
+          anchor_linenums: true
+          line_spans: __span
+          pygments_lang_class: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets:
+          base_path: .
+    - pymdownx.tabbed:
+          alternate_style: true
+          combine_header_slug: true
+    - pymdownx.tasklist:
+          custom_checkbox: true
+    - pymdownx.emoji:
+          emoji_index: !!python/name:material.extensions.emoji.twemoji
+          emoji_generator: !!python/name:material.extensions.emoji.to_svg
+    - pymdownx.keys
+    - pymdownx.mark
+    - pymdownx.smartsymbols
+    - footnotes
+    - pymdownx.keys
+    - pymdownx.mark
+    - pymdownx.smartsymbols
+    - footnotes
 
 plugins:
-  - search:
-      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
-  - awesome-pages
-  - tags
+    - search:
+          separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+    - awesome-pages
+    - tags
 
 extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/bvandewe/events-player
-      name: Event Player on GitHub
-  version:
-    provider: mike
-    default: stable
+    social:
+        - icon: fontawesome/brands/github
+          link: https://github.com/bvandewe/events-player
+          name: Event Player on GitHub
+    version:
+        provider: mike
+        default: stable
 
 extra_javascript:
-  - https://unpkg.com/mermaid@11.2.1/dist/mermaid.min.js
-  - assets/js/mermaid-simple-init.js
-  - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js
-  - assets/js/tablesort-init.js
+    - https://unpkg.com/mermaid@11.2.1/dist/mermaid.min.js
+    - assets/js/mermaid-simple-init.js
+    - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js
+    - assets/js/tablesort-init.js
 
 extra_css:
-  - https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap
-  - assets/css/custom.css
-  - assets/css/table-sorting.css
+    - https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap
+    - assets/css/custom.css
+    - assets/css/table-sorting.css

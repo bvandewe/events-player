@@ -1,8 +1,10 @@
 import sys
-sys.path.insert(0, 'src')
+
+sys.path.insert(0, "src")
+
+import json
 
 from api.models import CloudEvent
-import json
 
 # Test data with Python types
 test_data = {
@@ -13,7 +15,7 @@ test_data = {
     "type": "com.test.direct",
     "source": "test",
     "subject": "test",
-    "data": {"foo": True, "bar": False, "baz": None}
+    "data": {"foo": True, "bar": False, "baz": None},
 }
 
 print("Original payload:")

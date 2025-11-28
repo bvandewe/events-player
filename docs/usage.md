@@ -263,33 +263,33 @@ Use the comprehensive filtering system to find specific events:
 #### Quick Search
 
 - **Search Box** (Ctrl/Cmd + K): Filter events by any text
-    - Searches across type, source, subject, and data content
-    - Real-time filtering as you type
-    - Case-insensitive matching
+  - Searches across type, source, subject, and data content
+  - Real-time filtering as you type
+  - Case-insensitive matching
 
 #### Filter Dropdowns
 
 - **Type Filter**: Select from available event types
 
-    - Auto-populates with types from received events
-    - Multi-select capability
-    - Clear individual or all selections
+  - Auto-populates with types from received events
+  - Multi-select capability
+  - Clear individual or all selections
 
 - **Source Filter**: Filter by event source
 
-    - Shows all unique sources
-    - Same multi-select functionality
+  - Shows all unique sources
+  - Same multi-select functionality
 
 - **Subject Filter**: Filter by event subject
 
-    - Filters events with matching subjects
-    - Supports null/empty subject filtering
+  - Filters events with matching subjects
+  - Supports null/empty subject filtering
 
 - **Time Range Filter**: Filter by time period
-    - Last Hour
-    - Last 6 Hours
-    - Last 24 Hours
-    - All Time (default)
+  - Last Hour
+  - Last 6 Hours
+  - Last 24 Hours
+  - All Time (default)
 
 #### Click-to-Filter
 
@@ -406,10 +406,10 @@ Administrators can manage background event generation tasks in real-time.
 - **Task Status**: View status of all running tasks
 - **Progress Tracking**: See progress bars for each task
 - **Task Details**:
-    - Task ID
-    - Status (Pending, Running, Completed, Failed, Cancelled)
-    - Progress percentage
-    - Created timestamp
+  - Task ID
+  - Status (Pending, Running, Completed, Failed, Cancelled)
+  - Progress percentage
+  - Created timestamp
 
 #### Task Control
 

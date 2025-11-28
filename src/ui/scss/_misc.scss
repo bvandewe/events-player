@@ -40,17 +40,17 @@
 
 .blink {
     animation: blink-animation 2s 3;
-  }
+}
 
-  @keyframes blink-animation {
+@keyframes blink-animation {
     0% {
-      opacity: 1;
+        opacity: 1;
     }
     50% {
-      opacity: 0.5;
+        opacity: 0.5;
     }
     100% {
-      opacity: 1;
+        opacity: 1;
     }
 }
 .glow {
@@ -83,7 +83,7 @@
 .accordion-button {
     white-space: nowrap;
     overflow: hidden;
-    
+
     span {
         white-space: nowrap;
         overflow: hidden;
@@ -91,12 +91,12 @@
         flex-shrink: 1;
         min-width: 0; // Allow flex items to shrink below content size
     }
-    
+
     // Ensure the entire button scrolls horizontally if needed
     &:hover {
         overflow-x: auto;
     }
-    
+
     // Hide the caret icon for disabled buttons (non-operator users)
     &.no-expand::after {
         display: none;

@@ -3,8 +3,10 @@ Unit tests for the Request ID tracing middleware.
 """
 
 import uuid
+
 import pytest
 from fastapi.testclient import TestClient
+
 from api.app import app, request_id_var
 
 
@@ -61,7 +63,9 @@ class TestRequestIdMiddleware:
 
         for endpoint in endpoints:
             response = client.get(endpoint)
-            assert "x-request-id" in response.headers, f"Missing Request ID on {endpoint}"
+            assert (
+                "x-request-id" in response.headers
+            ), f"Missing Request ID on {endpoint}"
 
     def test_request_id_on_post_requests(self, client, sample_cloudevent):
         """Test that Request ID works on POST requests."""

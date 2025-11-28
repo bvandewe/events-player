@@ -1,130 +1,130 @@
 /* Native table sorting styles */
 table.sortable th {
-  cursor: pointer;
-  user-select: none;
+    cursor: pointer;
+    user-select: none;
 }
 
 table.sortable th:hover {
-  background-color: var(--md-default-fg-color--lightest);
+    background-color: var(--md-default-fg-color--lightest);
 }
 
 /* Sorting indicators */
 table.sortable th::after {
-  content: ' ↕';
-  color: var(--md-default-fg-color--light);
-  font-size: 0.8em;
-  margin-left: 0.25em;
+    content: ' ↕';
+    color: var(--md-default-fg-color--light);
+    font-size: 0.8em;
+    margin-left: 0.25em;
 }
 
 table.sortable th.sort-up::after {
-  content: ' ↑';
-  color: var(--md-accent-fg-color);
+    content: ' ↑';
+    color: var(--md-accent-fg-color);
 }
 
 table.sortable th.sort-down::after {
-  content: ' ↓';
-  color: var(--md-accent-fg-color);
+    content: ' ↓';
+    color: var(--md-accent-fg-color);
 }
 
 /* Table styling improvements */
 .port-reservations-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
 }
 
 .port-reservations-table th {
-  background-color: var(--md-primary-fg-color--light);
-  color: white;
-  font-weight: 600;
-  padding: 0.75rem;
-  text-align: left;
-  border: 1px solid var(--md-default-border-color);
+    background-color: var(--md-primary-fg-color--light);
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem;
+    text-align: left;
+    border: 1px solid var(--md-default-border-color);
 }
 
 .port-reservations-table td {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--md-default-border-color);
-  vertical-align: top;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--md-default-border-color);
+    vertical-align: top;
 }
 
 .port-reservations-table tbody tr:nth-child(even) {
-  background-color: var(--md-default-bg-color--light);
+    background-color: var(--md-default-bg-color--light);
 }
 
 .port-reservations-table tbody tr:hover {
-  background-color: var(--md-accent-bg-color);
+    background-color: var(--md-accent-bg-color);
 }
 
 /* Port type badges */
 .port-type-ser {
-  background-color: #28a745;
-  color: white;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.8em;
-  font-weight: bold;
+    background-color: #28a745;
+    color: white;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.8em;
+    font-weight: bold;
 }
 
 .port-type-vnc {
-  background-color: #007bff;
-  color: white;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.8em;
-  font-weight: bold;
+    background-color: #007bff;
+    color: white;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.8em;
+    font-weight: bold;
 }
 
 .port-type-pat {
-  background-color: #ffc107;
-  color: #212529;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.8em;
-  font-weight: bold;
+    background-color: #ffc107;
+    color: #212529;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.8em;
+    font-weight: bold;
 }
 
 /* Search and filter controls */
 .table-controls {
-  margin: 1rem 0;
-  padding: 1rem;
-  background-color: var(--md-code-bg-color);
-  border-radius: 0.5rem;
-  border: 1px solid var(--md-default-border-color);
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: var(--md-code-bg-color);
+    border-radius: 0.5rem;
+    border: 1px solid var(--md-default-border-color);
 }
 
 .filter-group {
-  display: inline-block;
-  margin: 0.5rem 1rem 0.5rem 0;
+    display: inline-block;
+    margin: 0.5rem 1rem 0.5rem 0;
 }
 
 .filter-group label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: var(--md-default-fg-color);
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--md-default-fg-color);
 }
 
 .filter-group select,
 .filter-group input {
-  padding: 0.5rem;
-  border: 1px solid var(--md-default-border-color);
-  border-radius: 0.25rem;
-  background-color: var(--md-default-bg-color);
-  color: var(--md-default-fg-color);
-  min-width: 150px;
+    padding: 0.5rem;
+    border: 1px solid var(--md-default-border-color);
+    border-radius: 0.25rem;
+    background-color: var(--md-default-bg-color);
+    color: var(--md-default-fg-color);
+    min-width: 150px;
 }
 
 .search-box {
-  margin-bottom: 1rem;
+    margin-bottom: 1rem;
 }
 
 .search-box input {
-  width: 100%;
-  max-width: 300px;
-  padding: 0.5rem;
-  border: 1px solid var(--md-default-border-color);
-  border-radius: 0.25rem;
-  background-color: var(--md-default-bg-color);
-  color: var(--md-default-fg-color);
+    width: 100%;
+    max-width: 300px;
+    padding: 0.5rem;
+    border: 1px solid var(--md-default-border-color);
+    border-radius: 0.25rem;
+    background-color: var(--md-default-bg-color);
+    color: var(--md-default-fg-color);
 }

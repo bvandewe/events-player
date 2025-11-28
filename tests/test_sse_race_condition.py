@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from api.background_tasks import handle_event, _send_to_client
+from api.background_tasks import _send_to_client, handle_event
 from api.globals import sse_clients, sse_clients_lock
 
 

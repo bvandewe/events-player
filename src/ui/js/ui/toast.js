@@ -2,7 +2,7 @@ export const toastController = (() => {
     var bootstrap;
     let pendingToasts = [];
 
-    const showToast = (result) => {
+    const showToast = result => {
         // Guard against Bootstrap not being loaded yet
         if (!bootstrap) {
             console.warn('[Toast] Bootstrap not initialized yet, queuing toast');
@@ -10,7 +10,7 @@ export const toastController = (() => {
             return;
         }
 
-        console.log("result");
+        console.log('result');
         console.log(result);
         const toastEl = document.getElementById('liveToast');
 
@@ -22,13 +22,13 @@ export const toastController = (() => {
 
         const toast = bootstrap.Toast.getOrCreateInstance(toastEl);
 
-        if ("detail" in result) {
-            toastEl.classList.add("text-bg-warning");
+        if ('detail' in result) {
+            toastEl.classList.add('text-bg-warning');
 
             // Handle different detail formats
             if (Array.isArray(result.detail)) {
                 // FastAPI validation error format: array of error objects
-                var message = `${result.detail[0].type}: ${result.detail[0].msg} in ${result.detail[0].loc.join(", ")}`;
+                var message = `${result.detail[0].type}: ${result.detail[0].msg} in ${result.detail[0].loc.join(', ')}`;
             } else if (typeof result.detail === 'string') {
                 // Simple string error message
                 var message = result.detail;
@@ -37,15 +37,15 @@ export const toastController = (() => {
                 var message = JSON.stringify(result.detail);
             }
         } else {
-            toastEl.classList.add("text-bg-primary");
+            toastEl.classList.add('text-bg-primary');
             var message = `${result.status}: ${result.message} (Task.id: ${result.task_id})`;
         }
-        var toastBody = toastEl.querySelector(".toast-body");
+        var toastBody = toastEl.querySelector('.toast-body');
         toastBody.textContent = message;
         toast.show();
     };
 
-    const init = (bs) => {
+    const init = bs => {
         bootstrap = bs;
         const toastElList = document.querySelectorAll('.toast');
         const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl));
@@ -60,6 +60,6 @@ export const toastController = (() => {
 
     return {
         init,
-        showToast
-    }
+        showToast,
+    };
 })();

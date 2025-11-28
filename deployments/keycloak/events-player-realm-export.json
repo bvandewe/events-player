@@ -16,9 +16,7 @@
     "offlineSessionMaxLifespanEnabled": false,
     "offlineSessionMaxLifespan": 5184000,
     "internationalizationEnabled": true,
-    "supportedLocales": [
-        "en"
-    ],
+    "supportedLocales": ["en"],
     "defaultLocale": "en",
     "roles": {
         "realm": [
@@ -51,9 +49,7 @@
                     "temporary": false
                 }
             ],
-            "realmRoles": [
-                "admin"
-            ]
+            "realmRoles": ["admin"]
         },
         {
             "username": "operator",
@@ -69,9 +65,7 @@
                     "temporary": false
                 }
             ],
-            "realmRoles": [
-                "operator"
-            ]
+            "realmRoles": ["operator"]
         },
         {
             "username": "user",
@@ -87,9 +81,7 @@
                     "temporary": false
                 }
             ],
-            "realmRoles": [
-                "user"
-            ]
+            "realmRoles": ["user"]
         }
     ],
     "clients": [
@@ -97,14 +89,8 @@
             "clientId": "events-player-web",
             "name": "CloudEvents Player Web Client",
             "enabled": true,
-            "redirectUris": [
-                "http://localhost:8884/*",
-                "http://localhost:1234/*"
-            ],
-            "webOrigins": [
-                "http://localhost:8884",
-                "http://localhost:1234"
-            ],
+            "redirectUris": ["http://localhost:8884/*", "http://localhost:1234/*"],
+            "webOrigins": ["http://localhost:8884", "http://localhost:1234"],
             "standardFlowEnabled": true,
             "implicitFlowEnabled": false,
             "directAccessGrantsEnabled": true,
@@ -116,18 +102,8 @@
                 "oidc.ciba.grant.enabled": "false"
             },
             "fullScopeAllowed": true,
-            "defaultClientScopes": [
-                "web-origins",
-                "acr",
-                "profile",
-                "roles",
-                "email"
-            ],
-            "optionalClientScopes": [
-                "address",
-                "phone",
-                "microprofile-jwt"
-            ]
+            "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "email"],
+            "optionalClientScopes": ["address", "phone", "microprofile-jwt"]
         },
         {
             "clientId": "events-player-api",

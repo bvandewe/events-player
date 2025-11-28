@@ -6,7 +6,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Check if Mermaid is available
     if (typeof mermaid !== 'undefined') {
-
         // Get the current theme from Material theme
         const getTheme = () => {
             const palette = JSON.parse(localStorage.getItem('__palette') || '{}');
@@ -53,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
             flowchart: {
                 useMaxWidth: true,
                 htmlLabels: true,
-                curve: 'basis'
+                curve: 'basis',
             },
             sequence: {
                 diagramMarginX: 50,
@@ -67,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 messageMargin: 35,
                 mirrorActors: true,
                 bottomMarginAdj: 1,
-                useMaxWidth: true
+                useMaxWidth: true,
             },
             gantt: {
                 titleTopMargin: 25,
@@ -76,25 +75,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 fontSize: 12,
                 gridLineStartPadding: 35,
                 bottomPadding: 25,
-                rightPadding: 25
-            }
+                rightPadding: 25,
+            },
         });
 
         // Listen for theme changes and reinitialize Mermaid
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
                 if (mutation.attributeName === 'data-md-color-scheme') {
                     const newTheme = getTheme();
                     mermaid.initialize({
                         theme: newTheme,
-                        startOnLoad: true
+                        startOnLoad: true,
                     });
 
                     // Re-render all Mermaid diagrams
                     document.querySelectorAll('.mermaid').forEach((element, index) => {
                         const graphDefinition = element.textContent;
                         element.innerHTML = '';
-                        mermaid.render(`mermaid-diagram-${index}`, graphDefinition, (svgCode) => {
+                        mermaid.render(`mermaid-diagram-${index}`, graphDefinition, svgCode => {
                             element.innerHTML = svgCode;
                         });
                     });
@@ -107,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (bodyElement) {
             observer.observe(bodyElement, {
                 attributes: true,
-                attributeFilter: ['data-md-color-scheme']
+                attributeFilter: ['data-md-color-scheme'],
             });
         }
 

@@ -17,32 +17,23 @@
     }
 </style>
 
-<div class="offcanvas offcanvas-bottom p-4 shadow-lg" data-bs-scroll="true" data-bs-backdrop="true" data-bs-keyboard="true" tabindex="-1"
-    id="generatorPanel" aria-labelledby="staticBackdropLabel">
-    <div class="offcanvas-header position-relative" style="display: flex; align-items: center; justify-content: space-between;">
-        <div class="d-flex gap-2 align-items-center flex-shrink-1" style="min-width: 0; overflow: hidden;">
-            <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" 
-                    id="resetFormBtn" 
-                    data-bs-toggle="tooltip" 
-                    data-bs-title="Reset form to default values"
-                    title="Reset to defaults">
+<div class="offcanvas offcanvas-bottom p-4 shadow-lg" data-bs-scroll="true" data-bs-backdrop="true" data-bs-keyboard="true" tabindex="-1" id="generatorPanel" aria-labelledby="staticBackdropLabel">
+    <div class="offcanvas-header position-relative" style="display: flex; align-items: center; justify-content: space-between">
+        <div class="d-flex gap-2 align-items-center flex-shrink-1" style="min-width: 0; overflow: hidden">
+            <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" id="resetFormBtn" data-bs-toggle="tooltip" data-bs-title="Reset form to default values" title="Reset to defaults">
                 <i class="bi bi-arrow-counterclockwise"></i> Reset
             </button>
-            <button type="button" class="btn btn-sm btn-outline-info flex-shrink-0" 
-                    data-bs-toggle="modal" 
-                    data-bs-target="#operationsHistoryModal"
-                    data-bs-title="View operations history"
-                    title="View history">
+            <button type="button" class="btn btn-sm btn-outline-info flex-shrink-0" data-bs-toggle="modal" data-bs-target="#operationsHistoryModal" data-bs-title="View operations history" title="View history">
                 <i class="bi bi-clock-history"></i> History
             </button>
-            <select class="form-select form-select-sm" id="operationHistory" aria-label="Select previous operation" style="min-width: 100px; max-width: 250px;">
+            <select class="form-select form-select-sm" id="operationHistory" aria-label="Select previous operation" style="min-width: 100px; max-width: 250px">
                 <option value="" selected>New Operation</option>
             </select>
         </div>
-        <h4 class="offcanvas-title text-primary title flex-shrink-0 mx-3" id="generatorPanelLabel" style="text-align: center;">Generate CloudEvents</h4>
+        <h4 class="offcanvas-title text-primary title flex-shrink-0 mx-3" id="generatorPanelLabel" style="text-align: center">Generate CloudEvents</h4>
         <button type="button" class="btn-close flex-shrink-0" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">        
+    <div class="offcanvas-body">
         <div>
             <form id="generatorForm">
                 <div class="row">
@@ -68,20 +59,23 @@
                                 <div class="row mb-3 d-none" id="custom_gateway_container">
                                     <label for="custom_gateway_url" class="col-2 col-form-label text-end small">Custom</label>
                                     <div class="col-10">
-                                        <input type="url" class="form-control form-control-sm" id="custom_gateway_url" name="custom_gateway_url" 
-                                        placeholder="http://your-gateway:8080/events" onkeydown="return event.key !== ' '">
+                                        <input type="url" class="form-control form-control-sm" id="custom_gateway_url" name="custom_gateway_url" placeholder="http://your-gateway:8080/events" onkeydown="return event.key !== ' '" />
                                     </div>
                                 </div>
                                 <div class="row mb-3">
                                     <label for="event_source" class="col-2 col-form-label text-end small">Source</label>
                                     <div class="col-10">
                                         <div class="input-group input-group-sm">
-                                            <input type="text" class="form-control" id="event_source" name="event_source" 
-                                            placeholder="https://dummy.source.com/sys-admin" onkeydown="return event.key !== ' '"
-                                            value="{{ default_events_settings.event_source }}">
-                                            <button class="btn btn-outline-secondary d-none" type="button" id="randomSourceBtn" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-title="Toggle random source for each iteration (when iterations > 1)">
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="event_source"
+                                                name="event_source"
+                                                placeholder="https://dummy.source.com/sys-admin"
+                                                onkeydown="return event.key !== ' '"
+                                                value="{{ default_events_settings.event_source }}"
+                                            />
+                                            <button class="btn btn-outline-secondary d-none" type="button" id="randomSourceBtn" data-bs-toggle="tooltip" data-bs-title="Toggle random source for each iteration (when iterations > 1)">
                                                 <i class="bi bi-shuffle"></i>
                                             </button>
                                         </div>
@@ -91,12 +85,16 @@
                                     <label for="event_type" class="col-2 col-form-label text-end small">Type</label>
                                     <div class="col-10">
                                         <div class="input-group input-group-sm">
-                                            <input type="text" class="form-control" id="event_type" name="event_type"
-                                            placeholder="com.source.dummy.test.requested.v1" onkeydown="return event.key !== ' '"
-                                            value="{{ default_events_settings.event_type }}">
-                                            <button class="btn btn-outline-secondary d-none" type="button" id="randomTypeBtn" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-title="Toggle random type for each iteration (when iterations > 1)">
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="event_type"
+                                                name="event_type"
+                                                placeholder="com.source.dummy.test.requested.v1"
+                                                onkeydown="return event.key !== ' '"
+                                                value="{{ default_events_settings.event_type }}"
+                                            />
+                                            <button class="btn btn-outline-secondary d-none" type="button" id="randomTypeBtn" data-bs-toggle="tooltip" data-bs-title="Toggle random type for each iteration (when iterations > 1)">
                                                 <i class="bi bi-shuffle"></i>
                                             </button>
                                         </div>
@@ -106,12 +104,8 @@
                                     <label for="event_subject" class="col-2 col-form-label text-end small">Subject</label>
                                     <div class="col-10">
                                         <div class="input-group input-group-sm">
-                                            <input type="text" class="form-control" id="event_subject" name="event_subject" 
-                                            placeholder="123" onkeydown="return event.key !== ' '"
-                                            value="{{ default_events_settings.event_subject }}">
-                                            <button class="btn btn-outline-secondary d-none" type="button" id="randomSubjectBtn" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-title="Toggle random subject for each iteration (when iterations > 1)">
+                                            <input type="text" class="form-control" id="event_subject" name="event_subject" placeholder="123" onkeydown="return event.key !== ' '" value="{{ default_events_settings.event_subject }}" />
+                                            <button class="btn btn-outline-secondary d-none" type="button" id="randomSubjectBtn" data-bs-toggle="tooltip" data-bs-title="Toggle random subject for each iteration (when iterations > 1)">
                                                 <i class="bi bi-shuffle"></i>
                                             </button>
                                         </div>
@@ -137,24 +131,22 @@
                                 <!-- Iterations Control -->
                                 <div class="mb-3">
                                     <label for="eventIterations" class="form-label small">Iterations: <span id="eventIterationsValue">1</span></label>
-                                    <input type="range" min="1" max="500" value="1" class="form-range" id="eventIterations" name="iterations">
+                                    <input type="range" min="1" max="500" value="1" class="form-range" id="eventIterations" name="iterations" />
                                 </div>
-                                
+
                                 <!-- Delay Control -->
                                 <div class="mb-3">
                                     <label for="eventDelay" class="form-label small">Delay: <span id="eventDelayValue">100</span> ms</label>
-                                    <input type="range" min="50" max="2000" value="100" class="form-range" id="eventDelay" name="delay">
+                                    <input type="range" min="50" max="2000" value="100" class="form-range" id="eventDelay" name="delay" />
                                 </div>
-                                
-                                <hr>
-                                
+
+                                <hr />
+
                                 <!-- Auto-Repeat Control -->
                                 <div class="mb-2">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="repeaterEnabled" role="switch">
-                                        <label class="form-check-label small fw-bold" for="repeaterEnabled">
-                                            <i class="bi bi-arrow-repeat"></i> Auto-Repeat
-                                        </label>
+                                        <input class="form-check-input" type="checkbox" id="repeaterEnabled" role="switch" />
+                                        <label class="form-check-label small fw-bold" for="repeaterEnabled"> <i class="bi bi-arrow-repeat"></i> Auto-Repeat </label>
                                     </div>
                                 </div>
                                 <div class="d-none" id="repeaterControls">
@@ -190,13 +182,11 @@
                     <button type="submit" class="col-6 btn btn-primary mx-auto">Send</button>
                 </div>
                 <div class="row mb-3">
-                    <div class="progress row col-6 mx-auto" id="task-progress-bar-container" role="progressbar" aria-label="Generator task progress" 
-                    aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" style="height: 0px">
+                    <div class="progress row col-6 mx-auto" id="task-progress-bar-container" role="progressbar" aria-label="Generator task progress" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" style="height: 0px">
                         <div class="progress-bar" id="task-progress-bar" style="width: 0%"></div>
                     </div>
                 </div>
             </form>
-
         </div>
     </div>
 </div>

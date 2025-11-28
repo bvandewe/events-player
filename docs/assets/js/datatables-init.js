@@ -3,33 +3,36 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize DataTables on tables with the 'sortable-table' class
     if (typeof $ !== 'undefined' && $.fn.DataTable) {
         $('#port-reservations-table').DataTable({
-            "pageLength": 25,
-            "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            "order": [[0, "asc"]], // Sort by Port number by default
-            "columnDefs": [
+            pageLength: 25,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, 'All'],
+            ],
+            order: [[0, 'asc']], // Sort by Port number by default
+            columnDefs: [
                 {
-                    "targets": [0], // Port column - numeric sort
-                    "type": "num"
+                    targets: [0], // Port column - numeric sort
+                    type: 'num',
                 },
                 {
-                    "targets": [1], // Type column - string sort with custom order
-                    "type": "string"
-                }
+                    targets: [1], // Type column - string sort with custom order
+                    type: 'string',
+                },
             ],
-            "dom": 'lfrtip',
-            "language": {
-                "search": "Filter records:",
-                "lengthMenu": "Show _MENU_ entries",
-                "info": "Showing _START_ to _END_ of _TOTAL_ port reservations",
-                "paginate": {
-                    "first": "First",
-                    "last": "Last",
-                    "next": "Next",
-                    "previous": "Previous"
-                }
+            dom: 'lfrtip',
+            language: {
+                search: 'Filter records:',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ port reservations',
+                paginate: {
+                    first: 'First',
+                    last: 'Last',
+                    next: 'Next',
+                    previous: 'Previous',
+                },
             },
-            "searchHighlight": true,
-            "responsive": true
+            searchHighlight: true,
+            responsive: true,
         });
 
         // Add custom search functionality for specific columns
@@ -40,7 +43,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (selectedType === '') {
                 table.column(1).search('').draw();
             } else {
-                table.column(1).search('^' + selectedType + '$', true, false).draw();
+                table
+                    .column(1)
+                    .search('^' + selectedType + '$', true, false)
+                    .draw();
             }
         });
 

@@ -1,27 +1,27 @@
 <style>
-  /* Ensure confirmation modal is always on top of other modals */
-  #confirmModal {
-    z-index: 1060; /* Higher than Bootstrap's default modal z-index of 1055 */
-  }
-  #confirmModal .modal-backdrop {
-    z-index: 1059;
-  }
+    /* Ensure confirmation modal is always on top of other modals */
+    #confirmModal {
+        z-index: 1060; /* Higher than Bootstrap's default modal z-index of 1055 */
+    }
+    #confirmModal .modal-backdrop {
+        z-index: 1059;
+    }
 </style>
 
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="confirmModalLabel">Confirm Action</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p id="confirmModalMessage">Are you sure you want to proceed?</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" id="confirmModalActionBtn" class="btn btn-primary">Confirm</button>
-      </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="confirmModalLabel">Confirm Action</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalMessage">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmModalActionBtn" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>

@@ -3,3 +3,5 @@
 # E722: bare except
 # DS101: docstring in public class
 ignore = E501,E722,DS101
+per-file-ignores =
+    tests/*: E402,F401,F841

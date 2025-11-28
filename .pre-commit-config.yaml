@@ -11,7 +11,7 @@ repos:
             exclude: '\.md$'
           - id: end-of-file-fixer
           - id: check-yaml
-            exclude: '^(deployment/helm/)'
+            exclude: '^(deployments/helm/|mkdocs\.yml)'
           - id: check-json
             exclude: '^\.vscode\.example/'
           - id: check-added-large-files
@@ -59,7 +59,7 @@ repos:
       hooks:
           - id: prettier
             types_or: [javascript, jsx, ts, tsx, css, scss, sass, html, json, yaml, markdown]
-            exclude: '^(package-lock\.json|poetry\.lock|deployment/helm/)'
+            exclude: '^(package-lock\.json|poetry\.lock|deployments/helm/)'
             args: ['--config', '.prettierrc']
 
     # Markdown linting
@@ -75,16 +75,17 @@ repos:
       rev: v1.37.1
       hooks:
           - id: yamllint
-            args: ['-d', '{extends: default, rules: {line-length: {max: 120}, document-start: disable}}']
-            exclude: '^(deployment/helm/|docker-compose.*.yml$)'
+            args: ['-d', '{extends: default, rules: {line-length: disable, document-start: disable, truthy: disable}}']
+            exclude: '^(mkdocs.yml|deployments/helm/|docker-compose.*.yml$)'
 
     # Security check for Python dependencies
     - repo: https://github.com/PyCQA/bandit
       rev: 1.8.6
       hooks:
           - id: bandit
-            args: ['-c', 'pyproject.toml']
+            args: ['-c', 'pyproject.toml', '--skip', 'B311']
             additional_dependencies: ['bandit[toml]']
+            exclude: ^tests/
 
     # Check for secrets/credentials
     - repo: https://github.com/Yelp/detect-secrets

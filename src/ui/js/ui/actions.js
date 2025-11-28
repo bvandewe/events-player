@@ -1,4 +1,4 @@
-import { sseEventsController } from "../sse/events";
+import { sseEventsController } from '../sse/events';
 
 export const actionsController = (() => {
     var bootstrap;
@@ -18,27 +18,25 @@ export const actionsController = (() => {
             toggleIcon.classList.remove('bi-caret-down-fill');
             toggleIcon.classList.add('bi-caret-up-fill');
             toggleLink.innerText = 'Expand all';
-            toggleLink.appendChild(toggleIcon)
-
+            toggleLink.appendChild(toggleIcon);
         } else {
             toggleIcon.classList.remove('bi-caret-up-fill');
             toggleIcon.classList.add('bi-caret-down-fill');
             toggleLink.innerText = 'Collapse all';
-            toggleLink.appendChild(toggleIcon)
+            toggleLink.appendChild(toggleIcon);
         }
 
         for (var i = 0; i < cloudeventMessages.length; i++) {
             var item = new bootstrap.Collapse(cloudeventMessages[i]);
             item.hide();
         }
-
     };
 
     const confirmClearEvents = () => {
         // if there are events, show Confirmation dialog when clicking on the Viewer nav button
         var clearListLink = document.getElementById('clearListLink');
-        confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'))
-        const events = document.getElementsByClassName("accordion-item");
+        confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        const events = document.getElementsByClassName('accordion-item');
         console.log(`Deleting ${events.length} events`);
         if (events.length > 0) {
             confirmModal.show();
@@ -46,13 +44,13 @@ export const actionsController = (() => {
     };
 
     const deleteAllEvents = () => {
-        if (typeof confirmModal !== "undefined") {
+        if (typeof confirmModal !== 'undefined') {
             var events = document.getElementsByClassName('accordion-item');
             const eventsArray = Array.from(events);
             for (var i = 0; i < eventsArray.length; i++) {
                 eventsArray[i].remove();
-            };
-            document.title = "CloudEvents Viewer (0)";
+            }
+            document.title = 'CloudEvents Viewer (0)';
             document.getElementById('event-count').innerHTML = 0;
             sseEventsController.resetEventsCount();
             confirmModal.hide();
@@ -88,14 +86,8 @@ export const actionsController = (() => {
      * @param {string} options.confirmClass - Confirm button class (default: "btn-primary")
      * @param {Function} options.onConfirm - Callback function on confirm
      */
-    const showConfirm = (options) => {
-        const {
-            title = 'Confirm Action',
-            message = 'Are you sure you want to proceed?',
-            confirmText = 'Confirm',
-            confirmClass = 'btn-primary',
-            onConfirm = () => { }
-        } = options;
+    const showConfirm = options => {
+        const { title = 'Confirm Action', message = 'Are you sure you want to proceed?', confirmText = 'Confirm', confirmClass = 'btn-primary', onConfirm = () => {} } = options;
 
         // Get modal elements
         const modalEl = document.getElementById('confirmModal');
@@ -131,17 +123,21 @@ export const actionsController = (() => {
         modal.show();
 
         // Ensure the confirmation modal and its backdrop are on top
-        modalEl.addEventListener('shown.bs.modal', () => {
-            // Set z-index higher than any other modal
-            modalEl.style.zIndex = '1060';
+        modalEl.addEventListener(
+            'shown.bs.modal',
+            () => {
+                // Set z-index higher than any other modal
+                modalEl.style.zIndex = '1060';
 
-            // Find and update the backdrop z-index
-            const backdrops = document.querySelectorAll('.modal-backdrop');
-            if (backdrops.length > 0) {
-                const lastBackdrop = backdrops[backdrops.length - 1];
-                lastBackdrop.style.zIndex = '1059';
-            }
-        }, { once: true });
+                // Find and update the backdrop z-index
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                if (backdrops.length > 0) {
+                    const lastBackdrop = backdrops[backdrops.length - 1];
+                    lastBackdrop.style.zIndex = '1059';
+                }
+            },
+            { once: true }
+        );
     };
 
     /**
@@ -152,13 +148,8 @@ export const actionsController = (() => {
      * @param {string} options.details - Technical details (optional)
      * @param {Error} options.error - Error object (optional, will extract details from it)
      */
-    const showError = (options) => {
-        const {
-            title = 'Error',
-            message = 'An error occurred',
-            details = null,
-            error = null
-        } = options;
+    const showError = options => {
+        const { title = 'Error', message = 'An error occurred', details = null, error = null } = options;
 
         // Get modal elements
         const modalEl = document.getElementById('errorModal');
@@ -203,17 +194,21 @@ export const actionsController = (() => {
         modal.show();
 
         // Ensure the error modal and its backdrop are on top
-        modalEl.addEventListener('shown.bs.modal', () => {
-            // Set z-index higher than any other modal
-            modalEl.style.zIndex = '1070';
+        modalEl.addEventListener(
+            'shown.bs.modal',
+            () => {
+                // Set z-index higher than any other modal
+                modalEl.style.zIndex = '1070';
 
-            // Find and update the backdrop z-index
-            const backdrops = document.querySelectorAll('.modal-backdrop');
-            if (backdrops.length > 0) {
-                const lastBackdrop = backdrops[backdrops.length - 1];
-                lastBackdrop.style.zIndex = '1069';
-            }
-        }, { once: true });
+                // Find and update the backdrop z-index
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                if (backdrops.length > 0) {
+                    const lastBackdrop = backdrops[backdrops.length - 1];
+                    lastBackdrop.style.zIndex = '1069';
+                }
+            },
+            { once: true }
+        );
     };
 
     /**
@@ -223,12 +218,8 @@ export const actionsController = (() => {
      * @param {string} options.message - Info/success message
      * @param {string} options.variant - 'success' or 'info' (default: 'info')
      */
-    const showInfo = (options) => {
-        const {
-            title = 'Information',
-            message = '',
-            variant = 'info'
-        } = options;
+    const showInfo = options => {
+        const { title = 'Information', message = '', variant = 'info' } = options;
 
         // Use the confirm modal but style it as info/success
         const modalEl = document.getElementById('confirmModal');
@@ -265,19 +256,23 @@ export const actionsController = (() => {
         modal.show();
 
         // Reset button visibility when modal is hidden
-        modalEl.addEventListener('hidden.bs.modal', () => {
-            actionBtn.style.display = '';
-            if (closeBtn) {
-                closeBtn.style.display = '';
-            }
-            if (cancelBtn) {
-                cancelBtn.textContent = 'Cancel';
-                cancelBtn.className = 'btn btn-secondary';
-            }
-        }, { once: true });
+        modalEl.addEventListener(
+            'hidden.bs.modal',
+            () => {
+                actionBtn.style.display = '';
+                if (closeBtn) {
+                    closeBtn.style.display = '';
+                }
+                if (cancelBtn) {
+                    cancelBtn.textContent = 'Cancel';
+                    cancelBtn.className = 'btn btn-secondary';
+                }
+            },
+            { once: true }
+        );
     };
 
-    const init = (bs) => {
+    const init = bs => {
         bootstrap = bs;
 
         var expandCollapse = document.getElementById('expandCollapseLink');
@@ -307,7 +302,6 @@ export const actionsController = (() => {
         init,
         showConfirm,
         showError,
-        showInfo
-    }
-
+        showInfo,
+    };
 })();

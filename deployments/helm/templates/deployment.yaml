@@ -1,91 +1,91 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}"
-  namespace: "{{ .Values.namespace }}"
+    name: '{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}'
+    namespace: '{{ .Values.namespace }}'
 spec:
-  replicas: {{ .Values.player.replicas }}
-  selector:
-    matchLabels:
-      app: "{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}"
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: "{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}"
-        version: v1
-    spec:
-      containers:
-        - name: "{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}"
-          image: "{{ .Values.player.image.repository }}:{{ .Values.player.image.tag }}"
-          ports:
-            - containerPort: 8080
-              protocol: TCP
-          env:
-            # Application Settings
-            - name: tag
-              value: "{{ .Values.player.image.tag }}"
-            - name: repository_url
-              value: "{{ .Values.player.env.repository_url }}"
-            - name: log_level
-              value: "{{ .Values.player.env.log_level }}"
-            - name: log_format
-              value: "{{ .Values.player.env.log_format }}"
-            
-            # Authentication & Authorization
-            - name: auth_required
-              value: "{{ .Values.player.env.auth_required }}"
-            - name: auth_trust_mode
-              value: "{{ .Values.player.env.auth_trust_mode }}"
-            - name: auth_jwks_url
-              value: "{{ .Values.player.env.auth_jwks_url }}"
-            - name: auth_issuer
-              value: "{{ .Values.player.env.auth_issuer }}"
-            - name: auth_audience
-              value: "{{ .Values.player.env.auth_audience }}"
-            - name: auth_algorithm
-              value: "{{ .Values.player.env.auth_algorithm }}"
-            
-            # Role Mapping Configuration
-            - name: auth_role_admin
-              value: "{{ .Values.player.env.auth_role_admin }}"
-            - name: auth_role_operator
-              value: "{{ .Values.player.env.auth_role_operator }}"
-            - name: auth_role_user
-              value: "{{ .Values.player.env.auth_role_user }}"
-            
-            # OAuth/OIDC Configuration
-            - name: oauth_server_url
-              value: "{{ .Values.player.env.oauth_server_url }}"
-            - name: oauth_server_url_backend
-              value: "{{ .Values.player.env.oauth_server_url_backend }}"
-            - name: oauth_legacy_keycloak
-              value: "{{ .Values.player.env.oauth_legacy_keycloak }}"
-            - name: oauth_realm
-              value: "{{ .Values.player.env.oauth_realm }}"
-            - name: oauth_client_id
-              value: "{{ .Values.player.env.oauth_client_id }}"
-            - name: oauth_client_secret
-              value: "{{ .Values.player.env.oauth_client_secret }}"
-            
-            # HTTP Client Configuration
-            - name: http_client_timeout
-              value: "{{ .Values.player.env.http_client_timeout }}"
-            
-            # Default Generator Settings
-            - name: default_generator_gateways
-              value: '{{ .Values.player.env.default_generator_gateways }}'
-            - name: default_generator_event
-              value: '{{ .Values.player.env.default_generator_event }}'
-            
-            # Frontend Display Configuration
-            - name: browser_queue_size
-              value: "{{ .Values.player.env.browser_queue_size }}"
-            
-            # Frontend Storage Configuration
-            - name: storage_max_recent_events
-              value: "{{ .Values.player.env.storage_max_recent_events }}"
-            - name: storage_max_metadata_events
-              value: "{{ .Values.player.env.storage_max_metadata_events }}"
-          imagePullPolicy: IfNotPresent
-      restartPolicy: Always
+    replicas: {{ .Values.player.replicas }}
+    selector:
+        matchLabels:
+            app: '{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}'
+            version: v1
+    template:
+        metadata:
+            labels:
+                app: '{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}'
+                version: v1
+        spec:
+            containers:
+                - name: '{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}'
+                  image: '{{ .Values.player.image.repository }}:{{ .Values.player.image.tag }}'
+                  ports:
+                      - containerPort: 8080
+                        protocol: TCP
+                  env:
+                      # Application Settings
+                      - name: tag
+                        value: '{{ .Values.player.image.tag }}'
+                      - name: repository_url
+                        value: '{{ .Values.player.env.repository_url }}'
+                      - name: log_level
+                        value: '{{ .Values.player.env.log_level }}'
+                      - name: log_format
+                        value: '{{ .Values.player.env.log_format }}'
+
+                      # Authentication & Authorization
+                      - name: auth_required
+                        value: '{{ .Values.player.env.auth_required }}'
+                      - name: auth_trust_mode
+                        value: '{{ .Values.player.env.auth_trust_mode }}'
+                      - name: auth_jwks_url
+                        value: '{{ .Values.player.env.auth_jwks_url }}'
+                      - name: auth_issuer
+                        value: '{{ .Values.player.env.auth_issuer }}'
+                      - name: auth_audience
+                        value: '{{ .Values.player.env.auth_audience }}'
+                      - name: auth_algorithm
+                        value: '{{ .Values.player.env.auth_algorithm }}'
+
+                      # Role Mapping Configuration
+                      - name: auth_role_admin
+                        value: '{{ .Values.player.env.auth_role_admin }}'
+                      - name: auth_role_operator
+                        value: '{{ .Values.player.env.auth_role_operator }}'
+                      - name: auth_role_user
+                        value: '{{ .Values.player.env.auth_role_user }}'
+
+                      # OAuth/OIDC Configuration
+                      - name: oauth_server_url
+                        value: '{{ .Values.player.env.oauth_server_url }}'
+                      - name: oauth_server_url_backend
+                        value: '{{ .Values.player.env.oauth_server_url_backend }}'
+                      - name: oauth_legacy_keycloak
+                        value: '{{ .Values.player.env.oauth_legacy_keycloak }}'
+                      - name: oauth_realm
+                        value: '{{ .Values.player.env.oauth_realm }}'
+                      - name: oauth_client_id
+                        value: '{{ .Values.player.env.oauth_client_id }}'
+                      - name: oauth_client_secret
+                        value: '{{ .Values.player.env.oauth_client_secret }}'
+
+                      # HTTP Client Configuration
+                      - name: http_client_timeout
+                        value: '{{ .Values.player.env.http_client_timeout }}'
+
+                      # Default Generator Settings
+                      - name: default_generator_gateways
+                        value: '{{ .Values.player.env.default_generator_gateways }}'
+                      - name: default_generator_event
+                        value: '{{ .Values.player.env.default_generator_event }}'
+
+                      # Frontend Display Configuration
+                      - name: browser_queue_size
+                        value: '{{ .Values.player.env.browser_queue_size }}'
+
+                      # Frontend Storage Configuration
+                      - name: storage_max_recent_events
+                        value: '{{ .Values.player.env.storage_max_recent_events }}'
+                      - name: storage_max_metadata_events
+                        value: '{{ .Values.player.env.storage_max_metadata_events }}'
+                  imagePullPolicy: IfNotPresent
+            restartPolicy: Always

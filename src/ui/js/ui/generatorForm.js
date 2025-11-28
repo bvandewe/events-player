@@ -1,14 +1,13 @@
-import { toastController } from "./toast";
-import { taskController } from "../sse/task";
-import { authManager, authorizationManager } from "../app";
-import { apiPost } from "../utils/apiClient.js";
-import { actionsController } from "./actions";
-import { tasksModalController } from "./tasksModal";
-import { sseEventsController } from "../sse/events.js";
+import { toastController } from './toast';
+import { taskController } from '../sse/task';
+import { authManager, authorizationManager } from '../app';
+import { apiPost } from '../utils/apiClient.js';
+import { actionsController } from './actions';
+import { tasksModalController } from './tasksModal';
+import { sseEventsController } from '../sse/events.js';
 import * as bootstrap from 'bootstrap';
 
 export const generatorForm = (() => {
-
     const STORAGE_KEY = 'cloudevents-player-generator-state';
     const CUSTOM_GATEWAY_KEY = 'cloudevents-player-custom-gateway';
     const HISTORY_KEY = 'cloudevents-player-generator-history';
@@ -32,7 +31,7 @@ export const generatorForm = (() => {
                 event_subject: document.getElementById('event_subject')?.value || '',
                 event_data: document.getElementById('event_data')?.value || '',
                 iterations: document.getElementById('eventIterations')?.value || '1',
-                delay: document.getElementById('eventDelay')?.value || '100'
+                delay: document.getElementById('eventDelay')?.value || '100',
             };
 
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -51,22 +50,19 @@ export const generatorForm = (() => {
     /**
      * Save operation to history
      */
-    const saveOperationToHistory = (operationData) => {
+    const saveOperationToHistory = operationData => {
         try {
             let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
 
             // Get current user info
-            const username = authManager.userInfo?.username ||
-                authManager.userInfo?.preferred_username ||
-                authManager.userInfo?.email ||
-                'anonymous';
+            const username = authManager.userInfo?.username || authManager.userInfo?.preferred_username || authManager.userInfo?.email || 'anonymous';
 
             // Add timestamp, ID, and user
             const operation = {
                 id: `op_${Date.now()}`,
                 timestamp: new Date().toISOString(),
                 user: username,
-                ...operationData
+                ...operationData,
             };
 
             // Add to beginning of array
@@ -105,7 +101,7 @@ export const generatorForm = (() => {
     /**
      * Load operation from history
      */
-    const loadOperationFromHistory = (operationId) => {
+    const loadOperationFromHistory = operationId => {
         try {
             const history = getOperationsHistory();
             const operation = history.find(op => op.id === operationId);
@@ -169,24 +165,18 @@ export const generatorForm = (() => {
             const randomSubjectBtn = document.getElementById('randomSubjectBtn');
 
             if (randomSourceBtn) {
-                operation.randomize_source ?
-                    randomSourceBtn.classList.add('active') :
-                    randomSourceBtn.classList.remove('active');
+                operation.randomize_source ? randomSourceBtn.classList.add('active') : randomSourceBtn.classList.remove('active');
             }
             if (randomTypeBtn) {
-                operation.randomize_type ?
-                    randomTypeBtn.classList.add('active') :
-                    randomTypeBtn.classList.remove('active');
+                operation.randomize_type ? randomTypeBtn.classList.add('active') : randomTypeBtn.classList.remove('active');
             }
             if (randomSubjectBtn) {
-                operation.randomize_subject ?
-                    randomSubjectBtn.classList.add('active') :
-                    randomSubjectBtn.classList.remove('active');
+                operation.randomize_subject ? randomSubjectBtn.classList.add('active') : randomSubjectBtn.classList.remove('active');
             }
 
             toastController.showToast({
                 status: 'info',
-                message: 'Operation loaded from history'
+                message: 'Operation loaded from history',
             });
         } catch (error) {
             console.error('[GeneratorForm] Error loading operation from history:', error);
@@ -236,15 +226,16 @@ export const generatorForm = (() => {
         if (noOpsMessage) noOpsMessage.classList.add('d-none');
 
         // Build accordion items
-        accordion.innerHTML = history.map((op, index) => {
-            const date = new Date(op.timestamp);
-            const timeStr = date.toLocaleString();
+        accordion.innerHTML = history
+            .map((op, index) => {
+                const date = new Date(op.timestamp);
+                const timeStr = date.toLocaleString();
 
-            return `
+                return `
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="heading-${op.id}">
-                        <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" 
-                                data-bs-toggle="collapse" data-bs-target="#collapse-${op.id}" 
+                        <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapse-${op.id}"
                                 aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse-${op.id}">
                             <div class="d-flex justify-content-between align-items-center w-100 me-3">
                                 <div>
@@ -256,65 +247,81 @@ export const generatorForm = (() => {
                             </div>
                         </button>
                     </h2>
-                    <div id="collapse-${op.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" 
+                    <div id="collapse-${op.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}"
                          aria-labelledby="heading-${op.id}" data-bs-parent="#operationsHistoryAccordion">
                         <div class="accordion-body">
                             <dl class="row mb-0 small">
-                                ${op.user ? `
+                                ${
+                                    op.user
+                                        ? `
                                 <dt class="col-3">User</dt>
                                 <dd class="col-9">
                                     <span class="badge bg-secondary">${op.user}</span>
                                 </dd>
-                                ` : ''}
-                                
+                                `
+                                        : ''
+                                }
+
                                 <dt class="col-3">Gateway</dt>
                                 <dd class="col-9"><code>${op.event_gateway || 'N/A'}</code></dd>
-                                
+
                                 <dt class="col-3">Source</dt>
                                 <dd class="col-9">
                                     <code>${op.event_source || 'N/A'}</code>
-                                    ${op.event_source ? `
-                                    <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-1" 
+                                    ${
+                                        op.event_source
+                                            ? `
+                                    <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-1"
                                             onclick="window.generatorForm.filterBySource('${op.event_source.replace(/'/g, "\\'")}')"
                                             title="Filter by this source">
                                         <i class="bi bi-funnel" style="font-size: 0.75rem;"></i>
                                     </button>
-                                    ` : ''}
+                                    `
+                                            : ''
+                                    }
                                 </dd>
-                                
+
                                 <dt class="col-3">Type</dt>
                                 <dd class="col-9">
                                     <code>${op.event_type || 'N/A'}</code>
-                                    ${op.event_type ? `
-                                    <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-1" 
+                                    ${
+                                        op.event_type
+                                            ? `
+                                    <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-1"
                                             onclick="window.generatorForm.filterByType('${op.event_type.replace(/'/g, "\\'")}')"
                                             title="Filter by this type">
                                         <i class="bi bi-funnel" style="font-size: 0.75rem;"></i>
                                     </button>
-                                    ` : ''}
+                                    `
+                                            : ''
+                                    }
                                 </dd>
-                                
+
                                 <dt class="col-3">Subject</dt>
                                 <dd class="col-9">
                                     <code>${op.event_subject || '(empty)'}</code>
-                                    ${op.event_subject ? `
-                                    <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-1" 
+                                    ${
+                                        op.event_subject
+                                            ? `
+                                    <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-1"
                                             onclick="window.generatorForm.filterBySubject('${op.event_subject.replace(/'/g, "\\'")}')"
                                             title="Filter by this subject">
                                         <i class="bi bi-funnel" style="font-size: 0.75rem;"></i>
                                     </button>
-                                    ` : ''}
+                                    `
+                                            : ''
+                                    }
                                 </dd>
-                                
+
                                 <dt class="col-3">Data</dt>
                                 <dd class="col-9"><pre class="bg-dark p-2 rounded"><code>${op.event_data || '{}'}</code></pre></dd>
-                                
+
                                 <dt class="col-3">Iterations</dt>
                                 <dd class="col-9">${op.iterations || 1}</dd>
-                                
+
                                 <dt class="col-3">Delay</dt>
                                 <dd class="col-9">${op.delay || 100} ms</dd>
-                                
+
                                 <dt class="col-3">Randomization</dt>
                                 <dd class="col-9">
                                     ${op.randomize_source ? '<span class="badge bg-info me-1">Source</span>' : ''}
@@ -332,7 +339,8 @@ export const generatorForm = (() => {
                     </div>
                 </div>
             `;
-        }).join('');
+            })
+            .join('');
     };
 
     /**
@@ -347,7 +355,7 @@ export const generatorForm = (() => {
 
             toastController.showToast({
                 status: 'info',
-                message: 'Operations history cleared'
+                message: 'Operations history cleared',
             });
         } catch (error) {
             console.error('[GeneratorForm] Error clearing history:', error);
@@ -418,20 +426,20 @@ export const generatorForm = (() => {
     };
 
     const initSliders = () => {
-        var eventIterations = document.getElementById("eventIterations");
-        var eventIterationsValue = document.getElementById("eventIterationsValue");
+        var eventIterations = document.getElementById('eventIterations');
+        var eventIterationsValue = document.getElementById('eventIterationsValue');
         if (eventIterations && eventIterationsValue) {
-            eventIterations.addEventListener("input", function () {
+            eventIterations.addEventListener('input', function () {
                 var selectedValue = eventIterations.value;
                 eventIterationsValue.innerHTML = selectedValue;
                 saveFormState(); // Save on change
             });
         }
 
-        var eventDelay = document.getElementById("eventDelay");
-        var eventDelayValue = document.getElementById("eventDelayValue");
+        var eventDelay = document.getElementById('eventDelay');
+        var eventDelayValue = document.getElementById('eventDelayValue');
         if (eventDelay && eventDelayValue) {
-            eventDelay.addEventListener("input", function () {
+            eventDelay.addEventListener('input', function () {
                 var selectedValue = eventDelay.value;
                 eventDelayValue.innerHTML = selectedValue;
                 saveFormState(); // Save on change
@@ -442,7 +450,7 @@ export const generatorForm = (() => {
     /**
      * Toggle custom gateway input visibility
      */
-    const toggleCustomGateway = (show) => {
+    const toggleCustomGateway = show => {
         const customContainer = document.getElementById('custom_gateway_container');
         if (customContainer) {
             if (show) {
@@ -475,7 +483,7 @@ export const generatorForm = (() => {
         }
 
         // Handle gateway selection change
-        gatewaySelect.addEventListener('change', (e) => {
+        gatewaySelect.addEventListener('change', e => {
             if (e.target.value === '__custom__') {
                 toggleCustomGateway(true);
                 if (customGatewayInput) {
@@ -500,7 +508,7 @@ export const generatorForm = (() => {
 
     let isSubmitting = false; // Prevent duplicate submissions
 
-    const handleSubmit = async (event) => {
+    const handleSubmit = async event => {
         console.log('[GeneratorForm] handleSubmit called', event);
         event.preventDefault();
         event.stopPropagation();
@@ -531,20 +539,22 @@ export const generatorForm = (() => {
             const randomTypeBtn = document.getElementById('randomTypeBtn');
             const randomSubjectBtn = document.getElementById('randomSubjectBtn');
 
-            data.randomize_source = data.iterations > 1 && randomSourceBtn?.classList.contains('active') || false;
-            data.randomize_type = data.iterations > 1 && randomTypeBtn?.classList.contains('active') || false;
-            data.randomize_subject = data.iterations > 1 && randomSubjectBtn?.classList.contains('active') || false;
+            data.randomize_source = (data.iterations > 1 && randomSourceBtn?.classList.contains('active')) || false;
+            data.randomize_type = (data.iterations > 1 && randomTypeBtn?.classList.contains('active')) || false;
+            data.randomize_subject = (data.iterations > 1 && randomSubjectBtn?.classList.contains('active')) || false;
 
             // Use custom gateway URL if selected
             if (data.event_gateway === '__custom__') {
                 const customGatewayUrl = document.getElementById('custom_gateway_url')?.value?.trim();
                 if (!customGatewayUrl) {
                     toastController.showToast({
-                        detail: [{
-                            loc: ['form', 'custom_gateway_url'],
-                            msg: 'Please enter a custom gateway URL',
-                            type: 'error'
-                        }]
+                        detail: [
+                            {
+                                loc: ['form', 'custom_gateway_url'],
+                                msg: 'Please enter a custom gateway URL',
+                                type: 'error',
+                            },
+                        ],
                     });
                     return;
                 }
@@ -557,7 +567,7 @@ export const generatorForm = (() => {
             console.log('Randomization:', {
                 source: data.randomize_source,
                 type: data.randomize_type,
-                subject: data.randomize_subject
+                subject: data.randomize_subject,
             });
 
             console.log('[GeneratorForm] Checking authorization...');
@@ -613,14 +623,11 @@ export const generatorForm = (() => {
                     delay: data.delay,
                     randomize_source: data.randomize_source,
                     randomize_type: data.randomize_type,
-                    randomize_subject: data.randomize_subject
+                    randomize_subject: data.randomize_subject,
                 });
 
                 // Handle task status and show toast
-                await Promise.all([
-                    taskController.handleTaskStatus(result.task_id),
-                    toastController.showToast(result)
-                ]);
+                await Promise.all([taskController.handleTaskStatus(result.task_id), toastController.showToast(result)]);
 
                 // Start auto-repeat if enabled and not already running
                 const repeaterEnabledCheckbox = document.getElementById('repeaterEnabled');
@@ -634,11 +641,13 @@ export const generatorForm = (() => {
                 console.error('[GeneratorForm] Error message:', error?.message);
                 console.error('[GeneratorForm] Error stack:', error?.stack);
                 toastController.showToast({
-                    detail: [{
-                        loc: ['form'],
-                        msg: error.message || 'Failed to generate events',
-                        type: 'error'
-                    }]
+                    detail: [
+                        {
+                            loc: ['form'],
+                            msg: error.message || 'Failed to generate events',
+                            type: 'error',
+                        },
+                    ],
                 });
             } finally {
                 isSubmitting = false;
@@ -648,11 +657,13 @@ export const generatorForm = (() => {
             console.error('[GeneratorForm] Error stack:', error.stack);
             isSubmitting = false;
             toastController.showToast({
-                detail: [{
-                    loc: ['form'],
-                    msg: error.message || 'Failed to process form submission',
-                    type: 'error'
-                }]
+                detail: [
+                    {
+                        loc: ['form'],
+                        msg: error.message || 'Failed to process form submission',
+                        type: 'error',
+                    },
+                ],
             });
         }
     };
@@ -669,7 +680,7 @@ export const generatorForm = (() => {
             event_subject: document.getElementById('event_subject')?.getAttribute('value') || '',
             event_data: document.getElementById('event_data')?.textContent.trim() || '{}',
             iterations: '1',
-            delay: '100'
+            delay: '100',
         };
     };
 
@@ -761,8 +772,8 @@ export const generatorForm = (() => {
         if (type === 'uuid') {
             // Generate UUID v4-like string
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                const r = Math.random() * 16 | 0;
-                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                const r = (Math.random() * 16) | 0;
+                const v = c === 'x' ? r : (r & 0x3) | 0x8;
                 return v.toString(16);
             });
         } else if (type === 'numeric') {
@@ -841,7 +852,7 @@ export const generatorForm = (() => {
     /**
      * Update title indicator for auto-repeat status
      */
-    const updateTitleIndicator = (isActive) => {
+    const updateTitleIndicator = isActive => {
         const titleSpan = document.querySelector('.navbar-brand .title');
 
         if (!titleSpan) return;
@@ -858,9 +869,9 @@ export const generatorForm = (() => {
             indicator.id = 'autoRepeatIndicator';
             indicator.className = 'ms-2';
             indicator.innerHTML = `
-                <i class="bi bi-arrow-repeat text-warning" 
+                <i class="bi bi-arrow-repeat text-warning"
                    style="font-size: 1.2em; cursor: pointer; animation: spin 2s linear infinite;"
-                   data-bs-toggle="modal" 
+                   data-bs-toggle="modal"
                    data-bs-target="#tasksModal"
                    title="Auto-repeat active - Click to view tasks"></i>
                 <style>
@@ -952,7 +963,7 @@ export const generatorForm = (() => {
                         repeaterCheckbox.checked = false;
                         repeaterCheckbox.dispatchEvent(new Event('change'));
                     }
-                }
+                },
             });
 
             // Update next execution time
@@ -1041,7 +1052,7 @@ export const generatorForm = (() => {
     /**
      * Filter by source
      */
-    const filterBySource = (source) => {
+    const filterBySource = source => {
         console.log('[GeneratorForm] Filtering by source:', source);
 
         // Import appState dynamically to avoid circular dependencies
@@ -1050,7 +1061,7 @@ export const generatorForm = (() => {
                 type: '',
                 source: source,
                 subject: null,
-                timeRange: 'all'
+                timeRange: 'all',
             });
 
             // Update filtered count to reflect X/Y notation in page title
@@ -1064,7 +1075,7 @@ export const generatorForm = (() => {
 
             toastController.showToast({
                 status: 'info',
-                message: `Filtering by source: ${source}`
+                message: `Filtering by source: ${source}`,
             });
         });
     };
@@ -1072,7 +1083,7 @@ export const generatorForm = (() => {
     /**
      * Filter by type
      */
-    const filterByType = (type) => {
+    const filterByType = type => {
         console.log('[GeneratorForm] Filtering by type:', type);
 
         import('../state/appState.js').then(({ appState }) => {
@@ -1080,7 +1091,7 @@ export const generatorForm = (() => {
                 type: type,
                 source: '',
                 subject: null,
-                timeRange: 'all'
+                timeRange: 'all',
             });
 
             // Update filtered count to reflect X/Y notation in page title
@@ -1094,7 +1105,7 @@ export const generatorForm = (() => {
 
             toastController.showToast({
                 status: 'info',
-                message: `Filtering by type: ${type}`
+                message: `Filtering by type: ${type}`,
             });
         });
     };
@@ -1102,7 +1113,7 @@ export const generatorForm = (() => {
     /**
      * Filter by subject
      */
-    const filterBySubject = (subject) => {
+    const filterBySubject = subject => {
         console.log('[GeneratorForm] Filtering by subject:', subject);
 
         import('../state/appState.js').then(({ appState }) => {
@@ -1110,7 +1121,7 @@ export const generatorForm = (() => {
                 type: '',
                 source: '',
                 subject: subject,
-                timeRange: 'all'
+                timeRange: 'all',
             });
 
             // Update filtered count to reflect X/Y notation in page title
@@ -1124,7 +1135,7 @@ export const generatorForm = (() => {
 
             toastController.showToast({
                 status: 'info',
-                message: `Filtering by subject: ${subject}`
+                message: `Filtering by subject: ${subject}`,
             });
         });
     };
@@ -1164,7 +1175,7 @@ export const generatorForm = (() => {
             // Setup history dropdown handler
             const historyDropdown = document.getElementById('operationHistory');
             if (historyDropdown) {
-                historyDropdown.addEventListener('change', (e) => {
+                historyDropdown.addEventListener('change', e => {
                     if (e.target.value) {
                         loadOperationFromHistory(e.target.value);
                     }
@@ -1180,7 +1191,7 @@ export const generatorForm = (() => {
                         message: 'Are you sure you want to clear all operations history? This action cannot be undone.',
                         confirmText: 'Yes, clear history',
                         confirmClass: 'btn-danger',
-                        onConfirm: clearOperationsHistory
+                        onConfirm: clearOperationsHistory,
                     });
                 });
             }
@@ -1195,22 +1206,20 @@ export const generatorForm = (() => {
             const form = document.getElementById('generatorForm');
             if (form) {
                 console.log('[GeneratorForm] Attaching submit handler to form');
-                form.addEventListener('submit', (event) => {
-                    console.log('[GeneratorForm] Form submit event triggered');
-                    handleSubmit(event);
-                }, { capture: false, once: false });
+                form.addEventListener(
+                    'submit',
+                    event => {
+                        console.log('[GeneratorForm] Form submit event triggered');
+                        handleSubmit(event);
+                    },
+                    { capture: false, once: false }
+                );
             } else {
                 console.error('[GeneratorForm] Form element not found!');
             }
 
             // Add input listeners to save state on change
-            const inputs = [
-                'event_gateway',
-                'event_source',
-                'event_type',
-                'event_subject',
-                'event_data'
-            ];
+            const inputs = ['event_gateway', 'event_source', 'event_type', 'event_subject', 'event_data'];
 
             inputs.forEach(inputId => {
                 const element = document.getElementById(inputId);
@@ -1248,11 +1257,10 @@ export const generatorForm = (() => {
         loadOperation: loadOperationFromHistory,
         filterBySource: filterBySource,
         filterByType: filterByType,
-        filterBySubject: filterBySubject
+        filterBySubject: filterBySubject,
     };
 
     return {
-        init
-    }
-
+        init,
+    };
 })();

@@ -1,7 +1,8 @@
 import json
 import typing
 from datetime import datetime
-from pydantic import BaseModel, HttpUrl, field_validator, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, HttpUrl, field_validator
 
 
 class CloudEvent(BaseModel):

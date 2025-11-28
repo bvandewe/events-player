@@ -15,15 +15,15 @@ Features:
 """
 
 import logging
-from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 from functools import lru_cache
+from typing import Any, Dict, List, Optional
 
 import httpx
-from jose import jwt, jwk
-from jose.exceptions import JWTError, JWKError, ExpiredSignatureError, JWTClaimsError
-from fastapi import Request, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import jwk, jwt
+from jose.exceptions import ExpiredSignatureError, JWKError, JWTClaimsError, JWTError
 
 from .settings import settings
 
@@ -87,14 +87,18 @@ class JWTValidator:
                 self._jwks_cache_time = datetime.now()
 
                 # Log available key IDs for troubleshooting
-                available_kids = [key.get("kid", "unknown") for key in jwks_data.get("keys", [])]
+                available_kids = [
+                    key.get("kid", "unknown") for key in jwks_data.get("keys", [])
+                ]
                 logger.info(f"Fetched JWKS from {jwks_url}")
                 logger.debug(f"Available key IDs (kid): {available_kids}")
                 return jwks_data
 
         except httpx.HTTPError as e:
             logger.error(f"Failed to fetch JWKS from {jwks_url}: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to fetch JWKS: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to fetch JWKS: {str(e)}"
+            )
 
     def _get_signing_key(self, token: str, jwks: Dict[str, Any]) -> Optional[str]:
         """
@@ -196,7 +200,9 @@ class JWTValidator:
             # If key not found, invalidate cache and try one more time
             # This handles key rotation scenarios where the token is signed with a new key
             if not signing_key:
-                logger.info("Signing key not found in cached JWKS, refreshing JWKS cache...")
+                logger.info(
+                    "Signing key not found in cached JWKS, refreshing JWKS cache..."
+                )
                 self._jwks_cache = None  # Invalidate cache
                 self._jwks_cache_time = None
                 jwks = await self._fetch_jwks()  # Fetch fresh JWKS
@@ -240,7 +246,9 @@ class JWTValidator:
             raise HTTPException(status_code=401, detail="Token has expired")
         except JWTClaimsError as e:
             logger.warning(f"Invalid token claims: {e}")
-            raise HTTPException(status_code=401, detail=f"Invalid token claims: {str(e)}")
+            raise HTTPException(
+                status_code=401, detail=f"Invalid token claims: {str(e)}"
+            )
         except JWTError as e:
             logger.error(f"JWT validation error: {e}")
             raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
@@ -274,13 +282,17 @@ class JWTValidator:
         roles = []
 
         # Log available claims for debugging
-        logger.info(f"Extracting roles from token. Available claims: {list(token_payload.keys())}")
+        logger.info(
+            f"Extracting roles from token. Available claims: {list(token_payload.keys())}"
+        )
 
         # OAuth/OIDC format: realm_roles or realm_access.roles (highest priority)
         if "realm_roles" in token_payload:
             roles = token_payload["realm_roles"]
             logger.info(f"✓ Roles extracted from 'realm_roles': {roles}")
-        elif "realm_access" in token_payload and "roles" in token_payload["realm_access"]:
+        elif (
+            "realm_access" in token_payload and "roles" in token_payload["realm_access"]
+        ):
             roles = token_payload["realm_access"]["roles"]
             logger.info(f"✓ Roles extracted from 'realm_access.roles': {roles}")
 
@@ -309,7 +321,9 @@ class JWTValidator:
         user_info = {
             "user_id": token_payload.get("sub", ""),
             "email": token_payload.get("email", ""),
-            "username": token_payload.get("preferred_username", token_payload.get("username", "")),
+            "username": token_payload.get(
+                "preferred_username", token_payload.get("username", "")
+            ),
             "first_name": token_payload.get("given_name", ""),
             "last_name": token_payload.get("family_name", ""),
             "full_name": token_payload.get("name", ""),
@@ -320,8 +334,12 @@ class JWTValidator:
         }
 
         # Generate full name if not present
-        if not user_info["full_name"] and (user_info["first_name"] or user_info["last_name"]):
-            user_info["full_name"] = f"{user_info['first_name']} {user_info['last_name']}".strip()
+        if not user_info["full_name"] and (
+            user_info["first_name"] or user_info["last_name"]
+        ):
+            user_info["full_name"] = (
+                f"{user_info['first_name']} {user_info['last_name']}".strip()
+            )
 
         # Use email as username if username not present
         if not user_info["username"] and user_info["email"]:
@@ -577,7 +595,9 @@ async def require_operator(
 # OAuth Token Exchange
 
 
-async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) -> Dict[str, Any]:
+async def exchange_oauth_code(
+    code: str, redirect_uri: str, code_verifier: str
+) -> Dict[str, Any]:
     """
     Exchange OAuth authorization code for access token.
 
@@ -601,7 +621,9 @@ async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) 
         HTTPException: If token exchange fails
     """
     if not settings.oauth_server_url or not settings.oauth_realm:
-        raise HTTPException(status_code=500, detail="OAuth server not configured for OAuth flow")
+        raise HTTPException(
+            status_code=500, detail="OAuth server not configured for OAuth flow"
+        )
 
     token_endpoint = (
         f"{settings.oauth_base_url_backend}/realms/{settings.oauth_realm}"
@@ -631,7 +653,9 @@ async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) 
             )
 
             if response.status_code != 200:
-                logger.error(f"Token exchange failed: {response.status_code} - {response.text}")
+                logger.error(
+                    f"Token exchange failed: {response.status_code} - {response.text}"
+                )
                 raise HTTPException(
                     status_code=400, detail=f"Token exchange failed: {response.text}"
                 )
@@ -642,7 +666,9 @@ async def exchange_oauth_code(code: str, redirect_uri: str, code_verifier: str) 
 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error during token exchange: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to exchange token: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to exchange token: {str(e)}"
+        )
 
 
 async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
@@ -668,7 +694,9 @@ async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
         HTTPException: If token refresh fails
     """
     if not settings.oauth_server_url or not settings.oauth_realm:
-        raise HTTPException(status_code=500, detail="OAuth server not configured for token refresh")
+        raise HTTPException(
+            status_code=500, detail="OAuth server not configured for token refresh"
+        )
 
     token_endpoint = (
         f"{settings.oauth_base_url_backend}/realms/{settings.oauth_realm}"
@@ -696,7 +724,9 @@ async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
             )
 
             if response.status_code != 200:
-                logger.error(f"Token refresh failed: {response.status_code} - {response.text}")
+                logger.error(
+                    f"Token refresh failed: {response.status_code} - {response.text}"
+                )
                 raise HTTPException(
                     status_code=401, detail=f"Token refresh failed: {response.text}"
                 )
@@ -707,4 +737,6 @@ async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error during token refresh: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to refresh token: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to refresh token: {str(e)}"
+        )

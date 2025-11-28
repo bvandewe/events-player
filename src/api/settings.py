@@ -1,4 +1,5 @@
 import typing
+
 from pydantic import BaseModel, HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -77,7 +78,9 @@ class ApiSettings(BaseSettings):
     #   - Recommended: 50000-200000 depending on event volume and retention needs
     #   - Impact: Determines how far back the event timeline and dashboard charts extend
     storage_max_recent_events: int = 5000  # Tier 1: Max full events (capacity-based)
-    storage_max_metadata_events: int = 100000  # Tier 2: Max metadata entries (capacity-based)
+    storage_max_metadata_events: int = (
+        100000  # Tier 2: Max metadata entries (capacity-based)
+    )
 
     # HTTP client configuration
     http_client_timeout: float = 30.0
@@ -89,8 +92,12 @@ class ApiSettings(BaseSettings):
     #   - OAuth/OIDC: OAuth 2.0 + OIDC flow when oauth_server_url is configured
     #   - None: When auth_required=False, authentication is optional
     auth_required: bool = False  # Require authentication for all endpoints
-    auth_jwks_url: str = ""  # JWKS endpoint (optional - auto-derived from oauth_* if not set)
-    auth_issuer: str = ""  # Expected JWT issuer (optional - auto-derived from oauth_* if not set)
+    auth_jwks_url: str = (
+        ""  # JWKS endpoint (optional - auto-derived from oauth_* if not set)
+    )
+    auth_issuer: str = (
+        ""  # Expected JWT issuer (optional - auto-derived from oauth_* if not set)
+    )
     auth_audience: str = ""  # Expected JWT audience
     auth_algorithm: str = "RS256"  # JWT signature algorithm
 
@@ -107,7 +114,9 @@ class ApiSettings(BaseSettings):
     # Role mapping configuration
     # Maps JWT token roles to application roles (admin, operator, user)
     auth_role_admin: str = "admin"  # Role name in JWT that grants admin privileges
-    auth_role_operator: str = "operator"  # Role name in JWT that grants operator privileges
+    auth_role_operator: str = (
+        "operator"  # Role name in JWT that grants operator privileges
+    )
     auth_role_user: str = "user"  # Role name in JWT that grants user privileges
 
     # OAuth/OIDC settings (for OAuth-based authentication with any IDP)
@@ -116,7 +125,9 @@ class ApiSettings(BaseSettings):
     oauth_server_url_backend: str = (
         ""  # OAuth server URL for backend (optional, defaults to oauth_server_url)
     )
-    oauth_legacy_keycloak: bool = False  # Set to True for Keycloak < v17 (adds /auth prefix)
+    oauth_legacy_keycloak: bool = (
+        False  # Set to True for Keycloak < v17 (adds /auth prefix)
+    )
     oauth_realm: str = "events-player"  # OAuth realm/tenant name
     oauth_client_id: str = ""  # OAuth client ID
     oauth_client_secret: str = ""  # OAuth client secret

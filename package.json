@@ -1,32 +1,32 @@
 {
-  "name": "event-viewer",
-  "version": "0.4.10",
-  "description": "This micro-app can be used as a test subscriber and/or emitter of [CloudEvents](https://cloudevents.io/).",
-  "scripts": {
-    "start": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html src/ui/html/components/*.html --public-url /static/ --dist-dir static",
-    "dev": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html src/ui/html/components/*.html --public-url /static/ --dist-dir static --hmr-port 1234",
-    "build": "npm run copy && parcel build src/ui/index.html src/ui/html/*.html src/ui/html/components/*.html --public-url /static/ --dist-dir static --no-scope-hoist",
-    "copy": "copyfiles -f src/ui/img/*.* static/img"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@ccie-gitlab.ccie.cisco.com:mozart/infrastructure/eventing/cloudevent-viewer.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@parcel/transformer-sass": "^2.8.3",
-    "copyfiles": "^2.4.1",
-    "parcel": "^2.8.3",
-    "sass": "^1.60.0"
-  },
-  "dependencies": {
-    "bootstrap": "^5.3.0-alpha2",
-    "bootstrap-icons": "^1.10.4",
-    "chart.js": "^4.5.1",
-    "chartjs-adapter-date-fns": "^3.0.0",
-    "date-fns": "^4.1.0",
-    "uuid": "^9.0.0"
-  }
+    "name": "event-viewer",
+    "version": "0.4.10",
+    "description": "This micro-app can be used as a test subscriber and/or emitter of [CloudEvents](https://cloudevents.io/).",
+    "scripts": {
+        "start": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html src/ui/html/components/*.html --public-url /static/ --dist-dir static",
+        "dev": "npm run copy && parcel serve src/ui/index.html src/ui/html/*.html src/ui/html/components/*.html --public-url /static/ --dist-dir static --hmr-port 1234",
+        "build": "npm run copy && parcel build src/ui/index.html src/ui/html/*.html src/ui/html/components/*.html --public-url /static/ --dist-dir static --no-scope-hoist",
+        "copy": "copyfiles -f src/ui/img/*.* static/img"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@ccie-gitlab.ccie.cisco.com:mozart/infrastructure/eventing/cloudevent-viewer.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@parcel/transformer-sass": "^2.8.3",
+        "copyfiles": "^2.4.1",
+        "parcel": "^2.8.3",
+        "sass": "^1.60.0"
+    },
+    "dependencies": {
+        "bootstrap": "^5.3.0-alpha2",
+        "bootstrap-icons": "^1.10.4",
+        "chart.js": "^4.5.1",
+        "chartjs-adapter-date-fns": "^3.0.0",
+        "date-fns": "^4.1.0",
+        "uuid": "^9.0.0"
+    }
 }

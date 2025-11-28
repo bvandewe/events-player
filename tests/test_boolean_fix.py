@@ -2,8 +2,8 @@
 Test to demonstrate the boolean/None serialization fix for CloudEvents
 """
 
-import json
 import datetime
+import json
 
 
 async def build_sse_payload(payload: dict):
@@ -79,8 +79,12 @@ async def test_boolean_serialization():
     has_null = '"optional_field": null' in json_str
 
     # Check that Python string representations are NOT present
-    has_uppercase_false = '"terminated": False' in json_str or "'terminated': False" in json_str
-    has_none_string = '"optional_field": None' in json_str or "'optional_field': None" in json_str
+    has_uppercase_false = (
+        '"terminated": False' in json_str or "'terminated': False" in json_str
+    )
+    has_none_string = (
+        '"optional_field": None' in json_str or "'optional_field': None" in json_str
+    )
 
     print(f"   ✓ Contains JSON 'false': {has_lowercase_false}")
     print(f"   ✓ Contains JSON 'null': {has_null}")
@@ -91,7 +95,12 @@ async def test_boolean_serialization():
     print(json_str[:300] + "...")
 
     # Final verification
-    if has_lowercase_false and has_null and not has_uppercase_false and not has_none_string:
+    if (
+        has_lowercase_false
+        and has_null
+        and not has_uppercase_false
+        and not has_none_string
+    ):
         print("\n" + "=" * 60)
         print("✅ SUCCESS! Boolean/None serialization test passed!")
         print("   The fix correctly converts Python types to JSON types.")
