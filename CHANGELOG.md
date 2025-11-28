@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+## 0.5.1 - 2025-11-28
+
 ### Security
 
 - **Dependency Replacement**
