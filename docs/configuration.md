@@ -595,7 +595,7 @@ services:
 
 CloudEvent Player supports configurable role mapping, allowing you to map JWT token roles to application roles without code changes. This is essential for integrating with identity providers that use different role naming conventions.
 
-#### `AUTH_ROLE_ADMIN`
+### `AUTH_ROLE_ADMIN`
 
 - **Description**: Role name in JWT that grants administrator privileges
 - **Type**: String
