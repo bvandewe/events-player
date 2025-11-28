@@ -20,10 +20,11 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import httpx
+import jwt
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import jwk, jwt
-from jose.exceptions import ExpiredSignatureError, JWKError, JWTClaimsError, JWTError
+from jwt.algorithms import RSAAlgorithm
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError, PyJWTError
 
 from .settings import settings
 
@@ -100,7 +101,7 @@ class JWTValidator:
                 status_code=500, detail=f"Failed to fetch JWKS: {str(e)}"
             )
 
-    def _get_signing_key(self, token: str, jwks: Dict[str, Any]) -> Optional[str]:
+    def _get_signing_key(self, token: str, jwks: Dict[str, Any]) -> Optional[Any]:
         """
         Extract the signing key from JWKS that matches the token's key ID.
 
@@ -109,7 +110,7 @@ class JWTValidator:
             jwks: JWKS dictionary containing keys
 
         Returns:
-            Signing key as PEM string, or None if not found
+            Signing key object (RSAPublicKey), or None if not found
         """
         try:
             # Decode header without verification to get kid (key ID)
@@ -123,10 +124,10 @@ class JWTValidator:
             # Find the matching key in JWKS
             for key in jwks.get("keys", []):
                 if key.get("kid") == kid:
-                    # Convert JWK to PEM format
+                    # Convert JWK to PEM format/Key Object
                     try:
-                        return jwk.construct(key).to_pem().decode("utf-8")
-                    except (JWKError, AttributeError) as e:
+                        return RSAAlgorithm.from_jwk(key)
+                    except Exception as e:
                         logger.error(f"Failed to construct key: {e}")
                         return None
 
@@ -139,7 +140,7 @@ class JWTValidator:
             )
             return None
 
-        except JWTError as e:
+        except PyJWTError as e:
             logger.error(f"Failed to decode token header: {e}")
             return None
 
@@ -174,8 +175,6 @@ class JWTValidator:
             if settings.auth_trust_mode:
                 logger.info("Trust mode enabled - decoding token without verification")
                 # Decode without verification - skip all validations
-                # Note: python-jose requires a key parameter even when not verifying,
-                # so we pass an empty string
                 options = {
                     "verify_signature": False,
                     "verify_exp": False,
@@ -183,9 +182,9 @@ class JWTValidator:
                     "verify_iat": False,
                     "verify_aud": False,
                     "verify_iss": False,
-                    "verify_at_hash": False,  # Skip at_hash validation (OpenID Connect)
+                    # "verify_at_hash": False,  # PyJWT doesn't validate at_hash by default unless requested
                 }
-                payload = jwt.decode(token, "", options=options)
+                payload = jwt.decode(token, options=options)
                 logger.info("Trust mode: Token decoded successfully")
                 logger.debug(f"Trust mode token payload keys: {list(payload.keys())}")
                 return payload
@@ -225,7 +224,7 @@ class JWTValidator:
                 "verify_exp": True,
                 "verify_nbf": True,
                 "verify_iat": True,
-                "verify_aud": settings.auth_audience != "",
+                "verify_aud": False,  # Manually check audience to handle missing 'aud' claim gracefully
             }
 
             auth_issuer = settings.get_auth_issuer()
@@ -234,9 +233,30 @@ class JWTValidator:
                 signing_key,
                 algorithms=[settings.auth_algorithm],
                 issuer=auth_issuer if auth_issuer else None,
-                audience=settings.auth_audience if settings.auth_audience else None,
                 options=options,
             )
+
+            # Manual audience validation
+            if settings.auth_audience:
+                aud = payload.get("aud")
+                if aud:
+                    # Validate audience match
+                    if isinstance(aud, str):
+                        if aud != settings.auth_audience:
+                            raise InvalidTokenError(
+                                f"Invalid audience. Expected {settings.auth_audience}, got {aud}"
+                            )
+                    elif isinstance(aud, list):
+                        if settings.auth_audience not in aud:
+                            raise InvalidTokenError(
+                                f"Invalid audience. Expected {settings.auth_audience}, got {aud}"
+                            )
+                else:
+                    # Missing aud claim
+                    # Log warning but allow it (to match lenient behavior)
+                    logger.warning(
+                        f"Token missing 'aud' claim but AUTH_AUDIENCE is set to '{settings.auth_audience}'. Allowing request."
+                    )
 
             logger.debug(f"Token validated for user: {payload.get('sub', 'unknown')}")
             return payload
@@ -244,12 +264,12 @@ class JWTValidator:
         except ExpiredSignatureError:
             logger.warning("Token has expired")
             raise HTTPException(status_code=401, detail="Token has expired")
-        except JWTClaimsError as e:
+        except InvalidTokenError as e:
             logger.warning(f"Invalid token claims: {e}")
             raise HTTPException(
                 status_code=401, detail=f"Invalid token claims: {str(e)}"
             )
-        except JWTError as e:
+        except PyJWTError as e:
             logger.error(f"JWT validation error: {e}")
             raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
         except Exception as e:
