@@ -34,6 +34,7 @@ docker run -p 8080:8080 ghcr.io/bvandewe/events-player:latest
 Pre-authenticated mode where JWT tokens are injected by OAuth2 Proxy or Istio service mesh. The backend validates tokens but the frontend doesn't handle the login flow.
 
 **How it works:**
+
 1. OAuth2 Proxy handles the OAuth flow with Keycloak
 2. OAuth2 Proxy stores tokens in encrypted cookie
 3. OAuth2 Proxy injects JWT in request headers to backend
@@ -49,6 +50,7 @@ docker run -p 8080:8080 \
 ```
 
 **Environment Variables:**
+
 - `AUTH_REQUIRED=true` - Enable authentication
 - `AUTH_TRUST_MODE=true` - Skip JWT verification (proxy already validated)
 - `AUTH_JWKS_URL` - Optional, for JWT validation if not using trust mode
@@ -61,6 +63,7 @@ docker run -p 8080:8080 \
 Full OAuth 2.0 authentication with Keycloak for local development and standalone deployments.
 
 **How it works:**
+
 1. Frontend calls `/api/auth/info` and receives OAuth configuration
 2. Frontend shows login button when user not authenticated
 3. User clicks login → Redirects to Keycloak
@@ -127,8 +130,8 @@ The API enforces role-based access at the endpoint level:
 
 - **Required Role**: `operator` or `admin`
 - **Admin-Only Features**:
-    - `iterations > 1`: Only admins can generate multiple events
-    - `delay != 150`: Only admins can customize delay between events
+  - `iterations > 1`: Only admins can generate multiple events
+  - `delay != 150`: Only admins can customize delay between events
 
 **Example Response (403 Forbidden):**
 
@@ -629,47 +632,47 @@ The application validates tokens on every API request:
 #### Event Generation
 
 - `POST /api/generate` - Generate events (requires `operator` or `admin`)
-    - Submits background task for event generation
-    - Returns task ID for tracking
-    - Validates OAuth token before processing
+  - Submits background task for event generation
+  - Returns task ID for tracking
+  - Validates OAuth token before processing
 
 #### Task Management
 
 - `GET /api/tasks` - View all active tasks (requires `admin`)
 
-    - Lists running, pending, completed, and failed tasks
-    - Returns task status, progress, and timestamps
-    - Admin-only endpoint
+  - Lists running, pending, completed, and failed tasks
+  - Returns task status, progress, and timestamps
+  - Admin-only endpoint
 
 - `POST /api/task/{task_id}/cancel` - Cancel specific task (requires `admin`)
 
-    - Gracefully stops event generation task
-    - Events generated before cancellation are preserved
-    - Admin-only endpoint
+  - Gracefully stops event generation task
+  - Events generated before cancellation are preserved
+  - Admin-only endpoint
 
 - `POST /api/tasks/cancel-all` - Cancel all running tasks (requires `admin`)
-    - Bulk cancellation for all active tasks
-    - Emergency control feature
-    - Admin-only endpoint
+  - Bulk cancellation for all active tasks
+  - Emergency control feature
+  - Admin-only endpoint
 
 #### Authentication Management
 
 - `GET /api/auth/info` - Get current authentication status and config
 
-    - Returns user info if authenticated
-    - Provides Keycloak configuration for login
-    - Public endpoint
+  - Returns user info if authenticated
+  - Provides Keycloak configuration for login
+  - Public endpoint
 
 - `POST /api/auth/callback` - OAuth callback handler for token exchange
 
-    - Exchanges authorization code for tokens
-    - PKCE verification
-    - Returns access_token, refresh_token, and user info
+  - Exchanges authorization code for tokens
+  - PKCE verification
+  - Returns access_token, refresh_token, and user info
 
 - `POST /api/auth/refresh` - Refresh access token
-    - Exchanges refresh_token for new access_token
-    - Extends user session without re-login
-    - Returns new tokens and updated expiry
+  - Exchanges refresh_token for new access_token
+  - Extends user session without re-login
+  - Returns new tokens and updated expiry
 
 ### Authorization Rules
 
@@ -760,6 +763,7 @@ In production with OAuth2 Proxy:
 7. No login button shown, user already authenticated ✅
 
 **Backend configuration can be minimal:**
+
 ```bash
 AUTH_REQUIRED=true
 AUTH_TRUST_MODE=true

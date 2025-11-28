@@ -17,7 +17,7 @@ export const exportEventsController = (() => {
     /**
      * Initialize the export controller
      */
-    const init = (storage) => {
+    const init = storage => {
         storageManager = storage;
         exportButton = document.getElementById('exportEventsBtn');
 
@@ -81,7 +81,7 @@ export const exportEventsController = (() => {
                             <div class="mb-3">
                                 <p class="text-secondary">Choose what events to export:</p>
                             </div>
-                            
+
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="radio" name="exportType" id="exportFiltered" value="filtered" checked>
                                 <label class="form-check-label" for="exportFiltered">
@@ -90,7 +90,7 @@ export const exportEventsController = (() => {
                                     <small class="text-secondary" id="exportFilteredInfo">Export only the events matching current filters</small>
                                 </label>
                             </div>
-                            
+
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="radio" name="exportType" id="exportAll" value="all">
                                 <label class="form-check-label" for="exportAll">
@@ -185,7 +185,6 @@ export const exportEventsController = (() => {
 
                 const filterSuffix = filterParts.length > 0 ? `_filtered_${filterParts.join('_')}` : '_filtered';
                 filename = `cloudevents${filterSuffix}_${getTimestamp()}.json`;
-
             } else {
                 // Export all events
                 events = await storageManager.getRecentEvents({ limit: Number.MAX_SAFE_INTEGER });
@@ -208,7 +207,6 @@ export const exportEventsController = (() => {
 
             // Show success message
             showSuccessToast(cleanedEvents.length);
-
         } catch (error) {
             console.error('[ExportEvents] Export failed:', error);
             showErrorToast(error.message);
@@ -218,7 +216,7 @@ export const exportEventsController = (() => {
     /**
      * Build filter options for storage query
      */
-    const buildFilterOptions = (filters) => {
+    const buildFilterOptions = filters => {
         const options = {};
 
         if (filters.type) options.type = filters.type;
@@ -232,7 +230,7 @@ export const exportEventsController = (() => {
                 '1h': 3600000,
                 '6h': 21600000,
                 '24h': 86400000,
-                '7d': 604800000
+                '7d': 604800000,
             };
             const timeMs = ranges[filters.timeRange];
             if (timeMs) {
@@ -273,7 +271,7 @@ export const exportEventsController = (() => {
     /**
      * Show success toast notification
      */
-    const showSuccessToast = (count) => {
+    const showSuccessToast = count => {
         const message = `Successfully exported ${count} event${count !== 1 ? 's' : ''}`;
 
         // Create a simple Bootstrap alert that auto-dismisses
@@ -284,7 +282,7 @@ export const exportEventsController = (() => {
     /**
      * Show error toast notification
      */
-    const showErrorToast = (message) => {
+    const showErrorToast = message => {
         showNotification(`Export failed: ${message}`, 'danger');
         console.error(`[ExportEvents] Export failed: ${message}`);
     };
@@ -294,7 +292,7 @@ export const exportEventsController = (() => {
      */
     const showNotification = (message, type = 'info') => {
         const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" 
+            <div class="alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3"
                  role="alert" style="z-index: 9999; min-width: 300px;">
                 <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
                 ${message}
@@ -320,6 +318,6 @@ export const exportEventsController = (() => {
     };
 
     return {
-        init
+        init,
     };
 })();

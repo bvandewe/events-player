@@ -1,6 +1,6 @@
 /**
  * AppState - Centralized state management for the CloudEvents Player
- * 
+ *
  * Provides reactive state updates across all views (Events, Timeline, Dashboard)
  * with a pub/sub pattern for component communication.
  */
@@ -17,7 +17,7 @@ class AppState {
                 type: '',
                 source: '',
                 subject: null,
-                timeRange: 'all'
+                timeRange: 'all',
             },
 
             // Event counter state
@@ -33,12 +33,12 @@ class AppState {
             // Storage stats
             stats: {
                 metadataCount: 0,
-                recentCount: 0
+                recentCount: 0,
             },
 
             // Last event received (for triggering updates)
             lastEvent: null,
-            lastEventTime: null
+            lastEventTime: null,
         };
 
         // Subscribers: Map<stateKey, Array<callback>>
@@ -188,7 +188,7 @@ class AppState {
             type: '',
             source: '',
             subject: null,
-            timeRange: 'all'
+            timeRange: 'all',
         };
 
         // Persist to localStorage

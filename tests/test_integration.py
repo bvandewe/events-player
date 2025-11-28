@@ -51,7 +51,9 @@ class TestSSEStreaming:
         # Connect to task stream
         with client.stream("GET", f"/stream/task/{task_id}") as stream_response:
             assert stream_response.status_code == 200
-            assert "text/event-stream" in stream_response.headers.get("content-type", "")
+            assert "text/event-stream" in stream_response.headers.get(
+                "content-type", ""
+            )
 
 
 class TestEventPublishSubscribe:
@@ -93,7 +95,9 @@ class TestEventPublishSubscribe:
         }
 
         response = client.post(
-            "/events/pub", json=event, headers={"Content-Type": "application/cloudevents+json"}
+            "/events/pub",
+            json=event,
+            headers={"Content-Type": "application/cloudevents+json"},
         )
 
         assert response.status_code == 202

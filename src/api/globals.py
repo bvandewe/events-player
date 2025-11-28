@@ -2,8 +2,8 @@ import asyncio
 import logging
 import typing
 
-from .settings import settings
 from .models import EventGeneratorTask
+from .settings import settings
 
 # Configure logging
 logging.basicConfig(format=settings.log_format, level=settings.log_level)

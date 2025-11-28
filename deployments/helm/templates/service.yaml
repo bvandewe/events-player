@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: "{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}"
-  namespace: "{{ .Values.namespace }}"
+    name: '{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}'
+    namespace: '{{ .Values.namespace }}'
 spec:
-  selector:
-    app: "{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}"
-  ports:
-    - protocol: TCP
-      port: {{ .Values.player.service.port }}
-      targetPort: 8080
-  type: {{ .Values.player.service.type }}
+    selector:
+        app: '{{ .Values.global.appLabel }}-{{ .Values.global.appLabelSuffix }}'
+    ports:
+        - protocol: TCP
+          port: { { .Values.player.service.port } }
+          targetPort: 8080
+    type: { { .Values.player.service.type } }

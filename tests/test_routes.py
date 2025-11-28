@@ -79,7 +79,9 @@ class TestCloudEventSubscriber:
         }
 
         response = client.post(
-            "/events/pub", json=event, headers={"Content-Type": "application/cloudevents+json"}
+            "/events/pub",
+            json=event,
+            headers={"Content-Type": "application/cloudevents+json"},
         )
 
         assert response.status_code == 202

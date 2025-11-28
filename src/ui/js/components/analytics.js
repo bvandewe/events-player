@@ -56,13 +56,15 @@ class AnalyticsController {
             type: 'bar',
             data: {
                 labels: [],
-                datasets: [{
-                    label: 'Events by Source',
-                    data: [],
-                    backgroundColor: 'rgba(108, 117, 125, 0.5)',
-                    borderColor: 'rgba(108, 117, 125, 1)',
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: 'Events by Source',
+                        data: [],
+                        backgroundColor: 'rgba(108, 117, 125, 0.5)',
+                        borderColor: 'rgba(108, 117, 125, 1)',
+                        borderWidth: 1,
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -72,17 +74,17 @@ class AnalyticsController {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: (context) => {
+                            label: context => {
                                 return `${context.label}: ${context.parsed.x} events (click to filter)`;
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
+                        ticks: { precision: 0 },
+                    },
                 },
                 onClick: (event, elements) => {
                     if (elements.length > 0) {
@@ -94,11 +96,11 @@ class AnalyticsController {
                         const currentFilters = appState.get('filters') || {};
                         appState.set('filters', {
                             ...currentFilters,
-                            source: source
+                            source: source,
                         });
                     }
-                }
-            }
+                },
+            },
         });
     }
 
@@ -114,13 +116,15 @@ class AnalyticsController {
             type: 'bar',
             data: {
                 labels: [],
-                datasets: [{
-                    label: 'Events by Type',
-                    data: [],
-                    backgroundColor: 'rgba(25, 135, 84, 0.5)',
-                    borderColor: 'rgba(25, 135, 84, 1)',
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: 'Events by Type',
+                        data: [],
+                        backgroundColor: 'rgba(25, 135, 84, 0.5)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1,
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -130,17 +134,17 @@ class AnalyticsController {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: (context) => {
+                            label: context => {
                                 return `${context.label}: ${context.parsed.x} events (click to filter)`;
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
+                        ticks: { precision: 0 },
+                    },
                 },
                 onClick: (event, elements) => {
                     if (elements.length > 0) {
@@ -152,11 +156,11 @@ class AnalyticsController {
                         const currentFilters = appState.get('filters') || {};
                         appState.set('filters', {
                             ...currentFilters,
-                            type: type
+                            type: type,
                         });
                     }
-                }
-            }
+                },
+            },
         });
     }
 
@@ -172,13 +176,15 @@ class AnalyticsController {
             type: 'bar',
             data: {
                 labels: [],
-                datasets: [{
-                    label: 'Events by Subject',
-                    data: [],
-                    backgroundColor: 'rgba(255, 193, 7, 0.5)',
-                    borderColor: 'rgba(255, 193, 7, 1)',
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: 'Events by Subject',
+                        data: [],
+                        backgroundColor: 'rgba(255, 193, 7, 0.5)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1,
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -188,17 +194,17 @@ class AnalyticsController {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: (context) => {
+                            label: context => {
                                 return `${context.label}: ${context.parsed.x} events (click to filter)`;
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
+                        ticks: { precision: 0 },
+                    },
                 },
                 onClick: (event, elements) => {
                     if (elements.length > 0) {
@@ -210,11 +216,11 @@ class AnalyticsController {
                         const currentFilters = appState.get('filters') || {};
                         appState.set('filters', {
                             ...currentFilters,
-                            subject: subject
+                            subject: subject,
                         });
                     }
-                }
-            }
+                },
+            },
         });
     }
 
@@ -305,7 +311,7 @@ class AnalyticsController {
                     '24h': 24 * 60 * 60 * 1000,
                     '2d': 2 * 24 * 60 * 60 * 1000,
                     '7d': 7 * 24 * 60 * 60 * 1000,
-                    '30d': 30 * 24 * 60 * 60 * 1000
+                    '30d': 30 * 24 * 60 * 60 * 1000,
                 };
                 const timeMs = ranges[filters.timeRange];
                 if (timeMs) {
@@ -324,7 +330,7 @@ class AnalyticsController {
         const buttons = [
             { id: 'topSourcesEnlargeBtn', chartKey: 'topSources', title: 'Top Sources' },
             { id: 'topTypesEnlargeBtn', chartKey: 'topTypes', title: 'Top Event Types' },
-            { id: 'topSubjectsEnlargeBtn', chartKey: 'topSubjects', title: 'Top Subjects' }
+            { id: 'topSubjectsEnlargeBtn', chartKey: 'topSubjects', title: 'Top Subjects' },
         ];
 
         buttons.forEach(({ id, chartKey, title }) => {
@@ -371,7 +377,7 @@ class AnalyticsController {
         this.charts.enlarged = new Chart(ctx, {
             type: chart.config.type,
             data: JSON.parse(JSON.stringify(chart.data)),
-            options: JSON.parse(JSON.stringify(chart.options))
+            options: JSON.parse(JSON.stringify(chart.options)),
         });
 
         // Show modal

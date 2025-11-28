@@ -14,14 +14,14 @@ document.addEventListener('DOMContentLoaded', function () {
             theme: isDark ? 'dark' : 'default',
             flowchart: {
                 useMaxWidth: true,
-                htmlLabels: true
+                htmlLabels: true,
             },
             sequence: {
-                useMaxWidth: true
+                useMaxWidth: true,
             },
             gantt: {
-                useMaxWidth: true
-            }
+                useMaxWidth: true,
+            },
         });
 
         console.log('🎨 Mermaid initialized (simple mode)');

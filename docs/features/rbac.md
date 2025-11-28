@@ -200,10 +200,10 @@ The user interface adapts automatically based on the authenticated user's role.
 - Full form functionality
 - Can select from pre-configured gateway URLs
 - **Can use custom gateway URLs**:
-    - Select "Custom URL..." from gateway dropdown
-    - Enter any custom gateway endpoint (e.g., `http://dev-gateway:8080/events`)
-    - Custom URL is saved to localStorage for convenience
-    - Useful for testing with development/staging environments
+  - Select "Custom URL..." from gateway dropdown
+  - Enter any custom gateway endpoint (e.g., `http://dev-gateway:8080/events`)
+  - Custom URL is saved to localStorage for convenience
+  - Useful for testing with development/staging environments
 
 ### Admin Menu
 
@@ -217,7 +217,7 @@ The user interface adapts automatically based on the authenticated user's role.
 
 - Admin dropdown in navigation bar
 - Additional menu item:
-    - **Manage Tasks** - Opens Task Manager modal
+  - **Manage Tasks** - Opens Task Manager modal
 - Plus the "Clear Storage" option available to all users
 
 ### Task Manager Modal

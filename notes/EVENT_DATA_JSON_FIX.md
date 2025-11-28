@@ -197,9 +197,11 @@ To verify the fix:
 2. Click the offcanvas menu to open the event generator form
 3. Check the "Data" textarea - should contain valid JSON
 4. Try different values:
+
    ```json
    { "active": true, "count": 42, "name": "test", "optional": null }
    ```
+
 5. Submit the form and verify no parse errors
 6. Check the received event in the UI accordion
 

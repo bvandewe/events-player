@@ -156,10 +156,10 @@
 }
 
 /* Dark theme adjustments */
-[data-md-color-scheme="slate"] .dataTables_filter input,
-[data-md-color-scheme="slate"] .dataTables_length select,
-[data-md-color-scheme="slate"] .filter-group select,
-[data-md-color-scheme="slate"] .filter-group input {
+[data-md-color-scheme='slate'] .dataTables_filter input,
+[data-md-color-scheme='slate'] .dataTables_length select,
+[data-md-color-scheme='slate'] .filter-group select,
+[data-md-color-scheme='slate'] .filter-group input {
     background: var(--md-default-bg-color);
     border-color: var(--md-default-fg-color--lightest);
     color: var(--md-default-fg-color);

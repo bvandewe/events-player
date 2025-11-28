@@ -31,9 +31,7 @@
     "MD026": true,
     "MD027": true,
     "MD028": false,
-    "MD029": {
-        "style": "ordered"
-    },
+    "MD029": false,
     "MD030": {
         "ul_single": 1,
         "ol_single": 1,

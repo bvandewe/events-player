@@ -31,7 +31,7 @@ class FilterController {
 
         // Support legacy callback for backward compatibility
         if (config.onFilterChange) {
-            appState.subscribe('filters', (filters) => {
+            appState.subscribe('filters', filters => {
                 config.onFilterChange(filters);
             });
         }
@@ -66,7 +66,6 @@ class FilterController {
 
             // Update UI
             this.updateFilterDropdowns();
-
         } catch (error) {
             console.error('[Filters] Error loading filter options:', error);
         }
@@ -79,37 +78,43 @@ class FilterController {
         if (this.typeSelect) {
             const currentValue = this.typeSelect.value;
             this.typeSelect.innerHTML = '<option value="">All Types</option>';
-            Array.from(this.types).sort().forEach(type => {
-                const option = document.createElement('option');
-                option.value = type;
-                option.textContent = type;
-                if (type === currentValue) option.selected = true;
-                this.typeSelect.appendChild(option);
-            });
+            Array.from(this.types)
+                .sort()
+                .forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    if (type === currentValue) option.selected = true;
+                    this.typeSelect.appendChild(option);
+                });
         }
 
         if (this.sourceSelect) {
             const currentValue = this.sourceSelect.value;
             this.sourceSelect.innerHTML = '<option value="">All Sources</option>';
-            Array.from(this.sources).sort().forEach(source => {
-                const option = document.createElement('option');
-                option.value = source;
-                option.textContent = source;
-                if (source === currentValue) option.selected = true;
-                this.sourceSelect.appendChild(option);
-            });
+            Array.from(this.sources)
+                .sort()
+                .forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source;
+                    option.textContent = source;
+                    if (source === currentValue) option.selected = true;
+                    this.sourceSelect.appendChild(option);
+                });
         }
 
         if (this.subjectSelect) {
             const currentValue = this.subjectSelect.value;
             this.subjectSelect.innerHTML = '<option value="">All Subjects</option>';
-            Array.from(this.subjects).sort().forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject;
-                option.textContent = subject || '(empty)';
-                if (subject === currentValue) option.selected = true;
-                this.subjectSelect.appendChild(option);
-            });
+            Array.from(this.subjects)
+                .sort()
+                .forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject;
+                    option.textContent = subject || '(empty)';
+                    if (subject === currentValue) option.selected = true;
+                    this.subjectSelect.appendChild(option);
+                });
         }
     }
 
@@ -179,8 +184,8 @@ class FilterController {
         return {
             type: this.typeSelect ? this.typeSelect.value : '',
             source: this.sourceSelect ? this.sourceSelect.value : '',
-            subject: this.subjectSelect ? (this.subjectSelect.value || null) : null,
-            timeRange: appState.get('filters.timeRange') || 'all'
+            subject: this.subjectSelect ? this.subjectSelect.value || null : null,
+            timeRange: appState.get('filters.timeRange') || 'all',
         };
     }
 

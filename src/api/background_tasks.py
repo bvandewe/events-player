@@ -12,14 +12,13 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from .globals import (
-    sse_clients,
-    sse_clients_lock,
     active_tasks,
     active_tasks_lock,
+    sse_clients,
+    sse_clients_lock,
 )
-from .models import EventGeneratorRequest, EventGeneratorTask, CloudEvent
+from .models import CloudEvent, EventGeneratorRequest, EventGeneratorTask
 from .settings import settings
-
 
 log = logging.getLogger(__name__)
 
@@ -102,7 +101,9 @@ async def handle_event(payload: dict):
         tasks: Set[asyncio.Task] = set()
 
         for client_id, client_queue in client_items:
-            task = asyncio.create_task(_send_to_client(client_id, client_queue, payload))
+            task = asyncio.create_task(
+                _send_to_client(client_id, client_queue, payload)
+            )
             tasks.add(task)
             # Clean up completed tasks to prevent memory leak
             task.add_done_callback(tasks.discard)
@@ -112,7 +113,9 @@ async def handle_event(payload: dict):
 
     except Exception as e:
         log.error(f"Error in handle_event: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {e}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Internal server error: {e}"
+        ) from e
 
 
 async def handle_generator_request(
@@ -176,7 +179,9 @@ async def handle_generator_request(
             )
             log.debug("Event payload: %s", event.model_dump())
             try:
-                async with httpx.AsyncClient(timeout=settings.http_client_timeout) as client:
+                async with httpx.AsyncClient(
+                    timeout=settings.http_client_timeout
+                ) as client:
                     response = await client.post(
                         str(generator_request.event_gateway),
                         json=event.model_dump(mode="json"),
@@ -199,21 +204,19 @@ async def handle_generator_request(
                 )
                 task.status = "Failed"
                 task.progress = -1
-                task.error = (
-                    f"Service Unavailable: Could not connect to {generator_request.event_gateway}"
-                )
+                task.error = f"Service Unavailable: Could not connect to {generator_request.event_gateway}"
                 async with active_tasks_lock:
                     active_tasks[task.id] = task  # Update task with error info
                 return  # Exit gracefully without raising exception
             except httpx.TimeoutException as exc:
                 log.error(
-                    "Timeout when posting to gateway %s: %s", generator_request.event_gateway, exc
+                    "Timeout when posting to gateway %s: %s",
+                    generator_request.event_gateway,
+                    exc,
                 )
                 task.status = "Failed"
                 task.progress = -1
-                task.error = (
-                    f"Gateway Timeout: Request to {generator_request.event_gateway} timed out"
-                )
+                task.error = f"Gateway Timeout: Request to {generator_request.event_gateway} timed out"
                 async with active_tasks_lock:
                     active_tasks[task.id] = task  # Update task with error info
                 return  # Exit gracefully without raising exception

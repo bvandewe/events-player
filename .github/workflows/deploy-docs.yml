@@ -5,7 +5,7 @@ on:
         branches:
             - main
         tags:
-            - "v*.*.*"
+            - 'v*.*.*'
     workflow_dispatch:
 
 permissions:
@@ -15,7 +15,7 @@ permissions:
 
 # Allow only one concurrent deployment
 concurrency:
-    group: "pages"
+    group: 'pages'
     cancel-in-progress: false
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
             - name: Set up Python
               uses: actions/setup-python@v5
               with:
-                  python-version: "3.10"
+                  python-version: '3.10'
 
             - name: Cache dependencies
               uses: actions/cache@v4

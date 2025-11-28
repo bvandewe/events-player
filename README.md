@@ -106,17 +106,17 @@ When `auth_required=true`:
 The application automatically detects the authentication mode based on the incoming request:
 
 - **Istio/Proxy Mode**: When user is pre-authenticated (JWT injected by OAuth2 Proxy/Istio)
-    - Frontend detects: `/api/auth/info` returns `authenticated: true`
-    - No login button shown, user already authenticated
-    - Token managed server-side by proxy layer
+  - Frontend detects: `/api/auth/info` returns `authenticated: true`
+  - No login button shown, user already authenticated
+  - Token managed server-side by proxy layer
   
 - **OAuth Mode**: When OAuth configuration is provided
-    - Frontend detects: OAuth config present in `/api/auth/info` response
-    - Login button shown when not authenticated
-    - Frontend handles OAuth flow with Keycloak/OIDC provider
+  - Frontend detects: OAuth config present in `/api/auth/info` response
+  - Login button shown when not authenticated
+  - Frontend handles OAuth flow with Keycloak/OIDC provider
   
 - **No Auth Mode**: When authentication is disabled (default)
-    - All features accessible without login
+  - All features accessible without login
 
 > **🔍 Technical Detail:** The frontend determines authentication mode from the authentication state, not from backend environment variables. This resilient design works even with minimal backend configuration. See `notes/MODE_DETECTION_CASE_STUDY.md` for details.
 
@@ -126,8 +126,8 @@ See the [full authentication documentation](https://bvandewe.github.io/events-pl
 
 - **No Server-Side Persistence**: Refreshing the browser resets client-side state
 - **Client-Side Storage Only**: Events stored in browser IndexedDB (capacity-based FIFO queues)
-    - Tier 1: Full events (default: 5000 max)
-    - Tier 2: Metadata (default: 100,000 max)
+  - Tier 1: Full events (default: 5000 max)
+  - Tier 2: Metadata (default: 100,000 max)
 - **Display Limit**: Configurable max events rendered in DOM (default: 1000)
 
 ## Usage

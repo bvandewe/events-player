@@ -2,9 +2,11 @@
 Unit tests for CloudEvent Pydantic model.
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from pydantic import ValidationError
+
 from api.models import CloudEvent
 
 

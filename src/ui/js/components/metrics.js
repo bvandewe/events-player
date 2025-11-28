@@ -50,7 +50,7 @@ class MetricsController {
             });
 
             // Keyboard accessibility
-            typeMetric.addEventListener('keydown', (e) => {
+            typeMetric.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     typeMetric.click();
@@ -69,7 +69,7 @@ class MetricsController {
             });
 
             // Keyboard accessibility
-            sourceMetric.addEventListener('keydown', (e) => {
+            sourceMetric.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     sourceMetric.click();
@@ -88,8 +88,7 @@ class MetricsController {
         const totalCount = appState.get('eventCount');
 
         // Check if filters are active
-        const hasActiveFilters = filters.type || filters.source || filters.subject ||
-            (filters.timeRange && filters.timeRange !== 'all');
+        const hasActiveFilters = filters.type || filters.source || filters.subject || (filters.timeRange && filters.timeRange !== 'all');
 
         // Get filtered events if filters are active
         let events = [];
@@ -231,7 +230,7 @@ class MetricsController {
                     '24h': 24 * 60 * 60 * 1000,
                     '2d': 2 * 24 * 60 * 60 * 1000,
                     '7d': 7 * 24 * 60 * 60 * 1000,
-                    '30d': 30 * 24 * 60 * 60 * 1000
+                    '30d': 30 * 24 * 60 * 60 * 1000,
                 };
                 const timeMs = ranges[filters.timeRange];
                 if (timeMs) {

@@ -1,6 +1,6 @@
 /**
  * Authorization Helper Module
- * 
+ *
  * Provides client-side authorization checks based on user roles.
  * Works in conjunction with server-side authorization enforcement.
  */
@@ -142,7 +142,7 @@ class AuthorizationManager {
             new bootstrap.Tooltip(iterationsInput, {
                 trigger: 'hover',
                 delay: { show: 300, hide: 0 },
-                animation: true
+                animation: true,
             });
         }
 
@@ -158,7 +158,7 @@ class AuthorizationManager {
             new bootstrap.Tooltip(delayInput, {
                 trigger: 'hover',
                 delay: { show: 300, hide: 0 },
-                animation: true
+                animation: true,
             });
         }
 
@@ -193,9 +193,9 @@ class AuthorizationManager {
         // Listen for new accordion items being added
         const eventsStack = document.getElementById('events-stack');
         if (eventsStack) {
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    mutation.addedNodes.forEach((node) => {
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
                         if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('accordion-item')) {
                             const button = node.querySelector('.accordion-button');
                             if (button) {
@@ -236,16 +236,18 @@ class AuthorizationManager {
         const toastController = window.toastController;
         if (toastController) {
             toastController.showToast({
-                detail: [{
-                    loc: ['authorization'],
-                    msg: message || 'You do not have permission to perform this action',
-                    type: 'authorization_error'
-                }]
+                detail: [
+                    {
+                        loc: ['authorization'],
+                        msg: message || 'You do not have permission to perform this action',
+                        type: 'authorization_error',
+                    },
+                ],
             });
         } else if (actionsController) {
             actionsController.showError({
                 title: 'Authorization Error',
-                message: message || 'You do not have permission to perform this action'
+                message: message || 'You do not have permission to perform this action',
             });
         }
     }

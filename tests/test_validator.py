@@ -4,6 +4,7 @@ Unit tests for the validator module.
 
 import pytest
 from fastapi import HTTPException
+
 from api.validator import validate_cloud_event
 
 

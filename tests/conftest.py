@@ -2,8 +2,8 @@
 Test configuration and fixtures for CloudEvent Player tests.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add src directory to Python path
@@ -19,8 +19,9 @@ os.chdir(Path(__file__).parent.parent)
 
 import pytest
 from fastapi.testclient import TestClient
+
 from api.app import app, request_id_var
-from api.globals import sse_clients, active_tasks
+from api.globals import active_tasks, sse_clients
 
 
 @pytest.fixture

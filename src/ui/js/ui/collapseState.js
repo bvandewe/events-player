@@ -10,7 +10,7 @@ export function initializeCollapseState() {
     const collapsibles = [
         { id: 'metricsCollapse', chevronId: 'metricsChevron', key: 'metrics' },
         { id: 'analyticsCollapse', chevronId: 'analyticsChevron', key: 'analytics' },
-        { id: 'storageCollapse', chevronId: 'storageChevron', key: 'storage' }
+        { id: 'storageCollapse', chevronId: 'storageChevron', key: 'storage' },
     ];
 
     collapsibles.forEach(({ id, chevronId, key }) => {

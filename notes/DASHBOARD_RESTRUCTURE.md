@@ -7,6 +7,7 @@ Successfully restructured the monolithic `dashboard.js` (822 lines) and `timelin
 ## Before & After
 
 ### Before
+
 ```
 src/ui/js/
 ├── dashboard.js (822 lines - ALL concerns mixed)
@@ -15,6 +16,7 @@ src/ui/js/
 ```
 
 **Problems:**
+
 - Monolithic files mixing multiple concerns
 - Difficult to maintain and test
 - Redundant initialization code
@@ -22,6 +24,7 @@ src/ui/js/
 - No clear separation of responsibilities
 
 ### After
+
 ```
 src/ui/js/
 ├── main.js (260 lines - lightweight orchestrator)
@@ -34,6 +37,7 @@ src/ui/js/
 ```
 
 **Benefits:**
+
 - ✅ Clear separation of concerns
 - ✅ Each component manages its own lifecycle
 - ✅ Smaller, focused, testable modules
@@ -44,9 +48,11 @@ src/ui/js/
 ## Component Architecture
 
 ### 1. **main.js** - Dashboard Orchestrator (260 lines)
+
 **Purpose:** Lightweight coordinator for all dashboard components
 
 **Responsibilities:**
+
 - Initialize all component controllers
 - Coordinate tab switching (Streams/Timeline)
 - Handle global state subscriptions (filters, new events)
@@ -54,6 +60,7 @@ src/ui/js/
 - Manage filter indicator
 
 **Key Methods:**
+
 - `init()` - Initialize storage manager and all components
 - `setupTabSwitching()` - Handle tab navigation
 - `onFiltersChanged()` - Update all components when filters change
@@ -62,6 +69,7 @@ src/ui/js/
 - `destroy()` - Cleanup all components
 
 **Dependencies:**
+
 - EventStorageManager (singleton)
 - All component controllers
 - appState (reactive state management)
@@ -69,9 +77,11 @@ src/ui/js/
 ---
 
 ### 2. **components/metrics.js** - Metrics Cards Controller (269 lines)
+
 **Purpose:** Manage real-time metrics cards display
 
 **Features:**
+
 - Total Events (with filtered count indicator)
 - Event Rate (average and peak per minute)
 - Unique Types (with top type)
@@ -81,6 +91,7 @@ src/ui/js/
 - Tooltips for filtered vs total counts
 
 **Key Methods:**
+
 - `init()` - Setup DOM elements and click handlers
 - `update()` - Refresh metrics from storage
 - `setupClickHandlers()` - Enable click-to-filter on cards
@@ -92,9 +103,11 @@ src/ui/js/
 ---
 
 ### 3. **components/storage.js** - Storage Indicators Controller (117 lines)
+
 **Purpose:** Monitor and display storage utilization
 
 **Features:**
+
 - Recent Events tier (max 5,000)
 - Metadata tier (max 100,000)
 - Progress bars with color coding:
@@ -105,6 +118,7 @@ src/ui/js/
 - Percentage displays
 
 **Key Methods:**
+
 - `init()` - Setup auto-refresh
 - `update()` - Refresh storage stats and progress bars
 - `destroy()` - Clear intervals
@@ -114,20 +128,24 @@ src/ui/js/
 ---
 
 ### 4. **components/analytics.js** - Analytics Charts Controller (293 lines)
+
 **Purpose:** Manage Chart.js analytics visualizations
 
 **Charts:**
+
 1. **Top Sources** - Horizontal bar chart (top 10)
 2. **Top Types** - Horizontal bar chart (top 10)
 3. **Top Subjects** - Horizontal bar chart (top 10)
 
 **Features:**
+
 - Dynamic Chart.js registration
 - Enlarge/fullscreen functionality via modal
 - Filter-aware data queries
 - Responsive and accessible charts
 
 **Key Methods:**
+
 - `init()` - Initialize all three charts
 - `initTopSourcesChart()` - Setup sources chart
 - `initTopTypesChart()` - Setup types chart
@@ -141,9 +159,11 @@ src/ui/js/
 ---
 
 ### 5. **components/timeline.js** - Timeline Chart Controller (481 lines, streamlined)
+
 **Purpose:** Time-bucketed event visualization
 
 **Features:**
+
 - 13 bucket sizes: 1s, 3s, 5s, 10s, 15s, 20s, 30s, 1m, 3m, 5m, 10m, 30m, 1h
 - Persistent bucket size preference (localStorage)
 - Auto-refresh toggle
@@ -156,6 +176,7 @@ src/ui/js/
 - Filter-aware timeline
 
 **Key Methods:**
+
 - `init()` - Initialize chart and event subscriptions
 - `initChart()` - Setup Chart.js timeline
 - `refreshChart()` - Update chart data and statistics
@@ -168,6 +189,7 @@ src/ui/js/
 - `destroy()` - Cleanup chart and timers
 
 **Removed from timeline.js:**
+
 - ❌ Redundant auth manager initialization (handled by app.js)
 - ❌ Redundant SSE connection setup (handled by app.js)
 - ❌ Redundant storage manager initialization (injected via constructor)
@@ -179,6 +201,7 @@ src/ui/js/
 ## Data Flow
 
 ### Initialization Sequence
+
 ```
 app.js
   ↓ (imports)
@@ -192,6 +215,7 @@ Components:
 ```
 
 ### State Management
+
 ```
 appState (reactive pub/sub)
   ↓ publish('newEvent')
@@ -205,6 +229,7 @@ Components:
 ```
 
 ### Filter Changes
+
 ```
 globalFilterController
   ↓ appState.set('filters', ...)
@@ -257,6 +282,7 @@ class ComponentController {
 ## Import Simplification
 
 ### Before (dashboard.js)
+
 ```javascript
 import * as bootstrap from 'bootstrap';
 import { Chart, registerables } from 'chart.js';
@@ -268,6 +294,7 @@ import EventStorageManager from './storage/eventStorage';
 ```
 
 ### After (main.js)
+
 ```javascript
 import * as bootstrap from 'bootstrap';
 import { appState } from './state/appState';
@@ -279,6 +306,7 @@ import { TimelineController } from './components/timeline';
 ```
 
 **Benefits:**
+
 - Clear component imports
 - No redundant Chart.js registration
 - Each component manages its own dependencies
@@ -291,6 +319,7 @@ import { TimelineController } from './components/timeline';
 With this modular structure, testing becomes much easier:
 
 ### Unit Testing
+
 ```javascript
 // Test metrics controller in isolation
 import { MetricsController } from './components/metrics';
@@ -311,6 +340,7 @@ describe('MetricsController', () => {
 ```
 
 ### Integration Testing
+
 ```javascript
 // Test main orchestrator
 import { dashboardController } from './main';
@@ -330,7 +360,9 @@ describe('MainDashboardController', () => {
 ## Migration Notes
 
 ### Backward Compatibility
+
 ✅ **No breaking changes** - All functionality preserved:
+
 - Click-to-filter on metrics cards still works
 - Real-time SSE updates still work
 - Filter subscriptions still work
@@ -339,12 +371,15 @@ describe('MainDashboardController', () => {
 - Timeline buckets and zoom levels still work
 
 ### Files to Update
+
 - ✅ `src/ui/js/app.js` - Changed import from `./dashboard` to `./main`
 - ⚠️ `src/ui/js/dashboard.js` - **Can be archived/deleted after testing**
 - ⚠️ `src/ui/js/timeline.js` - **Can be archived/deleted after testing**
 
 ### Build Process
+
 No changes required - Parcel will automatically:
+
 - Bundle new component structure
 - Tree-shake unused code
 - Generate optimized bundles
@@ -354,6 +389,7 @@ No changes required - Parcel will automatically:
 ## Next Steps
 
 ### Immediate Testing
+
 1. ✅ Build with Parcel: `npm run build` or `make build`
 2. ✅ Test locally: `npm start` or `docker-compose up`
 3. ✅ Verify all metrics update in real-time
@@ -364,6 +400,7 @@ No changes required - Parcel will automatically:
 8. ✅ Test filter changes across all components
 
 ### Future Enhancements
+
 - [ ] Add component-level error boundaries
 - [ ] Implement lazy loading for charts (load only when visible)
 - [ ] Add unit tests for each component
@@ -375,14 +412,17 @@ No changes required - Parcel will automatically:
 ## Performance Improvements
 
 ### Throttling
+
 - **Real-time updates:** 2-second throttle prevents excessive re-renders during high-volume SSE streams
 - **Timeline refresh:** 2-second throttle avoids chart re-initialization spam
 
 ### Lazy Loading
+
 - **Timeline:** Only initialized when timeline tab is activated
 - **Chart.js:** Dynamically imported only when needed
 
 ### Memory Management
+
 - **Destroy methods:** All components properly clean up intervals, charts, and subscriptions
 - **Singleton storage:** Single EventStorageManager instance shared across all components
 

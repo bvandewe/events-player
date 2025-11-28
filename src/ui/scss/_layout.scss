@@ -1,10 +1,11 @@
-
-* {box-sizing: border-box}
+* {
+    box-sizing: border-box;
+}
 
 body {
     margin: 0;
     padding: 0;
-    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    font-family: 'Roboto', Helvetica, Arial, sans-serif;
     overflow-x: hidden; // Prevent horizontal scrollbar
     overflow-y: hidden; // Body doesn't scroll, main does
     display: flex;
@@ -42,7 +43,6 @@ footer p {
     }
 }
 
-
 .title {
     font-family: 'Comfortaa', 'Arial', sans-serif;
     color: $primary;
@@ -52,4 +52,3 @@ footer p {
 #generatorPanel {
     height: 650px;
 }
-

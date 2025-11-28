@@ -1,7 +1,6 @@
-
 .actionLink {
     cursor: pointer;
-    
+
     &:hover {
         cursor: pointer;
         color: $primary;
@@ -12,7 +11,7 @@
 .nav-link.active {
     position: relative;
     color: $primary !important;
-    
+
     &::after {
         content: '';
         position: absolute;
@@ -33,29 +32,29 @@ header {
     background-color: $gray-900; // Dark background to match navbar-dark
     overflow: visible; // Allow dropdown to extend beyond header bounds
     flex-shrink: 0; // Don't allow header to shrink
-    
+
     .navbar {
         flex-wrap: nowrap;
-        
+
         .container-fluid {
             flex-wrap: nowrap;
             overflow: visible; // Allow dropdown to overflow
         }
-        
+
         .navbar-brand {
             white-space: nowrap;
             flex-shrink: 0; // Don't shrink the brand
         }
-        
+
         .navbar-collapse {
             flex-wrap: nowrap;
             overflow: visible; // Allow dropdown to overflow
-            
+
             .navbar-nav {
                 flex-wrap: nowrap;
                 flex-shrink: 1;
             }
-            
+
             form {
                 flex-shrink: 1;
                 min-width: 150px; // Minimum width for search form
