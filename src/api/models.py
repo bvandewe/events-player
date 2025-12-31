@@ -29,7 +29,8 @@ class CloudEvent(BaseModel):
     datacontenttype: str = "application/json"
     type: str
     source: str
-    subject: str
+    #subject: str
+    subject: typing.Optional[str] = None
     data: typing.Dict[str, typing.Any]
 
 
