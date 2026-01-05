@@ -111,6 +111,13 @@ class ApiSettings(BaseSettings):
     # is handled by the proxy layer (e.g., Istio with RequestAuthentication)
     auth_trust_mode: bool = False
 
+    # Protect the /events/pub endpoint with OAuth/JWT authentication
+    # When enabled, only authenticated clients with a valid JWT can POST CloudEvents
+    # This is independent of auth_required - you can protect just the pub endpoint
+    # without requiring auth for the rest of the application
+    # ⚠️ NOTE: When enabled, ensure your OAuth/JWKS settings are properly configured
+    auth_pub_endpoint: bool = False
+
     # Role mapping configuration
     # Maps JWT token roles to application roles (admin, operator, user)
     auth_role_admin: str = "admin"  # Role name in JWT that grants admin privileges

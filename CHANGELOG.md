@@ -4,6 +4,18 @@
 
 ## Unreleased
 
+## 0.6.0 - 2026-01-05
+
+### Added
+
+#### Security
+
+- **Optional Pub Endpoint Authentication**
+  - Added `AUTH_PUB_ENDPOINT` environment variable to optionally protect the `/events/pub` endpoint with OAuth/JWT authentication
+  - When enabled (`AUTH_PUB_ENDPOINT=true`), only authenticated clients with valid JWT tokens can publish CloudEvents
+  - This setting is independent of `AUTH_REQUIRED` - you can protect just the pub endpoint without requiring auth for the UI
+  - Added `require_pub_endpoint_auth` dependency for conditional authentication
+
 ## 0.5.1 - 2025-11-28
 
 ### Security
