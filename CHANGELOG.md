@@ -16,6 +16,16 @@
   - This setting is independent of `AUTH_REQUIRED` - you can protect just the pub endpoint without requiring auth for the UI
   - Added `require_pub_endpoint_auth` dependency for conditional authentication
 
+### Fixed
+
+#### Infrastructure
+
+- **Docker Build Failure with uuid Package**
+  - Updated Node.js base image from `node:16-alpine` to `node:20-alpine`
+  - Replaced `uuid` package with native `crypto.randomUUID()` browser API
+  - Fixes Parcel build failure: `Cannot load file './index' from module 'uuid'`
+  - Reduces bundle size by removing unnecessary dependency
+
 ## 0.5.1 - 2025-11-28
 
 ### Security

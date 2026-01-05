@@ -1,5 +1,4 @@
 import { toastController } from '../ui/toast';
-import { v4 as uuidv4 } from 'uuid';
 import { sseConnection } from './connection';
 import { connectionStatus } from './connectionStatus';
 import { appState } from '../state/appState';
@@ -325,7 +324,7 @@ export const sseEventsController = (() => {
                 return;
             }
 
-            const uuid = uuidv4();
+            const uuid = crypto.randomUUID();
 
             // Store event in storage manager (both tiers) first to get sequence number
             let sequenceNumber = 0;
@@ -608,7 +607,7 @@ export const sseEventsController = (() => {
 
                 // Render events in reverse order (oldest first, so newest ends up on top)
                 events.reverse().forEach(cloudEventData => {
-                    const uuid = uuidv4();
+                    const uuid = crypto.randomUUID();
                     const accordionData = {
                         eventCount: cloudEventData.sequenceNumber || 0, // Use stored sequence number
                         timestamp: cloudEventData.time,
