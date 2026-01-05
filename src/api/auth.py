@@ -612,6 +612,46 @@ async def require_operator(
     )
 
 
+async def require_pub_endpoint_auth(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> Optional[Dict[str, Any]]:
+    """
+    Conditional authentication dependency for the /events/pub endpoint.
+
+    When AUTH_PUB_ENDPOINT=true, requires a valid JWT token to publish CloudEvents.
+    When AUTH_PUB_ENDPOINT=false (default), allows unauthenticated access.
+
+    This is useful for scenarios where you want to:
+    - Protect the event ingestion endpoint without requiring auth for the UI
+    - Ensure only trusted services/clients can publish events
+    - Maintain an audit trail of event publishers
+
+    Example:
+        @router.post("/events/pub")
+        async def handle_events(
+            payload: dict,
+            user: Optional[Dict] = Depends(require_pub_endpoint_auth)
+        ):
+            # If auth is enabled, user will be set; otherwise None
+            ...
+
+    Returns:
+        User info dict if authenticated, None if auth is not required
+
+    Raises:
+        HTTPException(401): If AUTH_PUB_ENDPOINT=true and no valid token provided
+    """
+    if not settings.auth_pub_endpoint:
+        # Auth not required for pub endpoint, allow unauthenticated access
+        logger.debug("Pub endpoint auth disabled, allowing unauthenticated access")
+        return None
+
+    # Auth is required for pub endpoint
+    logger.debug("Pub endpoint auth enabled, validating token")
+    return await get_current_user_required(request, credentials)
+
+
 # OAuth Token Exchange
 
 

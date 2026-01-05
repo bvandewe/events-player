@@ -24,6 +24,7 @@ from .auth import (
     refresh_access_token,
     require_admin,
     require_operator,
+    require_pub_endpoint_auth,
 )
 from .background_tasks import handle_event, handle_generator_request
 from .constants import MAX_QUEUE_SIZE, SLOW_CLIENT_THRESHOLD
@@ -566,8 +567,13 @@ async def handle_events(
     background_tasks: BackgroundTasks,
     content_type: str = Header(...),
     valid_event: bool = Depends(validate_cloud_event),
+    publisher: Optional[dict] = Depends(require_pub_endpoint_auth),
 ):
-    log.debug("Received request on events subscriber: %s", payload)
+    log.debug(
+        "Received request on events subscriber: %s (publisher: %s)",
+        payload,
+        publisher.get("username") if publisher else "anonymous",
+    )
     try:
         # Parse and validate as CloudEvent to ensure proper serialization
         cloud_event = CloudEvent(**payload)
