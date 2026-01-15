@@ -122,3 +122,52 @@ class TestCloudEventModel:
         )
 
         assert event.datacontenttype == "application/json"
+
+    def test_cloudevent_optional_subject_none(self):
+        """Test that subject field can be None (optional per CloudEvents spec)."""
+        event = CloudEvent(
+            id="test-no-subject",
+            time=datetime.now(),
+            type="com.test.nosubject",
+            source="test-source",
+            data={"key": "value"},
+        )
+
+        assert event.subject is None
+        assert event.id == "test-no-subject"
+        assert event.type == "com.test.nosubject"
+
+    def test_cloudevent_optional_subject_from_dict_missing(self):
+        """Test creating CloudEvent from dict without subject field."""
+        data = {
+            "specversion": "1.0",
+            "id": "test-dict-no-subject",
+            "time": "2025-10-16T00:00:00Z",
+            "datacontenttype": "application/json",
+            "type": "com.test.event",
+            "source": "test-source",
+            "data": {"foo": "bar"},
+        }
+
+        event = CloudEvent(**data)
+
+        assert event.subject is None
+        assert event.id == "test-dict-no-subject"
+
+    def test_cloudevent_optional_subject_serialization(self):
+        """Test that CloudEvent with None subject serializes correctly."""
+        event = CloudEvent(
+            specversion="1.0",
+            id="test-serialize-no-subject",
+            time=datetime(2025, 10, 16, 0, 0, 0),
+            datacontenttype="application/json",
+            type="com.test.serialize",
+            source="test",
+            data={"active": True},
+        )
+
+        json_dict = event.model_dump(mode="json")
+
+        assert json_dict["subject"] is None
+        assert json_dict["id"] == "test-serialize-no-subject"
+        assert json_dict["data"]["active"] is True
