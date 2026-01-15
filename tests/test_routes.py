@@ -102,6 +102,47 @@ class TestCloudEventSubscriber:
         # Should fail validation
         assert response.status_code in [400, 422, 500]
 
+    def test_receive_cloudevent_without_subject(self, client):
+        """Test receiving a valid CloudEvent without subject field (optional per spec)."""
+        event = {
+            "specversion": "1.0",
+            "id": "test-no-subject-event",
+            "time": "2025-10-16T00:00:00Z",
+            "datacontenttype": "application/json",
+            "type": "com.test.nosubject",
+            "source": "test-source",
+            "data": {"message": "event without subject"},
+        }
+
+        response = client.post(
+            "/events/pub",
+            json=event,
+            headers={"Content-Type": "application/cloudevents+json"},
+        )
+
+        assert response.status_code == 202  # Accepted
+
+    def test_receive_cloudevent_with_null_subject(self, client):
+        """Test receiving a CloudEvent with explicit null subject."""
+        event = {
+            "specversion": "1.0",
+            "id": "test-null-subject-event",
+            "time": "2025-10-16T00:00:00Z",
+            "datacontenttype": "application/json",
+            "type": "com.test.nullsubject",
+            "source": "test-source",
+            "subject": None,
+            "data": {"message": "event with null subject"},
+        }
+
+        response = client.post(
+            "/events/pub",
+            json=event,
+            headers={"Content-Type": "application/cloudevents+json"},
+        )
+
+        assert response.status_code == 202  # Accepted
+
 
 class TestTaskManagement:
     """Test suite for task management endpoints."""
