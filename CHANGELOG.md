@@ -4,10 +4,12 @@
 
 ## Unreleased
 
+## 0.6.1 - 2026-01-15
+
 ### Fixed
 
 - **Optional Subject Field in CloudEvents**
-  - Made `subject` field optional in `CloudEvent` model per CloudEvents v1.0 specification
+  - Made `subject` field optional in `CloudEvent` model per CloudEvents v1.0 specification (credit to sonathaj)
   - Frontend already handles missing subject gracefully (displays "(none)")
   - Added unit tests for CloudEvent creation and serialization with missing/null subject
   - Added route tests for receiving CloudEvents without subject field
