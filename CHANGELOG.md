@@ -4,6 +4,13 @@
 
 ## Unreleased
 
+### Security
+
+- **Starlette host-header validation fix**
+  - Upgraded the project dependency stack to a patched Starlette release above the CVE-2026-48710 remediation threshold
+  - Moved FastAPI/Pydantic to a compatible Python 3.10-safe set and refreshed the lock file
+  - Kept the app on the existing Python 3.10 runtime while removing the vulnerable `starlette` 0.50.0 resolution
+
 ## 0.6.1 - 2026-01-15
 
 ### Fixed
